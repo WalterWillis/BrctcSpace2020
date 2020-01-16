@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+option csharp_namespace = "BrctcSpace";
+
+package vibe2020;
+
+service Vibe {
+  rpc GetResultSet (ResultRequest) returns (ResultReply);
+}
+
+enum ResultType{
+    GyroOnly = 0;
+    AccelerometerOnly = 1;
+    RtcOnly = 2;
+    Full = 3;
+}
+
+message ResultRequest {
+  ResultType ResultType = 1;
+}
+
+message ResultReply {
+  int32 ResultStatus = 1; //proto3 doesn't allow enum flags, so we'll send an integer and use a shared enum class
+  ResultSet ResultSet = 2;
+}
+
+message ResultSet{
+    Accelerometer Accelerometer = 1;
+    Gyroscope Gyroscope = 2;
+}
+
+message Accelerometer{
+    double X = 1;
+    double Y = 2;
+    double Z = 3;
+}
+
+message Gyroscope{
+    BurstResults BurstResults = 1;
+}
+
+message BurstResults{
+    double Diagnostic = 1;
+    double Gyro_X = 2;
+    double Gyro_Y = 3;
+    double Gyro_Z = 4;
+    double Accel_X = 5;
+    double Accel_Y = 6;
+    double Accel_Z = 7;
+    double Temperature = 8;
+    double SampleCount = 9;
+    double Checksum = 10;
+}
