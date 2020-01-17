@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
@@ -18,13 +15,19 @@ namespace GrpcSpaceServer
 
         public override Task<ResultReply> GetResultSet(ResultRequest request, ServerCallContext context)
         {
+            Device.Accelerometer accelerometerDevice = new Device.Accelerometer();
+            Device.Gyroscope gyroscopeDevice = new Device.Gyroscope();
+            Device.RTC rtcDevice = new Device.RTC();
+
             return Task.FromResult(new ResultReply
             {
                 ResultStatus = (int)ResultStatus.Good,
                 ResultSet = new ResultSet
                 {
-                    Accelerometer = new Accelerometer { X = 1, Y = 2, Z = 3 },
-                    Gyroscope = new Gyroscope { BurstResults = new BurstResults { } }
+                    AccelerometerResults =  accelerometerDevice.GetAccelerometerResults(request.ScaleAccelerometer),
+                    GyroscopeResults = new GyroscopeResults { BurstResults = gyroscopeDevice.GetBurstResults() },
+                    CpuTemperature = new Iot.Device.CpuTemperature.CpuTemperature().Temperature.Fahrenheit,
+                    CurrentTime = rtcDevice.GetTimeStamp()                   
                 }
             });
         }

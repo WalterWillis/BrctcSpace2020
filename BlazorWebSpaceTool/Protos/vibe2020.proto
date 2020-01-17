@@ -4,6 +4,8 @@ option csharp_namespace = "BrctcSpace";
 
 package vibe2020;
 
+import "google/protobuf/timestamp.proto";
+
 service Vibe {
   rpc GetResultSet (ResultRequest) returns (ResultReply);
 }
@@ -17,6 +19,7 @@ enum ResultType{
 
 message ResultRequest {
   ResultType ResultType = 1;
+  bool scaleAccelerometer= 2;
 }
 
 message ResultReply {
@@ -25,17 +28,19 @@ message ResultReply {
 }
 
 message ResultSet{
-    Accelerometer Accelerometer = 1;
-    Gyroscope Gyroscope = 2;
+    AccelerometerResults AccelerometerResults = 1;
+    GyroscopeResults GyroscopeResults = 2;
+    double CpuTemperature = 3;
+    google.protobuf.Timestamp CurrentTime = 4;
 }
 
-message Accelerometer{
+message AccelerometerResults{
     double X = 1;
     double Y = 2;
     double Z = 3;
 }
 
-message Gyroscope{
+message GyroscopeResults{
     BurstResults BurstResults = 1;
 }
 
