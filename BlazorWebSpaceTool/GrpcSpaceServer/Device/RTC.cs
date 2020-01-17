@@ -59,18 +59,7 @@ namespace GrpcSpaceServer.Device
         /// <returns></returns>
         public Google.Protobuf.WellKnownTypes.Timestamp GetTimeStamp()
         {
-            DateTime currentTime;
-
-            try
-            {
-                currentTime = GetCurrentDate();
-            }
-            catch
-            {
-                Debug.WriteLine("RTC call failure");
-                currentTime = DateTime.Now;
-            }
-            return Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(currentTime);
+            return Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(GetCurrentDate());
         }
     }
 }
