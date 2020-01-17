@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorWebSpaceTool", "Blazo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcSpaceServer", "BlazorWebSpaceTool\GrpcSpaceServer\GrpcSpaceServer.csproj", "{810E8E13-F1EE-457D-B7BE-96F2E1311B03}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrctcSpaceLibrary", "BlazorWebSpaceTool\BrctcSpaceLibrary\BrctcSpaceLibrary.csproj", "{6386815A-6A2E-4579-BB65-22B0124CBF97}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BrctcSpaceLibrary", "BlazorWebSpaceTool\BrctcSpaceLibrary\BrctcSpaceLibrary.csproj", "{6386815A-6A2E-4579-BB65-22B0124CBF97}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
