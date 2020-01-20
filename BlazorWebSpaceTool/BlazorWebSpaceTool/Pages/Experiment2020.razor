@@ -1,7 +1,28 @@
 ﻿@page "/experiment2020"
+@using BrctcSpace;
+@using BlazorWebSpaceTool.Components
+@inject Vibe.VibeClient vibeClient;
 
 <h3>Experiment2020</h3>
 
+<button title="Get Data" @onclick="GetResult" class="btn btn-primary" />
+
+<Vibe2020ResultList Items="Results"/>
+
+
 @code {
+
+    public List<ResultReply> Results { get; set; } = new List<ResultReply>();
+
+    public async void GetResult()
+    {
+        Results.Add(await vibeClient.GetResultSetAsync(
+            new ResultRequest() { ResultType = ResultType.Full, ScaleAccelerometer = false }
+            ));
+
+        //Update the state when result is received
+        StateHasChanged();
+    }
+
 
 }

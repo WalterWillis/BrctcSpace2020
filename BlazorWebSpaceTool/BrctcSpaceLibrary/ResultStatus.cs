@@ -5,14 +5,14 @@ namespace BrctcSpace
     [Flags]
     public enum ResultStatus
     {
-        /// <summary>
-        /// Also used as None
-        /// </summary>
-        Unknown = 0,
-        AccelerometerFailure = 1,
-        GyroscopeFailure = 2,
-        RTCFailure = 4,
-        CpuTempReadfailure = 8,
-        Good = 16
+        None = 1,
+        AccelerometerFailure = 2,
+        GyroscopeFailure = 4,
+        RTCFailure = 8,
+        CpuTempReadFailure = 16,
+        AccelerometerSuccess = 32,
+        GyroscopeSuccess = 64,
+        RTCSuccess = 128,
+        CpuTempReadSuccess = 256,
     }
 }

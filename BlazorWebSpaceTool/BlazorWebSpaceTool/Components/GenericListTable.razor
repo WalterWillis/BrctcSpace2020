@@ -1,0 +1,54 @@
+﻿@typeparam TItem
+
+<table class="table">
+    <thead>
+        <tr>@TableHeader</tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Items)
+        {
+            <tr>@RowTemplate(item)</tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>@TableFooter</tr>
+    </tfoot>
+</table>
+
+
+@*
+    Use:
+    <GenericListTable Items="MyItems">
+                    <TableHeader>
+                        <th>Text property</th>
+                        <th>boolean property</th>
+                    </TableHeader>
+                    <RowTemplate>
+                        <td>@context.Text</td>
+                        <td>@(context.IsPositive ? "Positive" : "Negative")</td>
+                    </RowTemplate>
+                </GenericListTable>*@
+
+@code {
+    /// <summary>
+    /// Use html style markup to define header rows
+    /// </summary>
+    [Parameter]
+    public RenderFragment TableHeader { get; set; }
+
+    /// <summary>
+    /// Use html style markup to define body rows
+    /// </summary>
+    [Parameter]
+    public RenderFragment<TItem> RowTemplate { get; set; }
+
+    /// <summary>
+    /// Use html style markup for footer rows
+    /// </summary>
+    [Parameter]
+    public RenderFragment TableFooter { get; set; }
+
+
+    [Parameter]
+    public IReadOnlyList<TItem> Items { get; set; }
+}

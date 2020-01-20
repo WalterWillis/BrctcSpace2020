@@ -19,9 +19,20 @@ namespace GrpcSpaceServer
         // For instructions on how to configure Kestrel and gRPC clients on macOS, visit https://go.microsoft.com/fwlink/?linkid=2099682
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
+                 .ConfigureWebHostDefaults(webBuilder =>
+                 {
+                     webBuilder.UseStartup<Startup>();
+                     if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Development")
+                     {
+                         webBuilder.UseKestrel(options =>
+                         {
+                             options.ListenAnyIP(5443, listenOptions =>
+                             {
+                                 string certPath = "server.pfx";
+                                 listenOptions.UseHttps(certPath, "1234");
+                             });
+                         });
+                     }
+                 });
     }
 }

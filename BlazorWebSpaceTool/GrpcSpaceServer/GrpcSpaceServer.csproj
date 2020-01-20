@@ -19,4 +19,10 @@
     <ProjectReference Include="..\BrctcSpaceLibrary\BrctcSpaceLibrary.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\Certs\server.pfx" Link="server.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

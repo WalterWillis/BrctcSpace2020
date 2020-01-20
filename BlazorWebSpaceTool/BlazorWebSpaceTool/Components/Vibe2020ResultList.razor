@@ -1,0 +1,79 @@
+﻿@using BrctcSpace
+
+<style>
+    #Vibe2020-table {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+        #Vibe2020-table thead tr {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        #Vibe2020-table tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #Vibe2020-table tr:hover {
+            background-color: #ddd;
+        }
+
+        #Vibe2020-table th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #4CAF50;
+            color: white;
+        }
+</style>
+
+<table class="table">
+    <thead>
+        <tr>
+            <td>Status</td>
+            <td>Result</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Items)
+        {
+            <tr>
+                <td>
+                    @foreach (ResultStatus flag in GetFlags((ResultStatus)item.ResultStatus))
+                    {
+                    <div>
+                        @GetStatus(flag)
+                    </div>
+                    <br />
+
+                    }
+                </td>
+
+                <td>
+                    <Vibe2020Container ResultSet="item.ResultSet" />
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<ResultReply> Items { get; set; }
+
+    private string GetStatus(ResultStatus status)
+    {
+        return Enum.GetName(typeof(ResultStatus), status);
+    }
+
+    private IEnumerable<ResultStatus> GetFlags(ResultStatus input)
+    {
+        foreach (ResultStatus value in ResultStatus.GetValues(input.GetType()))
+            if (input.HasFlag(value))
+                yield return value;
+    }
+
+
+}

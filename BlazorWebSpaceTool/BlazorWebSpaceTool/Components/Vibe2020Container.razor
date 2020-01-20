@@ -1,0 +1,77 @@
+﻿@using BrctcSpace
+
+@if (ResultSet == null || 
+    (double.IsNaN(ResultSet.CpuTemperature) 
+    && ResultSet.AccelerometerResults == null)
+    && ResultSet.GyroscopeResults?.BurstResults == null)
+{
+    <p>No data</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                @if (!double.IsNaN(ResultSet.CpuTemperature))
+                {
+                    <td>CPU Temp</td>
+                }
+                @if (ResultSet.AccelerometerResults != null)
+                {
+                    <td>Acceleration X</td>
+                    <td>Acceleration Y</td>
+                    <td>Acceleration Z</td>
+                }
+                @if (ResultSet.GyroscopeResults?.BurstResults != null)
+                {
+                    <td>Gyro Acceleration X</td>
+                    <td>Gyro Acceleration Y</td>
+                    <td>Gyro Acceleration Z</td>
+                    <td>Gyro Rotation X</td>
+                    <td>Gyro Rotation Y</td>
+                    <td>Gyro Rotation Z</td>
+                    <td>Sample Count</td>
+                    <td>Gyro Temperature</td>
+                    <td>Checksum</td>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                @if (!double.IsNaN(ResultSet.CpuTemperature))
+                {
+                    <td>@ResultSet.CpuTemperature</td>
+                }
+                @if (ResultSet.AccelerometerResults != null)
+                {
+                    <td>@ResultSet.AccelerometerResults.X</td>
+                    <td>@ResultSet.AccelerometerResults.Y</td>
+                    <td>@ResultSet.AccelerometerResults.Z</td>
+                }
+                @if (ResultSet.GyroscopeResults?.BurstResults != null)
+                {
+                    <td>@ResultSet.GyroscopeResults.BurstResults.AccelX</td>
+                    <td>@ResultSet.GyroscopeResults.BurstResults.AccelY</td>
+                    <td>@ResultSet.GyroscopeResults.BurstResults.AccelZ</td>
+                    <td>@ResultSet.GyroscopeResults.BurstResults.GyroX</td>
+                    <td>@ResultSet.GyroscopeResults.BurstResults.GyroY</td>
+                    <td>@ResultSet.GyroscopeResults.BurstResults.GyroZ</td>
+                    <td>@ResultSet.GyroscopeResults.BurstResults.SampleCount</td>
+                    <td>@ResultSet.GyroscopeResults.BurstResults.Temperature</td>
+                    <td>@ResultSet.GyroscopeResults.BurstResults.Checksum</td>
+                }
+            </tr>
+        </tbody>
+        @*<tfoot>
+                <td>@TableFooter</td>
+            </tfoot>*@
+    </table>
+}
+
+@code {
+    [Parameter]
+    public ResultSet ResultSet { get; set; }
+
+
+
+}

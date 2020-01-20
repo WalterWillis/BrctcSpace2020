@@ -21,58 +21,97 @@ namespace GrpcSpaceServer
             return Task.FromResult(GetFullResults(request.ScaleAccelerometer));
         }
 
-        public ResultReply GetFullResults(bool scaleAccelerometer)
+        private ResultReply GetFullResults(bool scaleAccelerometer)
         {
-            Device.Accelerometer accelerometerDevice = new Device.Accelerometer();
-            Device.Gyroscope gyroscopeDevice = new Device.Gyroscope();
-            Device.RTC rtcDevice = new Device.RTC();
-
             ResultReply results = new ResultReply();
-
-            ResultStatus status = ResultStatus.Unknown;
-            results.ResultSet.GyroscopeResults = new GyroscopeResults();
-
-            try
-            {
-                results.ResultSet.AccelerometerResults = accelerometerDevice.GetAccelerometerResults(scaleAccelerometer);
-            }
-            catch
-            {
-                status |= ResultStatus.AccelerometerFailure;
-            }
-
-            try
-            {
-                results.ResultSet.GyroscopeResults.BurstResults = gyroscopeDevice.GetBurstResults();
-            }
-            catch
-            {
-                status |= ResultStatus.GyroscopeFailure;
-            }
-
-            try
-            {
-                results.ResultSet.CurrentTime = rtcDevice.GetTimeStamp();
-            }
-            catch
-            {
-                results.ResultSet.CurrentTime = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(DateTime.Now);
-                status |= ResultStatus.RTCFailure;
-            }
-
-            try
-            {
-                results.ResultSet.CpuTemperature = new Iot.Device.CpuTemperature.CpuTemperature().Temperature.Fahrenheit;
-            }
-            catch
-            {
-                status |= ResultStatus.CpuTempReadfailure;
-            }
+            results.ResultSet = new ResultSet();
+            
+            ResultStatus status = GetAccelerometerResults(ref results, scaleAccelerometer);
+            status |= GetGyroscopeResults(ref results);
+            status |= GetRTCResults(ref results);
+            status |= GetCPUTemperatureResults(ref results);
 
             // Convert to integer for transmission
             results.ResultStatus = (int)status;
 
             return results;
+        }
+
+        private ResultStatus GetAccelerometerResults(ref ResultReply results, bool scaleAccelerometer)
+        {
+            Device.Accelerometer accelerometerDevice = new Device.Accelerometer();
+            ResultStatus status;
+
+            try
+            {
+                results.ResultSet.AccelerometerResults = accelerometerDevice.GetAccelerometerResults(scaleAccelerometer);
+                status = ResultStatus.AccelerometerSuccess;
+            }
+            catch
+            {
+                status = ResultStatus.AccelerometerFailure;
+            }
+
+            return status;
+        }
+
+        private ResultStatus GetGyroscopeResults(ref ResultReply results)
+        {
+            Device.Gyroscope gyroscopeDevice = new Device.Gyroscope();
+            results.ResultSet.GyroscopeResults = new GyroscopeResults();
+            ResultStatus status;
+
+            try
+            {
+                results.ResultSet.GyroscopeResults.BurstResults = gyroscopeDevice.GetBurstResults();
+                status = ResultStatus.GyroscopeSuccess;
+            }
+            catch
+            {
+                status = ResultStatus.GyroscopeFailure;
+            }
+
+            return status;
+        }
+
+        private ResultStatus GetRTCResults(ref ResultReply results)
+        {
+            Device.RTC rtcDevice = new Device.RTC();
+            ResultStatus status;
+
+            try
+            {
+                results.ResultSet.CurrentTime = rtcDevice.GetTimeStamp();
+                status = ResultStatus.RTCSuccess;
+            }
+            catch
+            {
+                //Timestamp must be in UTC
+                results.ResultSet.CurrentTime = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(DateTime.UtcNow);
+                status = ResultStatus.RTCFailure;
+            }
+
+            return status;
+        }
+
+        private ResultStatus GetCPUTemperatureResults(ref ResultReply results)
+        {
+            ResultStatus status;
+
+            try
+            {
+                results.ResultSet.CpuTemperature = new Iot.Device.CpuTemperature.CpuTemperature().Temperature.Fahrenheit;
+                if(!double.IsNaN(results.ResultSet.CpuTemperature))
+                    status = ResultStatus.CpuTempReadSuccess;
+                else
+                    status = ResultStatus.CpuTempReadFailure;
+            }
+            catch
+            {
+                status = ResultStatus.CpuTempReadFailure;
+            }
+
+            return status;
         }
     }
 }

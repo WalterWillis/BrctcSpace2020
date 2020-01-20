@@ -59,7 +59,7 @@ namespace GrpcSpaceServer.Device
         /// <returns></returns>
         public Google.Protobuf.WellKnownTypes.Timestamp GetTimeStamp()
         {
-            return Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(GetCurrentDate());
+            return Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(GetCurrentDate().ToUniversalTime());
         }
     }
 }
