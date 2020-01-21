@@ -40,7 +40,11 @@ namespace BlazorWebSpaceTool
             .ConfigurePrimaryHttpMessageHandler(() =>
             {
                 var handler = new HttpClientHandler();
-                handler.ClientCertificates.Add(LoadCertificate());
+                handler.ClientCertificates.Add(GetClientCertificate());
+                handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+                {
+                    return cert.Equals(GetServerCertificate());
+                };
                 return handler;
             });
         }
@@ -71,10 +75,16 @@ namespace BlazorWebSpaceTool
             });
         }
 
-        private X509Certificate2 LoadCertificate()
+        private X509Certificate2 GetClientCertificate()
         {
             string configPath = Path.GetFullPath(Configuration.GetSection("ClientCert").Value);
-            return new X509Certificate2(configPath, "1234");
+            return new X509Certificate2(configPath, Configuration.GetSection("ClientCertPass").Value);
+        }
+
+        private X509Certificate2 GetServerCertificate()
+        {
+            string configPath = Path.GetFullPath(Configuration.GetSection("ServerCert").Value);
+            return new X509Certificate2(configPath, Configuration.GetSection("ServerCertPass").Value);
         }
     }
 }

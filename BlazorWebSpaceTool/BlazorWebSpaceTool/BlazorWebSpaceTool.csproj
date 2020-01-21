@@ -30,9 +30,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="..\Certs\client.pfx" Link="client.pfx">
+    <Content Include="..\Certs\client.pfx" Link="client.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
+    </Content>
+    <Content Include="..\Certs\server.pfx" Link="server.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

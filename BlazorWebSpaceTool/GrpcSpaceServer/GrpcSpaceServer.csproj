@@ -20,9 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\Certs\server.pfx" Link="server.pfx">
+    <Content Include="..\Certs\server.pfx" Link="server.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </Content>
   </ItemGroup>
 
 </Project>

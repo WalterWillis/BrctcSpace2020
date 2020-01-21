@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace GrpcSpaceServer
@@ -22,17 +23,32 @@ namespace GrpcSpaceServer
                  .ConfigureWebHostDefaults(webBuilder =>
                  {
                      webBuilder.UseStartup<Startup>();
-                     if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Development")
-                     {
                          webBuilder.UseKestrel(options =>
                          {
                              options.ListenAnyIP(5443, listenOptions =>
                              {
-                                 string certPath = "server.pfx";
-                                 listenOptions.UseHttps(certPath, "1234");
+                                 var config = new ConfigurationBuilder()
+                                    .AddJsonFile("appsettings.json", optional: false)
+                                    .Build();
+
+                                 string certPath = config.GetSection("ServerCert").Value;
+                                 string certPass = config.GetSection("ServerCertPass").Value;
+                                 listenOptions.UseHttps(certPath, certPass, o =>
+                                 {
+                                     //o.AllowAnyClientCertificate();
+
+                                     o.ClientCertificateValidation = (cert, chain, errors) =>
+                                     {
+                                         string certPath = config.GetSection("ClientCert").Value;
+                                         string certPass = config.GetSection("ClientCertPass").Value;
+
+                                         var clientCert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, certPass);
+
+                                         return cert.Equals(clientCert);
+                                     };
+                                 });
                              });
                          });
-                     }
                  });
     }
 }
