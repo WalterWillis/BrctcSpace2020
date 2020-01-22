@@ -21,6 +21,28 @@ namespace GrpcSpaceServer
             return Task.FromResult(GetFullResults(request.ScaleAccelerometer));
         }
 
+        public override async Task GetResultStream(ResultRequest request, IServerStreamWriter<ResultReply> responseStream, ServerCallContext context)
+        {
+            Int64 counter = 0;
+            try
+            {
+                while (!context.CancellationToken.IsCancellationRequested)
+                {
+                    ResultReply resultReply = GetFullResults(request.ScaleAccelerometer);
+
+                    _logger.LogInformation($"Sending response #{counter++}");
+
+                    if (context.CancellationToken.IsCancellationRequested)
+                        context.CancellationToken.ThrowIfCancellationRequested();
+                    await responseStream.WriteAsync(resultReply);
+                }
+            }
+            catch(OperationCanceledException)
+            {
+                _logger.LogInformation("Stream cancelled by user request.");
+            }
+        }
+
         private ResultReply GetFullResults(bool scaleAccelerometer)
         {
             ResultReply results = new ResultReply();

@@ -8,6 +8,7 @@ import "google/protobuf/timestamp.proto";
 
 service Vibe {
   rpc GetResultSet (ResultRequest) returns (ResultReply);
+  rpc GetResultStream (ResultRequest) returns (stream ResultReply);
 }
 
 enum ResultType{

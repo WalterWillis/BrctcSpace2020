@@ -1,28 +1,85 @@
 ﻿@page "/experiment2020"
 @using BrctcSpace;
-@using BlazorWebSpaceTool.Components
+@using BlazorWebSpaceTool.Components;
+@using System.Threading;
 @inject Vibe.VibeClient vibeClient;
 
 <h3>Experiment2020</h3>
 
-<button @onclick="GetResult" class="btn btn-primary">Get Data</button>
+<div><input type="checkbox" @bind-value="isChecked">Continuous Data</div>
 
-<Vibe2020ResultList Items="Results"/>
+<button disabled="@isRunning" @onclick="GetResult" class="btn btn-primary">Get Data</button>
+
+<button disabled="@(!isRunning)" @onclick="CancellationToken.Cancel" class="btn btn-primary">Cancel Stream</button>
+
+<Vibe2020ResultList Items="Results" />
 
 
 @code {
 
     public List<ResultReply> Results { get; set; } = new List<ResultReply>();
 
-    public async void GetResult()
-    {
-        Results.Add(await vibeClient.GetResultSetAsync(
-            new ResultRequest() { ResultType = ResultType.Full, ScaleAccelerometer = false }
-            ));
+    private bool isChecked { get; set; } = false;
 
-        //Update the state when result is received
-        StateHasChanged();
+    public bool isRunning { get; set; } = false;
+
+    private CancellationTokenSource CancellationToken { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        CancellationToken = new CancellationTokenSource();
+        CancellationToken.Token.Register(Cancel);
+        return base.OnInitializedAsync();
     }
 
+    public async void GetResult()
+    {
+        if (isChecked && !isRunning)
+        {
+            //Prevent multiple attempts
+            isRunning = true;
+            try
+            {
+                using (var call = vibeClient.GetResultStream(
+            new ResultRequest() { ResultType = ResultType.Full, ScaleAccelerometer = false },
+            cancellationToken: CancellationToken.Token))
+                {
+                    try
+                    {
+                        if (CancellationToken.IsCancellationRequested)
+                            CancellationToken.Token.ThrowIfCancellationRequested();
+                        while (await call.ResponseStream.MoveNext(CancellationToken.Token))
+                        {
+                            Results.Add(call.ResponseStream.Current);
+                            StateHasChanged();
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+
+                }
+            }
+            finally
+            {
+                isRunning = false;
+            }
+        }
+        else if (!isChecked)
+        {
+            Results.Add(await vibeClient.GetResultSetAsync(
+                new ResultRequest() { ResultType = ResultType.Full, ScaleAccelerometer = false }
+                ));
+
+            //Update the state when result is received
+            StateHasChanged();
+        }
+    }
+
+    public void Cancel()
+    {
+        isRunning = false;
+    }
 
 }
