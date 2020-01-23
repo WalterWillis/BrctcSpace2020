@@ -3,20 +3,26 @@ using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using BrctcSpace;
 using System;
+using GrpcSpaceServer.Services.Interfaces;
 
-namespace GrpcSpaceServer
+namespace GrpcSpaceServer.Services
 {
-    public class Vibe2020Service : Vibe.VibeBase
+    public class Vibe2020GrpcService : Vibe.VibeBase
     {
-        private readonly ILogger<Vibe2020Service> _logger;
-        public Vibe2020Service(ILogger<Vibe2020Service> logger)
+        private readonly ILogger<Vibe2020GrpcService> _logger;
+        private readonly IVibe2020DataService _dataService;
+        public Vibe2020GrpcService(ILogger<Vibe2020GrpcService> logger, IVibe2020DataService dataService)
         {
             _logger = logger;
+            _dataService = dataService;
+
+            //Start the data thread
+            _dataService.Initialize();
         }
 
         public override Task<ResultReply> GetResultSet(ResultRequest request, ServerCallContext context)
         {
-            
+            _logger.LogInformation($"Data service has {_dataService.GetData().Count} sets of data so far!");
             //create switch case
             return Task.FromResult(GetFullResults(request.ScaleAccelerometer));
         }

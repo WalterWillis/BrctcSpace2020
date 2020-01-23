@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GrpcSpaceServer.Services;
+using GrpcSpaceServer.Services.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -17,6 +19,8 @@ namespace GrpcSpaceServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddGrpc();
+            //Create the data thread singleton with logging capabilities
+            services.AddSingleton<IVibe2020DataService, Vibe2020DataService>().AddLogging();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -31,7 +35,7 @@ namespace GrpcSpaceServer
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGrpcService<Vibe2020Service>();
+                endpoints.MapGrpcService<Vibe2020GrpcService>();
 
                 endpoints.MapGet("/", async context =>
                 {
