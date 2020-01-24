@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Device.Spi;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace GrpcSpaceServer.Device
 {
@@ -34,44 +35,20 @@ namespace GrpcSpaceServer.Device
         /// returns an array of burst data
         /// </summary>
         /// <returns></returns>
-        public short[] BurstRead()
+        public Span<int> BurstRead()
         {
-            byte[] burstdata = new byte[22]; //+2 bytes for the address selection
-            short[] burstwords = new short[10];
+            Span<byte> burstdata = new byte[22]; //+2 bytes for the address selection           
 
-            byte[] burstTrigger = { 0x3E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            Span<byte> burstTrigger = new byte[] { 0x3E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
             using (SpiDevice Gyro = SpiDevice.Create(_settings))
             {
-
-                Gyro.TransferFullDuplex(burstTrigger, burstdata);
-
-                byte[] data = (byte[])burstdata.Skip(2).ToArray(); //the first two bytes contain no valid data
-                int counter = 0;
-
-                for (int i = 0; i < data.Length; i += 2)
-                {
-                    byte[] bytes = data.Skip(i).Take(2).Reverse().ToArray();
-                    burstwords[counter++] = BitConverter.ToInt16(bytes, 0);
-                }
-                #region Array Details
-                /*
-                burstwords[0]; //DIAG_STAT
-                burstwords[1];//XGYRO
-                burstwords[2]; //YGYRO
-                burstwords[3]; //ZGYRO
-                burstwords[4]; //XACCEL
-                burstwords[5]; //YACCEL
-                burstwords[6]; //ZACCEL
-                burstwords[7]; //TEMP_OUT
-                burstwords[8]; //SMPL_CNTR
-                burstwords[9]; //CHECKSUM
-                */
-                #endregion
+                Gyro.TransferFullDuplex(burstTrigger, burstdata); 
             }
-
-            return burstwords;
+ 
+            //Convert the byte array to an int array -- Efficient, but will require using the exact opposite to retrieve correct values
+            return MemoryMarshal.Cast<byte, int>(burstdata.Slice(2)); //remove the leading empty bytes
         }
 
         /// <summary>

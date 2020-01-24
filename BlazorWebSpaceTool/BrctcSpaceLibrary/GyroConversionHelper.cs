@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace BrctcSpaceLibrary
@@ -68,6 +69,40 @@ namespace BrctcSpaceLibrary
         public static double ScaleDeltaVelocity(short sensorData)
         {
             return sensorData * 2.5; // Multiply by velocity scale (2.5 mm/sec/LSB)
+        }
+
+        /// <summary>
+        /// Combine bytes into the 16bit values we expect
+        /// </summary>
+        /// <param name="burstdata"></param>
+        /// <returns></returns>
+        public static Span<short> CombineBytes(Span<byte> burstdata)
+        {
+            int counter = 0;
+            Span<short> burstwords = new short[10];
+
+            for (int i = 0; i < burstdata.Length; i += 2)
+            {
+                Span<byte> bytes = burstdata.Slice(i, 2);
+                bytes.Reverse();
+                burstwords[counter++] = BitConverter.ToInt16(bytes.ToArray(), 0);
+            }
+            #region Array Details
+            /*
+            burstwords[0]; //DIAG_STAT
+            burstwords[1];//XGYRO
+            burstwords[2]; //YGYRO
+            burstwords[3]; //ZGYRO
+            burstwords[4]; //XACCEL
+            burstwords[5]; //YACCEL
+            burstwords[6]; //ZACCEL
+            burstwords[7]; //TEMP_OUT
+            burstwords[8]; //SMPL_CNTR
+            burstwords[9]; //CHECKSUM
+            */
+            #endregion
+
+            return burstwords;
         }
     }
 }

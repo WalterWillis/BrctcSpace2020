@@ -7,6 +7,8 @@
 <h3>Experiment2020</h3>
 
 <div><input type="checkbox" @bind-value="isChecked">Continuous Data</div>
+<button disabled="@isRunning" @onclick="GetLotsOfData" class="btn btn-primary">Gather all Async Data</button>
+<br />
 
 <button disabled="@isRunning" @onclick="GetResult" class="btn btn-primary">Get Data</button>
 
@@ -14,10 +16,27 @@
 
 <Vibe2020ResultList Items="Results" />
 
+    <GenericListTable Items="OtherResults">
+        <TableHeader>
+            <th>Accelerometer</th>
+            <th>Gyroscope</th>
+            <th>Cpu Temp</th>
+            <th>Transaction Timestamp</th>
+        </TableHeader>
+        <RowTemplate>
+            <td>@(string.Join(',', context.AccelData) ?? "None")</td>
+            <td>@(string.Join(',', context.GyroData) ?? "None")</td>
+            <td>@context.CpuTemp</td>
+            <td>@(new DateTime(context.TransactionTime))</td>
+        </RowTemplate>
+    </GenericListTable>
+
+
 
 @code {
 
     public List<ResultReply> Results { get; set; } = new List<ResultReply>();
+    public List<DeviceDataModel> OtherResults { get; set; } = new List<DeviceDataModel>();
 
     private bool isChecked { get; set; } = false;
 
@@ -75,6 +94,17 @@
             //Update the state when result is received
             StateHasChanged();
         }
+    }
+
+    public async void GetLotsOfData()
+    {
+        var data = await vibeClient.PollVibe2020DataServiceAsync(
+            new DeviceDataRequest()
+            { UseAccelerometer = true, UseCpuTemperature = true, UseGyroscope = true, UseRtc = true }
+            );
+
+        OtherResults = data.Items.ToList();
+        StateHasChanged();
     }
 
     public void Cancel()

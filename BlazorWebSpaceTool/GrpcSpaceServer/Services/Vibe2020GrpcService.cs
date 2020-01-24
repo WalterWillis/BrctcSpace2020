@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using BrctcSpace;
 using System;
 using GrpcSpaceServer.Services.Interfaces;
+using System.Threading;
+using BrctcSpaceLibrary;
 
 namespace GrpcSpaceServer.Services
 {
@@ -11,6 +13,7 @@ namespace GrpcSpaceServer.Services
     {
         private readonly ILogger<Vibe2020GrpcService> _logger;
         private readonly IVibe2020DataService _dataService;
+
         public Vibe2020GrpcService(ILogger<Vibe2020GrpcService> logger, IVibe2020DataService dataService)
         {
             _logger = logger;
@@ -21,8 +24,7 @@ namespace GrpcSpaceServer.Services
         }
 
         public override Task<ResultReply> GetResultSet(ResultRequest request, ServerCallContext context)
-        {
-            _logger.LogInformation($"Data service has {_dataService.GetData().Count} sets of data so far!");
+        {            
             //create switch case
             return Task.FromResult(GetFullResults(request.ScaleAccelerometer));
         }
@@ -48,6 +50,15 @@ namespace GrpcSpaceServer.Services
                 _logger.LogInformation("Stream cancelled by user request.");
             }
         }
+
+        public override Task<DeviceDataArray> PollVibe2020DataService(DeviceDataRequest request, ServerCallContext context)
+        {
+            var response = new DeviceDataArray();
+            _dataService.Initialize(request.UseAccelerometer, request.UseGyroscope, request.UseRtc, request.UseCpuTemperature);
+            response.Items.AddRange(_dataService.GetData());
+            return Task.FromResult(response);
+        }
+
 
         private ResultReply GetFullResults(bool scaleAccelerometer)
         {

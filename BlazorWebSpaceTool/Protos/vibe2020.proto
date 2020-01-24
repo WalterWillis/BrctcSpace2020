@@ -9,6 +9,7 @@ import "google/protobuf/timestamp.proto";
 service Vibe {
   rpc GetResultSet (ResultRequest) returns (ResultReply);
   rpc GetResultStream (ResultRequest) returns (stream ResultReply);
+  rpc PollVibe2020DataService (DeviceDataRequest) returns (DeviceDataArray);
 }
 
 enum ResultType{
@@ -56,4 +57,21 @@ message BurstResults{
     double Temperature = 8;
     double SampleCount = 9;
     double Checksum = 10;
+}
+
+message DeviceDataRequest{
+    bool useAccelerometer = 1;
+    bool useGyroscope = 2;
+    bool useRtc = 3;
+    bool useCpuTemperature = 4;
+}
+
+message DeviceDataArray{
+    repeated DeviceDataModel Items = 1;
+}
+message DeviceDataModel{
+    repeated int32 AccelData = 1;
+    repeated int32 GyroData = 2;
+    int64 TransactionTime = 3;
+    double CpuTemp = 4; 
 }

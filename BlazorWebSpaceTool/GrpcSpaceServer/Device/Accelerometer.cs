@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Device.Spi;
 using Iot.Device.Adc;
 
@@ -64,17 +65,17 @@ namespace GrpcSpaceServer.Device
         /// Gets all three raw axis data in the order of X, Y, Z
         /// </summary>
         /// <returns></returns>
-        public int[] GetRaws()
+        public Span<int> GetRaws()
         {
             using (SpiDevice spi = SpiDevice.Create(_settings))
             {
                 using (Mcp3208 adc = new Mcp3208(spi))
                 {
-                    return new int[] {
-                        adc.Read(_channels[Channel.X]),
-                        adc.Read(_channels[Channel.Y]),
-                        adc.Read(_channels[Channel.Z])
-                    };
+                    Span<int> values = new Span<int>();
+                    values[0] = adc.Read(_channels[Channel.X]);
+                    values[0] = adc.Read(_channels[Channel.Y]);
+                    values[0] = adc.Read(_channels[Channel.Z]);
+                    return values;
                 }
             }
         }

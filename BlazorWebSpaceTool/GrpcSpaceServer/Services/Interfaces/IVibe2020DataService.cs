@@ -1,14 +1,19 @@
-﻿using System;
+﻿using BrctcSpace;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace GrpcSpaceServer.Services.Interfaces
 {
     public interface IVibe2020DataService
-    {
-        public void Initialize();
+    { 
+        /// <summary>
+        /// Starts the asynchronous gathering of data
+        /// </summary>
+        public void Initialize(bool useAccel = true, bool useGyro = true, bool useRtc = true, bool useCpu = true);
 
-        public List<double[]> GetData();
+        /// <summary>
+        /// Retrieves the currently buffered data, clearing the buffer in the process
+        /// </summary>
+        /// <returns></returns>
+        public List<DeviceDataModel> GetData();
     }
 }
