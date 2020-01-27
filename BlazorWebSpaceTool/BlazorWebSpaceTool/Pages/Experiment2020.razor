@@ -6,40 +6,48 @@
 
 <h3>Experiment2020</h3>
 
-<div><input type="checkbox" @bind-value="isChecked">Continuous Data</div>
-<button disabled="@isRunning" @onclick="GetLotsOfData" class="btn btn-primary">Gather all Async Data</button>
-<br />
+<div class="results">
+    <div class="resultsleft">
+        <button disabled="@isRunning" @onclick="GetResult" class="btn btn-primary">Get Data</button>
+        <Vibe2020ResultList Items="SingleResults" />
+    </div>
 
-<button disabled="@isRunning" @onclick="GetResult" class="btn btn-primary">Get Data</button>
+    <div class="resultscenter">
+        <button disabled="@isRunning" @onclick="GetBulkResults" class="btn btn-primary">Gather all Async Data</button>
+        <GenericListTable Items="BulkResults">
+            <TableHeader>
+                <th>Accelerometer</th>
+                <th>Gyroscope</th>
+                <th>Cpu Temp</th>
+                <th>Transaction Timestamp</th>
+            </TableHeader>
+            <RowTemplate>
+                <td>@(string.Join(',', context.AccelData) ?? "None")</td>
+                <td>@(string.Join(',', context.GyroData) ?? "None")</td>
+                <td>@context.CpuTemp</td>
+                <td>@(new DateTime(context.TransactionTime))</td>
+            </RowTemplate>
+        </GenericListTable>
+    </div>
 
-<button disabled="@(!isRunning)" @onclick="CancellationToken.Cancel" class="btn btn-primary">Cancel Stream</button>
+    <div class="resultsright">
+        <button disabled="@isRunning" @onclick="GetStreamResults" class="btn btn-primary btn-sm">Stream Data</button>
+        <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel Stream</button>
+        <Vibe2020ResultList Items="StreamResults" />
 
-<Vibe2020ResultList Items="Results" />
+    </div>
 
-    <GenericListTable Items="OtherResults">
-        <TableHeader>
-            <th>Accelerometer</th>
-            <th>Gyroscope</th>
-            <th>Cpu Temp</th>
-            <th>Transaction Timestamp</th>
-        </TableHeader>
-        <RowTemplate>
-            <td>@(string.Join(',', context.AccelData) ?? "None")</td>
-            <td>@(string.Join(',', context.GyroData) ?? "None")</td>
-            <td>@context.CpuTemp</td>
-            <td>@(new DateTime(context.TransactionTime))</td>
-        </RowTemplate>
-    </GenericListTable>
+</div>
 
 
 
 @code {
 
-    public List<ResultReply> Results { get; set; } = new List<ResultReply>();
-    public List<DeviceDataModel> OtherResults { get; set; } = new List<DeviceDataModel>();
+    public List<ResultReply> SingleResults { get; set; } = new List<ResultReply>();
+    public List<ResultReply> StreamResults { get; set; } = new List<ResultReply>();
+    public List<DeviceDataModel> BulkResults { get; set; } = new List<DeviceDataModel>();
 
-    private bool isChecked { get; set; } = false;
-
+    //Used to disable all buttons when streaming data. Not technically necessary, but better safe than sorry.
     public bool isRunning { get; set; } = false;
 
     private CancellationTokenSource CancellationToken { get; set; }
@@ -51,9 +59,9 @@
         return base.OnInitializedAsync();
     }
 
-    public async void GetResult()
+    public async void GetStreamResults()
     {
-        if (isChecked && !isRunning)
+        if (!isRunning)
         {
             //Prevent multiple attempts
             isRunning = true;
@@ -69,7 +77,7 @@
                             CancellationToken.Token.ThrowIfCancellationRequested();
                         while (await call.ResponseStream.MoveNext(CancellationToken.Token))
                         {
-                            Results.Add(call.ResponseStream.Current);
+                            StreamResults.Add(call.ResponseStream.Current);
                             StateHasChanged();
                         }
                     }
@@ -83,33 +91,45 @@
             finally
             {
                 isRunning = false;
+                StateHasChanged();
             }
         }
-        else if (!isChecked)
+    }
+
+    public async void GetResult()
+    {
+        if (!isRunning)
         {
-            Results.Add(await vibeClient.GetResultSetAsync(
-                new ResultRequest() { ResultType = ResultType.Full, ScaleAccelerometer = false }
-                ));
+            SingleResults.Add(await vibeClient.GetResultSetAsync(
+           new ResultRequest() { ResultType = ResultType.Full, ScaleAccelerometer = false }
+           ));
 
             //Update the state when result is received
             StateHasChanged();
         }
     }
 
-    public async void GetLotsOfData()
+    public async void GetBulkResults()
     {
-        var data = await vibeClient.PollVibe2020DataServiceAsync(
+        if (!isRunning)
+        {
+            var data = await vibeClient.PollVibe2020DataServiceAsync(
             new DeviceDataRequest()
             { UseAccelerometer = true, UseCpuTemperature = true, UseGyroscope = true, UseRtc = true }
             );
 
-        OtherResults = data.Items.ToList();
-        StateHasChanged();
+            BulkResults = data.Items.ToList();
+            StateHasChanged();
+        }
     }
 
     public void Cancel()
     {
         isRunning = false;
+        CancellationToken.Cancel();
+        CancellationToken = new CancellationTokenSource();
+        CancellationToken.Token.Register(Cancel);
+        StateHasChanged();
     }
 
 }
