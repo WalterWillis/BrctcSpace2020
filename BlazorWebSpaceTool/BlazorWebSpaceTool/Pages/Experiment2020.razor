@@ -2,17 +2,34 @@
 @using BrctcSpace;
 @using BlazorWebSpaceTool.Components;
 @using System.Threading;
+@using System.Text.Json;
 @inject Vibe.VibeClient vibeClient;
 
-<h3>Experiment2020</h3>
+<h2>Experiment2020</h2>
+
+<div style="margin-bottom: 10px;">
+    <button @onclick="ViewSingleData" class="btn btn-info" data-toggle="modal" data-target="#popup">
+        View single data point results json
+    </button>
+    <button @onclick="ViewServiceData" class="btn btn-info" data-toggle="modal" data-target="#popup">
+        View service call block results json
+    </button>
+    <button @onclick="ViewStreamData" class=" btn btn-info" data-toggle="modal" data-target="#popup">
+        View data stream results json
+    </button>
+</div>
 
 <div class="results">
     <div class="resultsleft">
+        <h5>Single data point testing</h5>
+        <br />
         <button disabled="@isRunning" @onclick="GetResult" class="btn btn-primary">Get Data</button>
         <Vibe2020ResultList Items="SingleResults" />
     </div>
 
     <div class="resultscenter">
+        <h5>Service call data block testing</h5>
+        <br />
         <button disabled="@isRunning" @onclick="GetBulkResults" class="btn btn-primary">Gather all Async Data</button>
         <GenericListTable Items="BulkResults">
             <TableHeader>
@@ -31,6 +48,8 @@
     </div>
 
     <div class="resultsright">
+        <h5>Data stream testing</h5>
+        <br />
         <button disabled="@isRunning" @onclick="GetStreamResults" class="btn btn-primary btn-sm">Stream Data</button>
         <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel Stream</button>
         <Vibe2020ResultList Items="StreamResults" />
@@ -39,6 +58,9 @@
 
 </div>
 
+<Popup ShowPopup="ShowPopup" ModelIDTag="popup" ClosePopup="handleClosePopup">
+    <PopupContents>@JsonifiedData</PopupContents>
+</Popup>
 
 
 @code {
@@ -49,6 +71,9 @@
 
     //Used to disable all buttons when streaming data. Not technically necessary, but better safe than sorry.
     public bool isRunning { get; set; } = false;
+    public bool ShowPopup { get; set; } = false;
+
+    public string JsonifiedData { get; set; }
 
     private CancellationTokenSource CancellationToken { get; set; }
 
@@ -130,6 +155,80 @@
         CancellationToken = new CancellationTokenSource();
         CancellationToken.Token.Register(Cancel);
         StateHasChanged();
+    }
+
+    public void ViewSingleData()
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        };
+
+        options.Converters.Add(new HandleSpecialDoublesAsStrings());
+        JsonifiedData = JsonSerializer.Serialize(SingleResults, options);
+        ShowPopup = true;
+        StateHasChanged();
+    }
+
+    public void ViewServiceData()
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        };
+        options.Converters.Add(new HandleSpecialDoublesAsStrings());
+
+        JsonifiedData = JsonSerializer.Serialize(BulkResults, options);
+        ShowPopup = true;
+        StateHasChanged();
+    }
+
+    public void ViewStreamData()
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        };
+        options.Converters.Add(new HandleSpecialDoublesAsStrings());
+
+        JsonifiedData = JsonSerializer.Serialize(StreamResults, options);
+        ShowPopup = true;
+        StateHasChanged();
+    }
+
+    public void handleClosePopup()
+    {
+        ShowPopup = false;
+        JsonifiedData = "";
+
+    }
+
+    //for handling NaN and Infinity doubles
+    private class HandleSpecialDoublesAsStrings : System.Text.Json.Serialization.JsonConverter<double>
+    {
+        public override double Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                return double.Parse(reader.GetString());
+            }
+            return reader.GetDouble();
+        }
+
+        public override void Write(Utf8JsonWriter writer, double value, JsonSerializerOptions options)
+        {
+            if (double.IsFinite(value))
+            {
+                writer.WriteNumberValue(value);
+            }
+            else
+            {
+                writer.WriteStringValue(value.ToString());
+            }
+        }
     }
 
 }

@@ -1,0 +1,46 @@
+﻿@if (ShowPopup)
+{
+    <div class="modal" id="@ModelIDTag" tabindex="-1" style="display:block;" role="dialog" 
+         aria-labelledby="modaltitle" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="modaltitle">Results Json</h3>
+                    <!-- Button to close the popup -->
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                            @onclick="ClosePopup">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="result-text" class="col-form-label">Results:</label>
+                            <textarea class="form-control" id="result-text">@PopupContents</textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="ClosePopup">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+@code{
+    [Parameter]
+    //Easier to understand and keep track of if we make it a parameter
+    public string ModelIDTag { get; set; }
+
+    [Parameter]
+    public bool ShowPopup { get; set; }
+
+    [Parameter]
+    public RenderFragment PopupContents { get; set; }
+
+    [Parameter]
+    //Fires when the popup is closed so the caller can handle the close - such as clearing the render fragmentj
+    public EventCallback ClosePopup { get; set; }
+}
