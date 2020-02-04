@@ -21,8 +21,13 @@
         <h5>Single data point testing</h5>
         <br />
         <button disabled="@isRunning" @onclick="GetResult" class="btn btn-primary">Get Data</button>
+
         <button @onclick="SaveSingleToJson" class="btn btn-info">Save To Json</button>
         <button @onclick="SaveSingleToCsv" class="btn btn-info">Save To CSV</button>
+
+        <br />
+        <p>Rows: @SingleResults.Count</p>
+
         <GenericListTable Items="SingleResults">
             <TableHeader>
                 <th>Accelerometer</th>
@@ -43,8 +48,12 @@
         <h5>Service call data block testing</h5>
         <br />
         <button disabled="@isRunning" @onclick="GetBulkResults" class="btn btn-primary">Gather all Async Data</button>
+
         <button @onclick="SaveBulkToJson" class="btn btn-info">Save To Json</button>
-        <button @onclick="SaveBulkToCsv" class="btn btn-info">Save To CSV</button>
+
+        <br />
+        <p>Rows: @BulkResults.Count</p>
+
         <GenericListTable Items="BulkResults">
             <TableHeader>
                 <th>Accelerometer</th>
@@ -68,8 +77,13 @@
         <br />
         <button disabled="@isRunning" @onclick="GetStreamResults" class="btn btn-primary btn-sm">Stream Data</button>
         <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel Stream</button>
+
         <button @onclick="SaveStreamToJson" class=" btn btn-info">Save To Json</button>
         <button @onclick="SaveStreamToCsv" class="btn btn-info">Save To CSV</button>
+
+        <p>Rows: @StreamResults.Count</p>
+        <br />
+
         <GenericListTable Items="StreamResults">
             <TableHeader>
                 <th>Accelerometer</th>
@@ -164,12 +178,15 @@
     {
         if (!isRunning)
         {
+            isRunning = true;
+            StateHasChanged();
             var data = await vibeClient.PollVibe2020DataServiceAsync(
             new DeviceDataRequest()
             { UseAccelerometer = true, UseCpuTemperature = true, UseGyroscope = true, UseRtc = true }
             );
 
             BulkResults = Utilities.ConvertToDataModel(data.Items.ToList());
+            isRunning = false;
             StateHasChanged();
         }
     }
