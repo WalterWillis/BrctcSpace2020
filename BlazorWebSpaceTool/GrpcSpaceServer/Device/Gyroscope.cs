@@ -47,7 +47,11 @@ namespace GrpcSpaceServer.Device
                 Gyro.TransferFullDuplex(burstTrigger, burstdata); 
             }
  
+            //Only for quick data retrieval
             //Convert the byte array to an int array -- Efficient, but will require using the exact opposite to retrieve correct values
+            //Example: Convert result such that newResult = MemoryMarshal.Cast<int,byte>(result)
+            //Note that the cast takes data type length into account. An int is 4 bytes.
+            //20 bytes = 5 int array. 22 bytes also = 5 int array! Remove the first two unused bytes to prevent data loss
             return MemoryMarshal.Cast<byte, int>(burstdata.Slice(2)); //remove the leading empty bytes
         }
 
@@ -58,7 +62,6 @@ namespace GrpcSpaceServer.Device
         public BrctcSpace.BurstResults GetBurstResults()
         {
             byte[] burstdata = new byte[22]; //+2 bytes for the address selection
-            short[] burstwords = new short[10];
 
             byte[] burstTrigger = { 0x3E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};

@@ -1,5 +1,7 @@
 ﻿@page "/experiment2020"
 @using BrctcSpace;
+@using Utilities;
+@using BrctcSpaceLibrary.DataModels;
 @using BlazorWebSpaceTool.Components;
 @using System.Threading;
 @using System.Text.Json;
@@ -24,7 +26,20 @@
         <h5>Single data point testing</h5>
         <br />
         <button disabled="@isRunning" @onclick="GetResult" class="btn btn-primary">Get Data</button>
-        <Vibe2020ResultList Items="SingleResults" />
+        <GenericListTable Items="SingleResults">
+            <TableHeader>
+                <th>Accelerometer</th>
+                <th>Gyroscope</th>
+                <th>Cpu Temp</th>
+                <th>Transaction Timestamp</th>
+            </TableHeader>
+            <RowTemplate>
+                <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
+                <td>@(context.GyroData != null ?string.Join(',', context.GyroData) : "None")</td>
+                <td>@context.CpuTemp</td>
+                <td>@context.TransactionTime</td>
+            </RowTemplate>
+        </GenericListTable>
     </div>
 
     <div class="resultscenter">
@@ -34,15 +49,17 @@
         <GenericListTable Items="BulkResults">
             <TableHeader>
                 <th>Accelerometer</th>
+                <th>Raw Gyroscope</th>
                 <th>Gyroscope</th>
                 <th>Cpu Temp</th>
                 <th>Transaction Timestamp</th>
             </TableHeader>
             <RowTemplate>
-                <td>@(string.Join(',', context.AccelData) ?? "None")</td>
-                <td>@(string.Join(',', context.GyroData) ?? "None")</td>
-                <td>@context.CpuTemp</td>
-                <td>@(new DateTime(context.TransactionTime))</td>
+                <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
+                <td>@(context.GyroData_Raw != null ? string.Join(',', context.GyroData_Raw) : "None")</td>
+                <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
+                <td>@(context.CpuTemp)</td>
+                <td>@context.TransactionTime</td>
             </RowTemplate>
         </GenericListTable>
     </div>
@@ -52,7 +69,20 @@
         <br />
         <button disabled="@isRunning" @onclick="GetStreamResults" class="btn btn-primary btn-sm">Stream Data</button>
         <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel Stream</button>
-        <Vibe2020ResultList Items="StreamResults" />
+        <GenericListTable Items="StreamResults">
+            <TableHeader>
+                <th>Accelerometer</th>
+                <th>Gyroscope</th>
+                <th>Cpu Temp</th>
+                <th>Transaction Timestamp</th>
+            </TableHeader>
+            <RowTemplate>
+                <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
+                <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
+                <td>@context.CpuTemp</td>
+                <td>@context.TransactionTime</td>
+            </RowTemplate>
+        </GenericListTable>
 
     </div>
 
@@ -65,9 +95,9 @@
 
 @code {
 
-    public List<ResultReply> SingleResults { get; set; } = new List<ResultReply>();
-    public List<ResultReply> StreamResults { get; set; } = new List<ResultReply>();
-    public List<DeviceDataModel> BulkResults { get; set; } = new List<DeviceDataModel>();
+    public List<Vibe2020DataModel> SingleResults { get; set; } = new List<Vibe2020DataModel>();
+    public List<Vibe2020DataModel> StreamResults { get; set; } = new List<Vibe2020DataModel>();
+    public List<Vibe2020DataModel> BulkResults { get; set; } = new List<Vibe2020DataModel>();
 
     //Used to disable all buttons when streaming data. Not technically necessary, but better safe than sorry.
     public bool isRunning { get; set; } = false;
@@ -93,7 +123,7 @@
             try
             {
                 using (var call = vibeClient.GetResultStream(
-            new ResultRequest() { ResultType = ResultType.Full, ScaleAccelerometer = false },
+            new ResultRequest() { ResultType = ResultType.Full },
             cancellationToken: CancellationToken.Token))
                 {
                     try
@@ -102,7 +132,7 @@
                             CancellationToken.Token.ThrowIfCancellationRequested();
                         while (await call.ResponseStream.MoveNext(CancellationToken.Token))
                         {
-                            StreamResults.Add(call.ResponseStream.Current);
+                            StreamResults.Add(Utilities.ConvertToDataModel(call.ResponseStream.Current.ResultSet));
                             StateHasChanged();
                         }
                     }
@@ -125,9 +155,11 @@
     {
         if (!isRunning)
         {
-            SingleResults.Add(await vibeClient.GetResultSetAsync(
-           new ResultRequest() { ResultType = ResultType.Full, ScaleAccelerometer = false }
-           ));
+            var result = await vibeClient.GetResultSetAsync(
+           new ResultRequest() { ResultType = ResultType.Full }
+           );
+
+            SingleResults.Add(Utilities.ConvertToDataModel(result.ResultSet));
 
             //Update the state when result is received
             StateHasChanged();
@@ -143,7 +175,7 @@
             { UseAccelerometer = true, UseCpuTemperature = true, UseGyroscope = true, UseRtc = true }
             );
 
-            BulkResults = data.Items.ToList();
+            BulkResults = Utilities.ConvertToDataModel(data.Items.ToList());
             StateHasChanged();
         }
     }

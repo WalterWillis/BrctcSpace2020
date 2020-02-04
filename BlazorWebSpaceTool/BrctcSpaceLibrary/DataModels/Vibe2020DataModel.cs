@@ -11,7 +11,9 @@ namespace BrctcSpaceLibrary.DataModels
     {
         public int[] AccelData { get; set; }
 
-        public short[] GyroData { get; set; }
+        public short[] GyroData_Raw { get; set; }
+
+        public double[] GyroData { get; set; }
 
         public DateTime TransactionTime { get; set; }
 

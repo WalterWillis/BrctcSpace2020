@@ -11,6 +11,7 @@ namespace GrpcSpaceServer.Device
     public class Accelerometer
     {
         private SpiConnectionSettings _settings;
+        //We use pins 0, 1 and 2 as X, Y, and Z respectively
         private Dictionary<Channel, int> _channels =
             new Dictionary<Channel, int> { { Channel.X, 0 }, { Channel.Y, 1 }, { Channel.Z, 2 } };
         private double _resolution = 4095 * 3.3;
@@ -101,7 +102,7 @@ namespace GrpcSpaceServer.Device
         /// Gets voltage representation of all three axis data in the order of X, Y, Z
         /// </summary>
         /// <returns></returns>
-        public double[] GetScaledValues()
+        public Span<double> GetScaledValues()
         {
             using (SpiDevice spi = SpiDevice.Create(_settings))
             {
@@ -120,7 +121,7 @@ namespace GrpcSpaceServer.Device
         /// Gets formatted results for efficient gRPC transmissions.
         /// </summary>
         /// <returns></returns>
-        public BrctcSpace.AccelerometerResults GetAccelerometerResults(bool isRaw)
+        public BrctcSpace.AccelerometerResults GetAccelerometerResults()
         {
             BrctcSpace.AccelerometerResults results = new BrctcSpace.AccelerometerResults();
 
@@ -128,18 +129,9 @@ namespace GrpcSpaceServer.Device
             {
                 using (Mcp3208 adc = new Mcp3208(spi))
                 {
-                    if (isRaw)
-                    {
-                        results.X = adc.Read(_channels[Channel.X]);
-                        results.Y = adc.Read(_channels[Channel.Y]);
-                        results.Z = adc.Read(_channels[Channel.Z]);
-                    }
-                    else
-                    {
-                        results.X = adc.Read(_channels[Channel.X]) / _resolution;
-                        results.Y = adc.Read(_channels[Channel.Y]) / _resolution;
-                        results.Z = adc.Read(_channels[Channel.Z]) / _resolution;
-                    }
+                    results.X = adc.Read(_channels[Channel.X]);
+                    results.Y = adc.Read(_channels[Channel.Y]);
+                    results.Z = adc.Read(_channels[Channel.Z]);
                 }
             }
 

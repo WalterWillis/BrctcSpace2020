@@ -26,7 +26,7 @@ namespace GrpcSpaceServer.Services
         public override Task<ResultReply> GetResultSet(ResultRequest request, ServerCallContext context)
         {            
             //create switch case
-            return Task.FromResult(GetFullResults(request.ScaleAccelerometer));
+            return Task.FromResult(GetFullResults());
         }
 
         public override async Task GetResultStream(ResultRequest request, IServerStreamWriter<ResultReply> responseStream, ServerCallContext context)
@@ -36,7 +36,7 @@ namespace GrpcSpaceServer.Services
             {
                 while (!context.CancellationToken.IsCancellationRequested)
                 {
-                    ResultReply resultReply = GetFullResults(request.ScaleAccelerometer);
+                    ResultReply resultReply = GetFullResults();
 
                     _logger.LogInformation($"Sending response #{counter++}");
 
@@ -60,12 +60,12 @@ namespace GrpcSpaceServer.Services
         }
 
 
-        private ResultReply GetFullResults(bool scaleAccelerometer)
+        private ResultReply GetFullResults()
         {
             ResultReply results = new ResultReply();
             results.ResultSet = new ResultSet();
             
-            ResultStatus status = GetAccelerometerResults(ref results, scaleAccelerometer);
+            ResultStatus status = GetAccelerometerResults(ref results);
             status |= GetGyroscopeResults(ref results);
             status |= GetRTCResults(ref results);
             status |= GetCPUTemperatureResults(ref results);
@@ -76,14 +76,14 @@ namespace GrpcSpaceServer.Services
             return results;
         }
 
-        private ResultStatus GetAccelerometerResults(ref ResultReply results, bool scaleAccelerometer)
+        private ResultStatus GetAccelerometerResults(ref ResultReply results)
         {
             Device.Accelerometer accelerometerDevice = new Device.Accelerometer();
             ResultStatus status;
 
             try
             {
-                results.ResultSet.AccelerometerResults = accelerometerDevice.GetAccelerometerResults(scaleAccelerometer);
+                results.ResultSet.AccelerometerResults = accelerometerDevice.GetAccelerometerResults();
                 status = ResultStatus.AccelerometerSuccess;
             }
             catch

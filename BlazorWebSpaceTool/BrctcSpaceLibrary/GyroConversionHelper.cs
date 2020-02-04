@@ -8,9 +8,9 @@ namespace BrctcSpaceLibrary
     /// <summary>
     /// Helper class for gyroscope conversions
     /// </summary>
-    /// <remarks>Thanks to juchong's library for his work on the ADIS16460 example code</remarks>
+    /// <remarks>The scaling functions here exist thanks to juchong's library</remarks>
     /// <see cref="https://github.com/juchong/ADIS16460-Arduino-Teensy/blob/master/ADIS16460/ADIS16460.cpp"/>
-    class GyroConversionHelper
+    public static class GyroConversionHelper
     {
         /// <summary>
         /// Converts accelerometer data to acceleration in mg's
@@ -48,7 +48,7 @@ namespace BrctcSpaceLibrary
                 signedData = sensorData;
             double finalData = (signedData * 0.05) + 25; // Multiply by temperature scale and add 25 to equal 0x0000
 
-            return isFahrenheit ? ((finalData * 9/5) + 32) : finalData;
+            return isFahrenheit ? ((finalData * 9 / 5) + 32) : finalData;
         }
 
         /// <summary>
@@ -72,7 +72,25 @@ namespace BrctcSpaceLibrary
         }
 
         /// <summary>
-        /// Combine bytes into the 16bit values we expect
+        /// Calculates checksum based on the data array
+        /// </summary>
+        /// <param name="burstArray"></param>
+        /// <remarks> Should be used to compare the value retrieved by the device for message validation.</remarks>
+        /// <returns></returns>
+        public static short GetChecksum(Span<short> burstdata)
+        {
+            short s = 0;
+            for (byte i = 0; i < 9; i++) // Checksum value is not part of the sum!!
+            {
+                s += (short)(burstdata[i] & 0xFF); // Count lower byte
+                s += (short)((burstdata[i] >> 8) & 0xFF); // Count upper byte
+            }
+
+            return s;
+        }
+
+        /// <summary>
+        ///Assemble raw data into the 16bit values we expect
         /// </summary>
         /// <param name="burstdata"></param>
         /// <returns></returns>
@@ -104,5 +122,56 @@ namespace BrctcSpaceLibrary
 
             return burstwords;
         }
+
+        /// <summary>
+        /// Pass in the raw byte data from the device to have them assembled and scaled
+        /// </summary>
+        /// <param name="burstdata"></param>
+        /// <returns></returns>
+        public static Span<double> GetGyroscopeDetails(Span<byte> burstdata)
+        {
+            Span<short> rawData = CombineBytes(burstdata);
+
+            Span<double> data = new double[10]
+            {
+                rawData[0],
+                ScaleGyroData(rawData[1]),
+                ScaleGyroData(rawData[2]),
+                ScaleGyroData(rawData[3]),
+                ScaleAccelData(rawData[4]),
+                ScaleAccelData(rawData[5]),
+                ScaleAccelData(rawData[6]),
+                ScaleTemperatureData(rawData[7]),
+                rawData[8],
+                rawData[9]
+            };
+
+            return data;
+        }
+
+        /// <summary>
+        /// Pass in the the 16bit array of unscaled results to have them scaled
+        /// </summary>
+        /// <param name="rawData"></param>
+        /// <returns></returns>
+        public static Span<double> GetGyroscopeDetails(Span<short> rawData)
+        {
+            Span<double> data = new double[10]
+            {
+                rawData[0],
+                ScaleGyroData(rawData[1]),
+                ScaleGyroData(rawData[2]),
+                ScaleGyroData(rawData[3]),
+                ScaleAccelData(rawData[4]),
+                ScaleAccelData(rawData[5]),
+                ScaleAccelData(rawData[6]),
+                ScaleTemperatureData(rawData[7]),
+                rawData[8],
+                rawData[9]
+            };
+
+            return data;
+        }
     }
 }
+

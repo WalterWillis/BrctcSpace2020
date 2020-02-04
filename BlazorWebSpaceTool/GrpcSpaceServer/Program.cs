@@ -27,8 +27,9 @@ namespace GrpcSpaceServer
                          {
                              options.ListenAnyIP(5443, listenOptions =>
                              {
+                                 string appconfig = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
                                  var config = new ConfigurationBuilder()
-                                    .AddJsonFile("appsettings.json", optional: false)
+                                    .AddJsonFile(appconfig, optional: false)
                                     .Build();
 
                                  string certPath = config.GetSection("ServerCert").Value;
