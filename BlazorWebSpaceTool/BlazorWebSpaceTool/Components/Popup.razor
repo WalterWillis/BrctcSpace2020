@@ -22,6 +22,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="ClosePopup">Close</button>
+                    @ExtraFooterMarkup
                 </div>
             </div>
         </div>
@@ -39,6 +40,9 @@
 
     [Parameter]
     public RenderFragment PopupContents { get; set; }
+
+    [Parameter]
+    public RenderFragment ExtraFooterMarkup { get; set; }
 
     [Parameter]
     //Fires when the popup is closed so the caller can handle the close - such as clearing the render fragmentj

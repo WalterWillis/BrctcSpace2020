@@ -19,5 +19,64 @@ namespace BrctcSpaceLibrary.DataModels
 
         public double CpuTemp { get; set; }
 
+        /// <summary>
+        /// Generates a line of text from the properties above
+        /// </summary>
+        /// <returns></returns>
+        public string ToCsvLine()
+        {
+            string line = "";
+
+            const string accelEmpty = "NA,NA,NA,";
+            const string gyroEmpty = "NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,";
+
+            if (AccelData != null && AccelData.Length > 0)
+            {
+                line += string.Join(',', AccelData);
+            }
+            else
+            {
+                line += accelEmpty;
+            }
+
+            if (GyroData_Raw != null && GyroData_Raw.Length > 0)
+            {
+                line += string.Join(',', GyroData_Raw);
+            }
+            else
+            {
+                line += gyroEmpty;
+            }
+
+            if (GyroData != null && GyroData.Length > 0)
+            {
+                line += string.Join(',', GyroData);
+            }
+            else
+            {
+                line += gyroEmpty;
+            }
+
+            line += TransactionTime.Ticks;
+            line += ',';
+            line += CpuTemp;
+
+            return line;
+        }
+
+        /// <summary>
+        /// Gets a CSV-style header
+        /// </summary>
+        /// <returns></returns>
+        public static string GetHeader()
+        {
+            const string header = "ACCEL_X,ACCEL_Y,ACCEL_Z," +
+                 "DIAG_STAT_RAW,GYRO_X_Raw,GYRO_Y_RAW,GYRO_Z_RAW,ACCEL_X_RAW,ACCEL_Y_RAW,ACCEL_Z_RAW,TEMP_RAW,SPS_RAW,CHECKSUM_RAW," +
+                 "DIAG_STAT,GYRO_X,GYRO_Y,GYRO_Z,ACCEL_X,ACCEL_Y,ACCEL_Z,TEMP,SPS,CHECKSUM," +
+                 "TRANSACTION_TIME_TICKS,CPU_TEMP";
+
+            return header;
+        }
+
     }
 }
