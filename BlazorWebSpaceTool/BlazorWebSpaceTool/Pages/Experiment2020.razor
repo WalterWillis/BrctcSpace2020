@@ -26,6 +26,7 @@
         <h5>Single data point testing</h5>
         <br />
         <button disabled="@isRunning" @onclick="GetResult" class="btn btn-primary">Get Data</button>
+        <p>Rows: @SingleResults.Count</p>
         <GenericListTable Items="SingleResults">
             <TableHeader>
                 <th>Accelerometer</th>
@@ -46,6 +47,7 @@
         <h5>Service call data block testing</h5>
         <br />
         <button disabled="@isRunning" @onclick="GetBulkResults" class="btn btn-primary">Gather all Async Data</button>
+        <p>Rows: @BulkResults.Count</p>
         <GenericListTable Items="BulkResults">
             <TableHeader>
                 <th>Accelerometer</th>
@@ -69,6 +71,7 @@
         <br />
         <button disabled="@isRunning" @onclick="GetStreamResults" class="btn btn-primary btn-sm">Stream Data</button>
         <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel Stream</button>
+        <p>Rows: @StreamResults.Count</p>
         <GenericListTable Items="StreamResults">
             <TableHeader>
                 <th>Accelerometer</th>
@@ -170,12 +173,15 @@
     {
         if (!isRunning)
         {
+            isRunning = true;
+            StateHasChanged();
             var data = await vibeClient.PollVibe2020DataServiceAsync(
             new DeviceDataRequest()
             { UseAccelerometer = true, UseCpuTemperature = true, UseGyroscope = true, UseRtc = true }
             );
 
             BulkResults = Utilities.ConvertToDataModel(data.Items.ToList());
+            isRunning = false;
             StateHasChanged();
         }
     }
