@@ -50,6 +50,7 @@
         <button disabled="@isRunning" @onclick="GetBulkResults" class="btn btn-primary">Gather all Async Data</button>
 
         <button @onclick="SaveBulkToJson" class="btn btn-info">Save To Json</button>
+        <button @onclick="SaveBulkToCsv" class="btn btn-info">Save To CSV</button>
 
         <br />
         <p>Rows: @BulkResults.Count</p>
