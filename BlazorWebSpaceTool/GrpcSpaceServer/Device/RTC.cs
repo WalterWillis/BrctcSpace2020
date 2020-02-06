@@ -5,9 +5,11 @@ using Iot.Device.Rtc;
 
 namespace GrpcSpaceServer.Device
 {
-    public class RTC
+    public class RTC : IDisposable
     {
+        private bool _isdisposing = false;
         private I2cConnectionSettings _settings;
+        private Ds1307 _rtc;
 
         /// <summary>
         /// Ds3231 RTC
@@ -15,6 +17,11 @@ namespace GrpcSpaceServer.Device
         public RTC()
         {
             _settings = new I2cConnectionSettings(1, Ds3231.DefaultI2cAddress);
+
+            using (I2cDevice device = I2cDevice.Create(_settings))
+            {
+                _rtc = new Ds1307(device);
+            }
         }
 
         /// <summary>
@@ -23,43 +30,50 @@ namespace GrpcSpaceServer.Device
         /// <param name="settings">Define customized settings or set null to allow default</param>
         public RTC(I2cConnectionSettings settings)
         {
-            if(settings == null)
+            if (settings == null)
             {
                 settings = new I2cConnectionSettings(1, Ds3231.DefaultI2cAddress);
             }
 
             _settings = settings;
+
+            using (I2cDevice device = I2cDevice.Create(_settings))
+            {
+                _rtc = new Ds1307(device);
+            }
         }
 
         public DateTime GetCurrentDate()
         {
-            using (I2cDevice device = I2cDevice.Create(_settings))
-            {
-                using (Ds1307 rtc = new Ds1307(device))
-                {
-                    return rtc.DateTime;
-                }
-            }
+            return _rtc.DateTime;
         }
 
         public void SetDate(DateTime newDate)
         {
-            using (I2cDevice device = I2cDevice.Create(_settings))
-            {
-                using (Ds1307 rtc = new Ds1307(device))
-                {
-                    rtc.DateTime = newDate;
-                }
-            }
+            _rtc.DateTime = newDate;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
-        /// Gets the formatted timestamp for efficient replies, uses system time if there is an error
+        /// Remove
         /// </summary>
-        /// <returns></returns>
-        public Google.Protobuf.WellKnownTypes.Timestamp GetTimeStamp()
+        /// <param name="disposing"></param>
+        protected virtual void Dispose(bool disposing)
         {
-            return Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(GetCurrentDate().ToUniversalTime());
+            if (_isdisposing)
+                return;
+
+            if (disposing)
+            {
+                _rtc.Dispose();
+            }
+
+            _isdisposing = true;
         }
     }
 }

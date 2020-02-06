@@ -5,9 +5,12 @@ using System.Runtime.InteropServices;
 
 namespace GrpcSpaceServer.Device
 {
-    public class Gyroscope
+    public class Gyroscope : IDisposable
     {
         private SpiConnectionSettings _settings;
+        private bool _isdisposing = false;
+
+        SpiDevice _gyro;
 
         /// <summary>
         /// ADIS16460 Gyroscope
@@ -15,6 +18,7 @@ namespace GrpcSpaceServer.Device
         public Gyroscope()
         {
             _settings = new SpiConnectionSettings(0, 1) { Mode = SpiMode.Mode3, ClockFrequency = 1000000 };
+            _gyro = SpiDevice.Create(_settings);
         }
 
         /// <summary>
@@ -29,6 +33,8 @@ namespace GrpcSpaceServer.Device
             }
 
             _settings = settings;
+
+            _gyro = SpiDevice.Create(_settings);
         }
 
         /// <summary>
@@ -71,42 +77,17 @@ namespace GrpcSpaceServer.Device
             return MemoryMarshal.Cast<byte, int>(burstData); //remove the leading empty bytes
         }
 
-        /// <summary>
-        /// Gets non-scaled results for efficient gRPC transmissions.
-        /// </summary>
-        /// <returns></returns>
-        public BrctcSpace.BurstResults GetBurstResults()
-        {
-            BrctcSpace.BurstResults results = new BrctcSpace.BurstResults();
-
-            results.Diagnostic = RegisterRead(Register.DIAG_STAT);
-            results.GyroX = RegisterRead(Register.X_GYRO_OUT);
-            results.GyroY = RegisterRead(Register.Y_GYRO_OUT);
-            results.GyroZ = RegisterRead(Register.Z_GYRO_OUT);
-            results.AccelX = RegisterRead(Register.X_GYRO_OUT);
-            results.AccelY = RegisterRead(Register.Y_GYRO_OUT);
-            results.AccelZ = RegisterRead(Register.Z_GYRO_OUT);
-            results.Temperature = RegisterRead(Register.TEMP_OUT);
-            results.SampleCount = RegisterRead(Register.SMPL_CNTR);
-            results.Checksum = RegisterRead(Register.CAL_CRC);
-
-            return results;
-        }
-
         public short RegisterRead(Register regAddr)
         {
             short result;
-            using (SpiDevice Gyro = SpiDevice.Create(_settings))
-            {
-                byte[] reply = new byte[2];
-                //ADIS is a 16 bit device. Append a 0 byte to the address
-                Gyro.TransferFullDuplex(new byte[] { (byte)regAddr, 0x00 }, reply);
+            byte[] reply = new byte[2];
+            //ADIS is a 16 bit device. Append a 0 byte to the address
+            _gyro.TransferFullDuplex(new byte[] { (byte)regAddr, 0x00 }, reply);
 
-                Gyro.TransferFullDuplex(new byte[] { 0x00, 0x00 }, reply);
+            _gyro.TransferFullDuplex(new byte[] { 0x00, 0x00 }, reply);
 
-                reply = reply.Reverse().ToArray();
-                result = BitConverter.ToInt16(reply);
-            }
+            reply = reply.Reverse().ToArray();
+            result = BitConverter.ToInt16(reply);
 
             return result;
         }
@@ -114,11 +95,8 @@ namespace GrpcSpaceServer.Device
         private Span<byte> FastRegisterRead(Register regAddr)
         {
             Span<byte> reply = new byte[2];
-            using (SpiDevice Gyro = SpiDevice.Create(_settings))
-            {
-                Gyro.TransferFullDuplex(new byte[] { (byte)regAddr, 0x00 }, reply);
-                Gyro.TransferFullDuplex(new byte[] { 0x00, 0x00 }, reply);
-            }
+            _gyro.TransferFullDuplex(new byte[] { (byte)regAddr, 0x00 }, reply);
+            _gyro.TransferFullDuplex(new byte[] { 0x00, 0x00 }, reply);
             return reply;
         }
 
@@ -166,6 +144,29 @@ namespace GrpcSpaceServer.Device
             CAL_CRC = 0x62,  //Calibration memory CRC values
             CODE_SGNTR = 0x64,  //Code memory signature value
             CODE_CRC = 0x66  //Code memory CRC values
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);    
+        }
+
+        /// <summary>
+        /// Remove
+        /// </summary>
+        /// <param name="disposing"></param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isdisposing)
+                return;
+
+            if (disposing)
+            {
+                _gyro.Dispose();
+            }
+
+            _isdisposing = true;
         }
     }
 }

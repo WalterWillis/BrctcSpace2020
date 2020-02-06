@@ -15,18 +15,12 @@ namespace GrpcSpaceServer.Services
     public class Vibe2020DataService : IVibe2020DataService
     {
         private readonly ILogger _logger;
-        private Task _dataTask;
 
-        private List<DeviceDataModel> _buffer = new List<DeviceDataModel>();
-        private static object _locker = new Object();
+        private const short gyroProductID = 16460;
         private Accelerometer _accelerometerDevice;
         private Gyroscope _gyroscopeDevice;
         private RTC _rtcDevice;
         private CpuTemperature _cpuDevice;
-        private DateTime startTime;
-        private bool isFull = false;
-
-        private bool _useAccel, _useGyro, _useRtc, _useCpu;
 
         //holds the latest status
         private ResultStatus _status = ResultStatus.None;
@@ -34,128 +28,62 @@ namespace GrpcSpaceServer.Services
         public Vibe2020DataService(ILogger<Vibe2020DataService> logger)
         {
             _logger = logger;
+            _accelerometerDevice = new Accelerometer();
+            _gyroscopeDevice = new Gyroscope();
+            _rtcDevice = new RTC();
+            _cpuDevice = new CpuTemperature();
         }
 
-        /// <summary>
-        /// Starts the asynchronous gathering of data
-        /// </summary>
-        public void Initialize(bool useAccel = true, bool useGyro = true, bool useRtc = true, bool useCpu = true)
+
+        public DeviceDataModel GetSingleReading()
         {
-            lock (_locker)
-            {
-                _useAccel = useAccel;
-                _useGyro = useGyro;
-                _useRtc = useRtc;
-                _useCpu = useCpu;
+            _status = ResultStatus.None;
 
-                Configure();
+            DeviceDataModel model = new DeviceDataModel();
 
-                //Occurs per GRPC request, so only start once or restart if completed
-                if (_dataTask == null || _dataTask.IsCompleted)
-                {
-                    startTime = DateTime.Now;
-                    _dataTask = Task.Run(GatherData);
-                }
-            }
+            model.AccelData.AddRange(GetAccelerometerResults() ?? new int[0]);
+            model.GyroData.AddRange(GetGyroscopeResults() ?? new int[0]);
+            model.TransactionTime = GetRTCResults();
+            model.CpuTemp = GetCPUTemperatureResults();
+
+            //Remove None flag
+            _status &= ResultStatus.None;
+
+            model.ResultStatus = (int)_status;
+
+            return model;
         }
 
-        private void Configure()
+        public DeviceDataModel[] GetReadings(int numReadings = 1000)
         {
+            Span<DeviceDataModel> dataModels = new DeviceDataModel[numReadings];
+            DateTime startTime = DateTime.Now;
+            for(int i = 0; i < numReadings; i++)
+            {
+                _status = ResultStatus.None;
 
-            try
-            {
-                _accelerometerDevice = new Accelerometer();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error Initializing Accelerometer.", ex.Message, ex.StackTrace);
-                //Remove the none status if it exists
-                _status |= ResultStatus.AccelerometerFailure;
-            }
-            try
-            {
-                _gyroscopeDevice = new Gyroscope();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error Initializing Accelerometer.", ex.Message, ex.StackTrace);
-                _status |= ResultStatus.GyroscopeFailure;
-            }
-            try
-            {
-                _rtcDevice = new RTC();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error Initializing Accelerometer.", ex.Message, ex.StackTrace);
-                _status |= ResultStatus.RTCFailure;
-            }
-            try
-            {
-                _cpuDevice = new CpuTemperature();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error Initializing Accelerometer.", ex.Message, ex.StackTrace);
-                _status |= ResultStatus.CpuTempReadFailure;
-            }
+                DeviceDataModel model = new DeviceDataModel();
 
+                model.AccelData.AddRange(GetAccelerometerResults() ?? new int[0]);
+                model.GyroData.AddRange(GetGyroscopeResults() ?? new int[0]);
+                model.TransactionTime = GetRTCResults();
+                model.CpuTemp = GetCPUTemperatureResults();
+                model.ResultStatus = (int)_status;
+
+                dataModels[i] = model;
+            }
+            _logger.LogInformation($"Finished {numReadings} items in {(DateTime.Now - startTime).TotalSeconds} seconds!");
+
+            return dataModels.ToArray();
         }
 
-        private void GatherData()
+        public bool isGyroValid()
         {
-            while (true)
-            {
-                lock (_locker)
-                {
-                    if (_buffer.Count >= 1000 && !isFull)
-                    {
-                        isFull = true;
-                        _logger.LogInformation($"Buffer full. Created {_buffer.Count} items in {(DateTime.Now - startTime).TotalSeconds} seconds!");
-                        Thread.Sleep(10000);
-                    }
-                    else
-                    {
-                        //Can't guarentee order of assignment, so simply initialize as none
-                        _status = ResultStatus.None;
-                        DeviceDataModel model = new DeviceDataModel();
-
-                        if (_useAccel)
-                            model.AccelData.AddRange(GetAccelerometerResults() ?? new int[0]);
-                        if (_useGyro)
-                            model.GyroData.AddRange(GetGyroscopeResults() ?? new int[0]);
-                        if (_useRtc)
-                            model.TransactionTime = GetRTCResults();
-                        if (_useCpu)
-                            model.CpuTemp = GetCPUTemperatureResults();
-
-                        //Remove None flag
-                        _status &= ResultStatus.None;
-
-                        _buffer.Add(model);
-                    }
-                }
-            }
+            short regValue = _gyroscopeDevice.RegisterRead(Gyroscope.Register.PROD_ID);
+            _logger.LogInformation($"ADIS16460 Prod ID Register reads {regValue}.");
+            return regValue.Equals(gyroProductID);
         }
 
-        /// <summary>
-        /// Retrieves the currently buffered data, clearing the buffer in the process
-        /// </summary>
-        /// <returns></returns>
-        public List<DeviceDataModel> GetData()
-        {
-            List<DeviceDataModel> data;
-            lock (_locker)
-            {
-                //clone the list to prevent reference clearing
-                data = new List<DeviceDataModel>(_buffer);
-                _buffer.Clear();
-                //reset the startTime variable for the next run
-                startTime = DateTime.Now;
-                isFull = false;            
-            }
-            return data;
-        }
 
         private int[] GetAccelerometerResults()
         {
@@ -166,8 +94,11 @@ namespace GrpcSpaceServer.Services
                 results = _accelerometerDevice.GetRaws();
                 _status |= ResultStatus.AccelerometerSuccess;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("Error with Accelerometer");
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
                 _status |= ResultStatus.AccelerometerFailure;
             }
 
@@ -182,8 +113,11 @@ namespace GrpcSpaceServer.Services
                 results = _gyroscopeDevice.BurstRead();
                 _status |= ResultStatus.GyroscopeSuccess;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("Error with Gyro");
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
                 _status |= ResultStatus.GyroscopeFailure;
             }
 
@@ -199,9 +133,11 @@ namespace GrpcSpaceServer.Services
                 results = _rtcDevice.GetCurrentDate();
                 _status |= ResultStatus.RTCSuccess;
             }
-            catch
+            catch (Exception ex)
             {
-                //Timestamp must be in UTC
+                _logger.LogError("Error with RTC");
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
                 results = DateTime.UtcNow;
                 _status |= ResultStatus.RTCFailure;
             }
@@ -217,9 +153,11 @@ namespace GrpcSpaceServer.Services
             {
                 results = _cpuDevice.Temperature.Fahrenheit;
             }
-            catch
+            catch (Exception ex)
             {
-
+                _logger.LogError("Error with CPU Temp");
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
                 _status = ResultStatus.CpuTempReadFailure;
             }
 

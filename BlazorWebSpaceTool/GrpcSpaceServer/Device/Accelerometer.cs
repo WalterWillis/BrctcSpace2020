@@ -8,13 +8,16 @@ namespace GrpcSpaceServer.Device
     /// <summary>
     /// Methods for communicating with our accelerometers. Uses three accelerometers through an MCP3208 ADC Pi hat.
     /// </summary>
-    public class Accelerometer
+    public class Accelerometer : IDisposable
     {
+        private bool _isdisposing = false;
         private SpiConnectionSettings _settings;
         //We use pins 0, 2 and 4 as X, Y, and Z respectively
         private Dictionary<Channel, int> _channels =
             new Dictionary<Channel, int> { { Channel.X, 0 }, { Channel.Y, 2 }, { Channel.Z, 4 } };
         private double _resolution = 4095 * 3.3;
+
+        private Mcp3208 _adc;
 
         /// <summary>
         /// Accelerometer values via SPI 
@@ -22,6 +25,11 @@ namespace GrpcSpaceServer.Device
         public Accelerometer()
         {
             _settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode1, ClockFrequency = 1000000 };
+
+            using (SpiDevice spi = SpiDevice.Create(_settings))
+            {
+                _adc = new Mcp3208(spi);
+            }
         }
 
         /// <summary>
@@ -44,6 +52,11 @@ namespace GrpcSpaceServer.Device
             { { Channel.X, channel_x }, { Channel.Y, channel_y }, { Channel.Z, channel_z } };
 
             _resolution = 4095 * voltRef;
+
+            using (SpiDevice spi = SpiDevice.Create(_settings))
+            {
+                _adc = new Mcp3208(spi);
+            }
         }
 
         /// <summary>
@@ -53,13 +66,7 @@ namespace GrpcSpaceServer.Device
         /// <returns></returns>
         public int GetRaw(Channel channel)
         {
-            using (SpiDevice spi = SpiDevice.Create(_settings))
-            {
-                using (Mcp3208 adc = new Mcp3208(spi))
-                {
-                    return adc.Read(_channels[channel]);
-                }
-            }
+            return _adc.Read(_channels[channel]);
         }
 
         /// <summary>
@@ -68,18 +75,12 @@ namespace GrpcSpaceServer.Device
         /// <returns></returns>
         public int[] GetRaws()
         {
-            using (SpiDevice spi = SpiDevice.Create(_settings))
-            {
-                using (Mcp3208 adc = new Mcp3208(spi))
-                {
-                    int[] values = new int[] {
-                    adc.Read(_channels[Channel.X]),
-                    adc.Read(_channels[Channel.Y]),
-                    adc.Read(_channels[Channel.Z])
-                    };
-                    return values;
-                }
-            }
+            int[] values = new int[] {
+                _adc.Read(_channels[Channel.X]),
+                _adc.Read(_channels[Channel.Y]),
+                _adc.Read(_channels[Channel.Z])
+            };
+            return values;
         }
 
         /// <summary>
@@ -89,13 +90,7 @@ namespace GrpcSpaceServer.Device
         /// <returns></returns>
         public double GetScaledValue(Channel channel)
         {
-            using (SpiDevice spi = SpiDevice.Create(_settings))
-            {
-                using (Mcp3208 adc = new Mcp3208(spi))
-                {
-                    return adc.Read(_channels[channel]) / _resolution;
-                }
-            }
+            return _adc.Read(_channels[channel]) / _resolution;
         }
 
 
@@ -105,41 +100,39 @@ namespace GrpcSpaceServer.Device
         /// <returns></returns>
         public Span<double> GetScaledValues()
         {
-            using (SpiDevice spi = SpiDevice.Create(_settings))
-            {
-                using (Mcp3208 adc = new Mcp3208(spi))
-                {
-                    return new double[] {
-                        adc.Read(_channels[Channel.X]) / _resolution,
-                        adc.Read(_channels[Channel.Y]) / _resolution,
-                        adc.Read(_channels[Channel.Z]) / _resolution
-                    };
-                }
-            }
+
+            return new double[] {
+                _adc.Read(_channels[Channel.X]) / _resolution,
+                _adc.Read(_channels[Channel.Y]) / _resolution,
+                _adc.Read(_channels[Channel.Z]) / _resolution
+            };
+
+        }
+
+        public enum Channel { X, Y, Z }
+
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
-        /// Gets formatted results for efficient gRPC transmissions.
+        /// Remove
         /// </summary>
-        /// <returns></returns>
-        public BrctcSpace.AccelerometerResults GetAccelerometerResults()
+        /// <param name="disposing"></param>
+        protected virtual void Dispose(bool disposing)
         {
-            BrctcSpace.AccelerometerResults results = new BrctcSpace.AccelerometerResults();
+            if (_isdisposing)
+                return;
 
-            using (SpiDevice spi = SpiDevice.Create(_settings))
+            if (disposing)
             {
-                using (Mcp3208 adc = new Mcp3208(spi))
-                {
-                    results.X = adc.Read(_channels[Channel.X]);
-                    results.Y = adc.Read(_channels[Channel.Y]);
-                    results.Z = adc.Read(_channels[Channel.Z]);
-                }
+                _adc.Dispose();
             }
 
-            return results;
+            _isdisposing = true;
         }
-
-
-        public enum Channel { X, Y, Z }
     }
 }

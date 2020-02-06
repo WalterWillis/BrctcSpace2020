@@ -1,33 +1,58 @@
-﻿using System.IO.Ports;
+﻿using System;
+using System.IO.Ports;
 
 namespace GrpcSpaceServer.Device
 {
-    public class UART
+    public class UART: IDisposable
     {
-        private SerialPort serialDevice;
+        private bool _isdisposing = false;
+        private SerialPort _serialDevice;
 
         public UART()
         {
-            serialDevice = new SerialPort("UART0", 57600, Parity.None, 8, StopBits.One);
-            serialDevice.WriteTimeout = 1000;
-            serialDevice.ReadTimeout = 1000;
+            _serialDevice = new SerialPort("UART0", 57600, Parity.None, 8, StopBits.One);
+            _serialDevice.WriteTimeout = 1000;
+            _serialDevice.ReadTimeout = 1000;
         }
         public void SerialSend(string message)
         {
-            serialDevice.Open();
+            _serialDevice.Open();
 
-            serialDevice.WriteLine(message);
+            _serialDevice.WriteLine(message);
 
-            serialDevice.Close();
+            _serialDevice.Close();
         }
 
         public void SendBytes(byte[] message)
         {
-            serialDevice.Open();
+            _serialDevice.Open();
 
-            serialDevice.Write(message, 0, message.Length);
+            _serialDevice.Write(message, 0, message.Length);
 
-            serialDevice.Close();
+            _serialDevice.Close();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Remove
+        /// </summary>
+        /// <param name="disposing"></param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isdisposing)
+                return;
+
+            if (disposing)
+            {
+                _serialDevice.Dispose();
+            }
+
+            _isdisposing = true;
         }
     }
 }

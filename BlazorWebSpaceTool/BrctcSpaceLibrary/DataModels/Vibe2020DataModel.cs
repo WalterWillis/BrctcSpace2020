@@ -19,6 +19,8 @@ namespace BrctcSpaceLibrary.DataModels
 
         public double CpuTemp { get; set; }
 
+        public ResultStatus ResultStatus { get; set; }
+
         /// <summary>
         /// Generates a line of text from the properties above
         /// </summary>
@@ -67,6 +69,8 @@ namespace BrctcSpaceLibrary.DataModels
             line += TransactionTime.Ticks;
             line += comma;
             line += CpuTemp;
+            line += comma;
+            line += (int)ResultStatus;
 
             return line;
         }
@@ -80,7 +84,7 @@ namespace BrctcSpaceLibrary.DataModels
             const string header = "ACCEL_X,ACCEL_Y,ACCEL_Z," +
                  "DIAG_STAT_RAW,GYRO_X_Raw,GYRO_Y_RAW,GYRO_Z_RAW,ACCEL_X_RAW,ACCEL_Y_RAW,ACCEL_Z_RAW,TEMP_RAW,SPS_RAW,CHECKSUM_RAW," +
                  "DIAG_STAT,GYRO_X,GYRO_Y,GYRO_Z,ACCEL_X,ACCEL_Y,ACCEL_Z,TEMP,SPS,CHECKSUM," +
-                 "TRANSACTION_TIME_TICKS,CPU_TEMP";
+                 "TRANSACTION_TIME_TICKS,CPU_TEMP,RESULT_STATUS";
 
             return header;
         }

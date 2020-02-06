@@ -4,65 +4,14 @@ option csharp_namespace = "BrctcSpace";
 
 package vibe2020;
 
-import "google/protobuf/timestamp.proto";
-
 service Vibe {
-  rpc GetResultSet (ResultRequest) returns (ResultReply);
-  rpc GetResultStream (ResultRequest) returns (stream ResultReply);
-  rpc PollVibe2020DataService (DeviceDataRequest) returns (DeviceDataArray);
-}
-
-enum ResultType{
-    GyroOnly = 0;
-    AccelerometerOnly = 1;
-    RtcOnly = 2;
-    Full = 3;
-}
-
-message ResultRequest {
-  ResultType ResultType = 1;
-}
-
-message ResultReply {
-  int32 ResultStatus = 1; //proto3 doesn't allow enum flags, so we'll send an integer and use a shared enum class
-  ResultSet ResultSet = 2;
-}
-
-message ResultSet{
-    AccelerometerResults AccelerometerResults = 1;
-    GyroscopeResults GyroscopeResults = 2;
-    double CpuTemperature = 3;
-    google.protobuf.Timestamp CurrentTime = 4;
-}
-
-message AccelerometerResults{
-    int32 X = 1;
-    int32 Y = 2;
-    int32 Z = 3;
-}
-
-message GyroscopeResults{
-    BurstResults BurstResults = 1;
-}
-
-message BurstResults{
-    int32 Diagnostic = 1;
-    int32 Gyro_X = 2;
-    int32 Gyro_Y = 3;
-    int32 Gyro_Z = 4;
-    int32 Accel_X = 5;
-    int32 Accel_Y = 6;
-    int32 Accel_Z = 7;
-    int32 Temperature = 8;
-    int32 SampleCount = 9;
-    int32 Checksum = 10;
+  rpc GetSingleDeviceData (DeviceDataRequest) returns (DeviceDataModel);
+  rpc StreamDeviceData (DeviceDataRequest) returns (stream DeviceDataModel);
+  rpc GetBulkDeviceData (DeviceDataRequest) returns (DeviceDataArray);
 }
 
 message DeviceDataRequest{
-    bool useAccelerometer = 1;
-    bool useGyroscope = 2;
-    bool useRtc = 3;
-    bool useCpuTemperature = 4;
+    int32 DataIterations = 1;
 }
 
 message DeviceDataArray{
@@ -73,4 +22,5 @@ message DeviceDataModel{
     repeated int32 GyroData = 2;
     int64 TransactionTime = 3;
     double CpuTemp = 4; 
+    int32 ResultStatus = 5;
 }

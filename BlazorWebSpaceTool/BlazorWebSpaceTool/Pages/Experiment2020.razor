@@ -135,8 +135,8 @@
             isRunning = true;
             try
             {
-                using (var call = vibeClient.GetResultStream(
-            new ResultRequest() { ResultType = ResultType.Full },
+                using (var call = vibeClient.StreamDeviceData(
+            new DeviceDataRequest(),
             cancellationToken: CancellationToken.Token))
                 {
                     try
@@ -145,7 +145,7 @@
                             CancellationToken.Token.ThrowIfCancellationRequested();
                         while (await call.ResponseStream.MoveNext(CancellationToken.Token))
                         {
-                            StreamResults.Add(Utilities.ConvertToDataModel(call.ResponseStream.Current.ResultSet));
+                            StreamResults.Add(Utilities.ConvertToDataModel(call.ResponseStream.Current));
                             StateHasChanged();
                         }
                     }
@@ -168,11 +168,9 @@
     {
         if (!isRunning)
         {
-            var result = await vibeClient.GetResultSetAsync(
-           new ResultRequest() { ResultType = ResultType.Full }
-           );
+            var result = await vibeClient.GetSingleDeviceDataAsync(new DeviceDataRequest());
 
-            SingleResults.Add(Utilities.ConvertToDataModel(result.ResultSet));
+            SingleResults.Add(Utilities.ConvertToDataModel(result));
 
             //Update the state when result is received
             StateHasChanged();
@@ -185,10 +183,7 @@
         {
             isRunning = true;
             StateHasChanged();
-            var data = await vibeClient.PollVibe2020DataServiceAsync(
-            new DeviceDataRequest()
-            { UseAccelerometer = true, UseCpuTemperature = true, UseGyroscope = true, UseRtc = true }
-            );
+            var data = await vibeClient.GetBulkDeviceDataAsync( new DeviceDataRequest() { DataIterations = 1000 } );
 
             BulkResults = Utilities.ConvertToDataModel(data.Items.ToList());
             isRunning = false;

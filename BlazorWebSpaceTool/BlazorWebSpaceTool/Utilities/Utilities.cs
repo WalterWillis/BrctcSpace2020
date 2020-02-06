@@ -14,50 +14,6 @@ namespace BlazorWebSpaceTool.Utilities
 {
     public static class Utilities
     {
-        public static Vibe2020DataModel ConvertToDataModel(ResultSet set)
-        {
-            Vibe2020DataModel model = new Vibe2020DataModel();
-
-            if (set?.AccelerometerResults != null)
-            {
-                model.AccelData = new int[] { set.AccelerometerResults.X, set.AccelerometerResults.Y, set.AccelerometerResults.Z };
-            }
-
-            if (set?.GyroscopeResults?.BurstResults != null)
-            {
-                model.GyroData_Raw = new short[10]
-                {
-                    (short)set.GyroscopeResults.BurstResults.Diagnostic,
-                    (short)set.GyroscopeResults.BurstResults.GyroX,
-                    (short)set.GyroscopeResults.BurstResults.GyroY,
-                    (short)set.GyroscopeResults.BurstResults.GyroZ,
-                    (short)set.GyroscopeResults.BurstResults.AccelX,
-                    (short)set.GyroscopeResults.BurstResults.AccelY,
-                    (short)set.GyroscopeResults.BurstResults.AccelZ,
-                    (short)set.GyroscopeResults.BurstResults.Temperature,
-                    (short)set.GyroscopeResults.BurstResults.SampleCount,
-                    (short)set.GyroscopeResults.BurstResults.Checksum
-                };
-            }
-
-            model.GyroData = GyroConversionHelper.GetGyroscopeDetails(model.GyroData_Raw).ToArray();
-
-            model.TransactionTime = set.CurrentTime.ToDateTime().ToLocalTime();
-
-            model.CpuTemp = set.CpuTemperature;
-
-            return model;
-        }
-
-        public static List<Vibe2020DataModel> ConvertToDataModel(List<ResultSet> resultSet)
-        {
-            List<Vibe2020DataModel> dataModels = new List<Vibe2020DataModel>();
-            foreach (var set in resultSet)
-                dataModels.Add(ConvertToDataModel(set));
-
-            return dataModels;
-        }
-
         public static Vibe2020DataModel ConvertToDataModel(DeviceDataModel deviceData)
         {
             Vibe2020DataModel model = new Vibe2020DataModel();
@@ -82,6 +38,8 @@ namespace BlazorWebSpaceTool.Utilities
 
                 model.GyroData = GyroConversionHelper.GetGyroscopeDetails(model.GyroData_Raw).ToArray();
             }
+
+            model.ResultStatus = (ResultStatus)deviceData.ResultStatus;
 
             model.TransactionTime = new DateTime(deviceData.TransactionTime).ToLocalTime();
 
