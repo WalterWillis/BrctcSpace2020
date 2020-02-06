@@ -163,5 +163,12 @@ namespace GrpcSpaceServer.Services
 
             return results;
         }
+
+        ~Vibe2020DataService()
+        {
+            _accelerometerDevice.Dispose();
+            _gyroscopeDevice.Dispose();
+            _rtcDevice.Dispose();
+        }
     }
 }
