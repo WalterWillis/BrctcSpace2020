@@ -25,20 +25,22 @@ namespace BlazorWebSpaceTool.Utilities
 
             if (set?.GyroscopeResults?.BurstResults != null)
             {
-                model.GyroData = new double[10]
+                model.GyroData_Raw = new short[10]
                 {
-                    set.GyroscopeResults.BurstResults.Diagnostic,
-                    set.GyroscopeResults.BurstResults.GyroX,
-                    set.GyroscopeResults.BurstResults.GyroY,
-                    set.GyroscopeResults.BurstResults.GyroZ,
-                    set.GyroscopeResults.BurstResults.AccelX,
-                    set.GyroscopeResults.BurstResults.AccelY,
-                    set.GyroscopeResults.BurstResults.AccelZ,
-                    set.GyroscopeResults.BurstResults.Temperature,
-                    set.GyroscopeResults.BurstResults.SampleCount,
-                    set.GyroscopeResults.BurstResults.Checksum
+                    (short)set.GyroscopeResults.BurstResults.Diagnostic,
+                    (short)set.GyroscopeResults.BurstResults.GyroX,
+                    (short)set.GyroscopeResults.BurstResults.GyroY,
+                    (short)set.GyroscopeResults.BurstResults.GyroZ,
+                    (short)set.GyroscopeResults.BurstResults.AccelX,
+                    (short)set.GyroscopeResults.BurstResults.AccelY,
+                    (short)set.GyroscopeResults.BurstResults.AccelZ,
+                    (short)set.GyroscopeResults.BurstResults.Temperature,
+                    (short)set.GyroscopeResults.BurstResults.SampleCount,
+                    (short)set.GyroscopeResults.BurstResults.Checksum
                 };
             }
+
+            model.GyroData = GyroConversionHelper.GetGyroscopeDetails(model.GyroData_Raw).ToArray();
 
             model.TransactionTime = set.CurrentTime.ToDateTime().ToLocalTime();
 
@@ -67,18 +69,12 @@ namespace BlazorWebSpaceTool.Utilities
 
             if (deviceData?.GyroData != null && deviceData.GyroData.Count > 0)
             {
-                Span<int> data = new int[10]
+                Span<int> data = new int[4]
                 {
                     deviceData.GyroData[0],
                     deviceData.GyroData[1],
                     deviceData.GyroData[2],
-                    deviceData.GyroData[3],
-                    deviceData.GyroData[4],
-                    deviceData.GyroData[5],
-                    deviceData.GyroData[6],
-                    deviceData.GyroData[7],
-                    deviceData.GyroData[8],
-                    deviceData.GyroData[9]
+                    deviceData.GyroData[3]
                 };
 
                 Span<byte> bytes = MemoryMarshal.Cast<int, byte>(data);

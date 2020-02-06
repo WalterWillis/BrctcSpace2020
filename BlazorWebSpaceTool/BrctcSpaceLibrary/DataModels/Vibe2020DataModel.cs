@@ -27,38 +27,45 @@ namespace BrctcSpaceLibrary.DataModels
         {
             string line = "";
 
-            const string accelEmpty = "NA,NA,NA,";
-            const string gyroEmpty = "NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,";
+            const string accelEmpty = "NA,NA,NA";
+            const string gyroEmpty = "NA,NA,NA,NA,NA,NA,NA,NA,NA,NA";
+            const char comma = ',';
 
             if (AccelData != null && AccelData.Length > 0)
             {
-                line += string.Join(',', AccelData);
+                line += string.Join(comma, AccelData);
             }
             else
             {
                 line += accelEmpty;
             }
 
+            line += comma;
+
             if (GyroData_Raw != null && GyroData_Raw.Length > 0)
             {
-                line += string.Join(',', GyroData_Raw);
+                line += string.Join(comma, GyroData_Raw);
             }
             else
             {
                 line += gyroEmpty;
             }
+
+            line += comma;
 
             if (GyroData != null && GyroData.Length > 0)
             {
-                line += string.Join(',', GyroData);
+                line += string.Join(comma, GyroData);
             }
             else
             {
                 line += gyroEmpty;
             }
 
+            line += comma;
+
             line += TransactionTime.Ticks;
-            line += ',';
+            line += comma;
             line += CpuTemp;
 
             return line;

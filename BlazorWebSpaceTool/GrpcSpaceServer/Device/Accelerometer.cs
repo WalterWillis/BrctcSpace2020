@@ -11,9 +11,9 @@ namespace GrpcSpaceServer.Device
     public class Accelerometer
     {
         private SpiConnectionSettings _settings;
-        //We use pins 0, 1 and 2 as X, Y, and Z respectively
+        //We use pins 0, 2 and 4 as X, Y, and Z respectively
         private Dictionary<Channel, int> _channels =
-            new Dictionary<Channel, int> { { Channel.X, 0 }, { Channel.Y, 1 }, { Channel.Z, 2 } };
+            new Dictionary<Channel, int> { { Channel.X, 0 }, { Channel.Y, 2 }, { Channel.Z, 4 } };
         private double _resolution = 4095 * 3.3;
 
         /// <summary>
@@ -21,7 +21,7 @@ namespace GrpcSpaceServer.Device
         /// </summary>
         public Accelerometer()
         {
-            _settings = new SpiConnectionSettings(0, 1) { Mode = SpiMode.Mode1, ClockFrequency = 1000000 };
+            _settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode1, ClockFrequency = 1000000 };
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace GrpcSpaceServer.Device
         {
             if (settings == null)
             {
-                settings = new SpiConnectionSettings(0, 1) { Mode = SpiMode.Mode1, ClockFrequency = 1000000 };
+                settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode1, ClockFrequency = 1000000 };
             }
 
             _settings = settings;
@@ -66,16 +66,17 @@ namespace GrpcSpaceServer.Device
         /// Gets all three raw axis data in the order of X, Y, Z
         /// </summary>
         /// <returns></returns>
-        public Span<int> GetRaws()
+        public int[] GetRaws()
         {
             using (SpiDevice spi = SpiDevice.Create(_settings))
             {
                 using (Mcp3208 adc = new Mcp3208(spi))
                 {
-                    Span<int> values = new Span<int>();
-                    values[0] = adc.Read(_channels[Channel.X]);
-                    values[0] = adc.Read(_channels[Channel.Y]);
-                    values[0] = adc.Read(_channels[Channel.Z]);
+                    int[] values = new int[] {
+                    adc.Read(_channels[Channel.X]),
+                    adc.Read(_channels[Channel.Y]),
+                    adc.Read(_channels[Channel.Z])
+                    };
                     return values;
                 }
             }

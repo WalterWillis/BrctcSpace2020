@@ -19,8 +19,10 @@ namespace GrpcSpaceServer.Services
             _logger = logger;
             _dataService = dataService;
 
+            LogGyroRegisters();
+
             //Start the data thread
-            _dataService.Initialize();
+            //_dataService.Initialize();
         }
 
         public override Task<ResultReply> GetResultSet(ResultRequest request, ServerCallContext context)
@@ -86,8 +88,11 @@ namespace GrpcSpaceServer.Services
                 results.ResultSet.AccelerometerResults = accelerometerDevice.GetAccelerometerResults();
                 status = ResultStatus.AccelerometerSuccess;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("Error with Accelerometer");
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
                 status = ResultStatus.AccelerometerFailure;
             }
 
@@ -105,8 +110,11 @@ namespace GrpcSpaceServer.Services
                 results.ResultSet.GyroscopeResults.BurstResults = gyroscopeDevice.GetBurstResults();
                 status = ResultStatus.GyroscopeSuccess;
             }
-            catch
+            catch(Exception ex)
             {
+                _logger.LogError("Error with Gyro");
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
                 status = ResultStatus.GyroscopeFailure;
             }
 
@@ -123,8 +131,11 @@ namespace GrpcSpaceServer.Services
                 results.ResultSet.CurrentTime = rtcDevice.GetTimeStamp();
                 status = ResultStatus.RTCSuccess;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("Error with RTC");
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
                 //Timestamp must be in UTC
                 results.ResultSet.CurrentTime = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(DateTime.UtcNow);
                 status = ResultStatus.RTCFailure;
@@ -145,12 +156,34 @@ namespace GrpcSpaceServer.Services
                 else
                     status = ResultStatus.CpuTempReadFailure;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("Error with CPU Temp");
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
                 status = ResultStatus.CpuTempReadFailure;
             }
 
             return status;
+        }
+
+        private void LogGyroRegisters()
+        {
+            try
+            {
+                Device.Gyroscope gyroscopeDevice = new Device.Gyroscope();
+                _logger.LogInformation($"Control Register MSC: {gyroscopeDevice.RegisterRead(Device.Gyroscope.Register.MSC_CTRL)}");
+                _logger.LogInformation($"Control Register FLTR: {gyroscopeDevice.RegisterRead(Device.Gyroscope.Register.FLTR_CTRL)}");
+                _logger.LogInformation($"Control Register DECR: {gyroscopeDevice.RegisterRead(Device.Gyroscope.Register.DEC_RATE)}");
+
+                _logger.LogInformation($"Product ID: {gyroscopeDevice.RegisterRead(Device.Gyroscope.Register.PROD_ID)}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error with Logging Gyro Registers");
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
+            }
         }
     }
 }

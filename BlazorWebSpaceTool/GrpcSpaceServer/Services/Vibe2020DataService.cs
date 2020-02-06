@@ -23,6 +23,8 @@ namespace GrpcSpaceServer.Services
         private Gyroscope _gyroscopeDevice;
         private RTC _rtcDevice;
         private CpuTemperature _cpuDevice;
+        private DateTime startTime;
+        private bool isFull = false;
 
         private bool _useAccel, _useGyro, _useRtc, _useCpu;
 
@@ -51,6 +53,7 @@ namespace GrpcSpaceServer.Services
                 //Occurs per GRPC request, so only start once or restart if completed
                 if (_dataTask == null || _dataTask.IsCompleted)
                 {
+                    startTime = DateTime.Now;
                     _dataTask = Task.Run(GatherData);
                 }
             }
@@ -103,13 +106,13 @@ namespace GrpcSpaceServer.Services
         {
             while (true)
             {
-                bool isFull = false;
-                DateTime startTime = DateTime.Now;
                 lock (_locker)
                 {
-                    if (_buffer.Count >= 100000)
+                    if (_buffer.Count >= 1000 && !isFull)
                     {
                         isFull = true;
+                        _logger.LogInformation($"Buffer full. Created {_buffer.Count} items in {(DateTime.Now - startTime).TotalSeconds} seconds!");
+                        Thread.Sleep(10000);
                     }
                     else
                     {
@@ -132,12 +135,6 @@ namespace GrpcSpaceServer.Services
                         _buffer.Add(model);
                     }
                 }
-
-                if (isFull)
-                {
-                    _logger.LogInformation($"Buffer full. Created {_buffer.Count} items in {(DateTime.Now - startTime).TotalSeconds} seconds!");
-                    Thread.Sleep(5000);
-                }
             }
         }
 
@@ -147,13 +144,17 @@ namespace GrpcSpaceServer.Services
         /// <returns></returns>
         public List<DeviceDataModel> GetData()
         {
+            List<DeviceDataModel> data;
             lock (_locker)
             {
                 //clone the list to prevent reference clearing
-                List<DeviceDataModel> data = new List<DeviceDataModel>(_buffer);
+                data = new List<DeviceDataModel>(_buffer);
                 _buffer.Clear();
-                return data;
+                //reset the startTime variable for the next run
+                startTime = DateTime.Now;
+                isFull = false;            
             }
+            return data;
         }
 
         private int[] GetAccelerometerResults()
@@ -162,7 +163,7 @@ namespace GrpcSpaceServer.Services
 
             try
             {
-                results = _accelerometerDevice.GetRaws().ToArray();
+                results = _accelerometerDevice.GetRaws();
                 _status |= ResultStatus.AccelerometerSuccess;
             }
             catch

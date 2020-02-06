@@ -31,12 +31,14 @@
         <GenericListTable Items="SingleResults">
             <TableHeader>
                 <th>Accelerometer</th>
+                <th>Raw Gyroscope</th>
                 <th>Gyroscope</th>
                 <th>Cpu Temp</th>
                 <th>Transaction Timestamp</th>
             </TableHeader>
             <RowTemplate>
                 <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
+                <td>@(context.GyroData_Raw != null ? string.Join(',', context.GyroData_Raw) : "None")</td>
                 <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
                 <td>@context.CpuTemp</td>
                 <td>@context.TransactionTime</td>
@@ -88,12 +90,14 @@
         <GenericListTable Items="StreamResults">
             <TableHeader>
                 <th>Accelerometer</th>
+                <th>Raw Gyroscope</th>
                 <th>Gyroscope</th>
                 <th>Cpu Temp</th>
                 <th>Transaction Timestamp</th>
             </TableHeader>
             <RowTemplate>
                 <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
+                <td>@(context.GyroData_Raw != null ? string.Join(',', context.GyroData_Raw) : "None")</td>
                 <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
                 <td>@context.CpuTemp</td>
                 <td>@context.TransactionTime</td>

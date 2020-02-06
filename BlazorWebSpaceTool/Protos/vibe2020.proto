@@ -46,16 +46,16 @@ message GyroscopeResults{
 }
 
 message BurstResults{
-    double Diagnostic = 1;
-    double Gyro_X = 2;
-    double Gyro_Y = 3;
-    double Gyro_Z = 4;
-    double Accel_X = 5;
-    double Accel_Y = 6;
-    double Accel_Z = 7;
-    double Temperature = 8;
-    double SampleCount = 9;
-    double Checksum = 10;
+    int32 Diagnostic = 1;
+    int32 Gyro_X = 2;
+    int32 Gyro_Y = 3;
+    int32 Gyro_Z = 4;
+    int32 Accel_X = 5;
+    int32 Accel_Y = 6;
+    int32 Accel_Z = 7;
+    int32 Temperature = 8;
+    int32 SampleCount = 9;
+    int32 Checksum = 10;
 }
 
 message DeviceDataRequest{
