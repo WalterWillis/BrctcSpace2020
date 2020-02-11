@@ -28,10 +28,38 @@ namespace GrpcSpaceServer.Services
         public Vibe2020DataService(ILogger<Vibe2020DataService> logger)
         {
             _logger = logger;
-            _accelerometerDevice = new Accelerometer();
-            _gyroscopeDevice = new Gyroscope();
-            _rtcDevice = new RTC();
-            _cpuDevice = new CpuTemperature();
+            try
+            {
+                _accelerometerDevice = new Accelerometer();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error Initializing Accelerometer.", ex.Message, ex.StackTrace);
+            }
+            try
+            {
+                _gyroscopeDevice = new Gyroscope();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error Initializing Gyroscope.", ex.Message, ex.StackTrace);
+            }
+            try
+            {
+                _rtcDevice = new RTC();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error Initializing RTC.", ex.Message, ex.StackTrace);
+            }
+            try
+            {
+                _cpuDevice = new CpuTemperature();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error Initializing CPU Temp Device.", ex.Message, ex.StackTrace);
+            }
         }
 
 
@@ -58,7 +86,7 @@ namespace GrpcSpaceServer.Services
         {
             Span<DeviceDataModel> dataModels = new DeviceDataModel[numReadings];
             DateTime startTime = DateTime.Now;
-            for(int i = 0; i < numReadings; i++)
+            for (int i = 0; i < numReadings; i++)
             {
                 _status = ResultStatus.None;
 
@@ -79,9 +107,20 @@ namespace GrpcSpaceServer.Services
 
         public bool isGyroValid()
         {
-            short regValue = _gyroscopeDevice.RegisterRead(Gyroscope.Register.PROD_ID);
-            _logger.LogInformation($"ADIS16460 Prod ID Register reads {regValue}.");
-            return regValue.Equals(gyroProductID);
+            bool valid = false;
+            try
+            {
+                short regValue = _gyroscopeDevice.RegisterRead(Gyroscope.Register.PROD_ID);
+                valid = regValue.Equals(gyroProductID);
+                _logger.LogInformation($"ADIS16460 Prod ID Register reads {regValue}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error validating Gyro");
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
+            }
+            return valid;
         }
 
 

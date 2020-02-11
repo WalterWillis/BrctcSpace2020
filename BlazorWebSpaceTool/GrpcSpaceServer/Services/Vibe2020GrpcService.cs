@@ -52,5 +52,10 @@ namespace GrpcSpaceServer.Services
             response.Items.AddRange(_dataService.GetReadings(request.DataIterations));
             return Task.FromResult( response );
         }
+
+        public override Task<DeviceStatus> GetDeviceStatus(DeviceStatusRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(new DeviceStatus() { GyroStatus = _dataService.isGyroValid() });
+        }
     }
 }

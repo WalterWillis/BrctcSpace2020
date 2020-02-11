@@ -17,7 +17,7 @@
 </div>
 
 <div class="results">
-    <div class="resultsleft">
+    <div class="results-left">
         <h5>Single data point testing</h5>
         <br />
         <button disabled="@isRunning" @onclick="GetResult" class="btn btn-primary">Get Data</button>
@@ -46,7 +46,7 @@
         </GenericListTable>
     </div>
 
-    <div class="resultscenter">
+    <div class="results-center">
         <h5>Service call data block testing</h5>
         <br />
         <button disabled="@isRunning" @onclick="GetBulkResults" class="btn btn-primary">Gather all Async Data</button>
@@ -75,7 +75,7 @@
         </GenericListTable>
     </div>
 
-    <div class="resultsright">
+    <div class="results-right">
         <h5>Data stream testing</h5>
         <br />
         <button disabled="@isRunning" @onclick="GetStreamResults" class="btn btn-primary btn-sm">Stream Data</button>
@@ -84,8 +84,8 @@
         <button @onclick="SaveStreamToJson" class=" btn btn-info">Save To Json</button>
         <button @onclick="SaveStreamToCsv" class="btn btn-info">Save To CSV</button>
 
-        <p>Rows: @StreamResults.Count</p>
         <br />
+        <p>Rows: @StreamResults.Count</p>
 
         <GenericListTable Items="StreamResults">
             <TableHeader>
@@ -103,7 +103,21 @@
                 <td>@context.TransactionTime</td>
             </RowTemplate>
         </GenericListTable>
+    </div>
 
+    <div class="results-footer container-fluid p-3 my-3 bg-dark text-white">
+        <h4 style="margin-bottom:10px;">Device Details</h4>
+        <div class="card bg-secondary" style="max-width: 12%;margin-right:10px; float:left">
+            <button @onclick="GetStatus" class="btn btn-sm btn-info">Verify Gyroscope Connection Status</button>
+            <br />
+            <div>
+                @GyroStatus
+            </div>
+        </div>
+
+        @*<div class="card bg-secondary" style="max-width: 12%;margin:auto; float:left">
+            Second card for more health checks
+        </div>*@
     </div>
 
 </div>
@@ -117,6 +131,8 @@
 
     //Used to disable all buttons when streaming data. Not technically necessary, but better safe than sorry.
     public bool isRunning { get; set; } = false;
+
+    public RenderFragment GyroStatus { get; set; }
 
     private CancellationTokenSource CancellationToken { get; set; }
 
@@ -183,7 +199,7 @@
         {
             isRunning = true;
             StateHasChanged();
-            var data = await vibeClient.GetBulkDeviceDataAsync( new DeviceDataRequest() { DataIterations = 1000 } );
+            var data = await vibeClient.GetBulkDeviceDataAsync(new DeviceDataRequest() { DataIterations = 1000 });
 
             BulkResults = Utilities.ConvertToDataModel(data.Items.ToList());
             isRunning = false;
@@ -227,8 +243,19 @@
 
     public void SaveStreamToCsv()
     {
-          Utilities.SaveToCsv(StreamResults, this.JS, "StreamResults");
+        Utilities.SaveToCsv(StreamResults, this.JS, "StreamResults");
     }
+
+    public async void GetStatus()
+    {
+        var result = await vibeClient.GetDeviceStatusAsync(new DeviceStatusRequest());
+
+        if (result.GyroStatus)
+            GyroStatus = @<p class="bg-success card-text text-center">Gyroscope Valid</p>;
+        else
+            GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
+        StateHasChanged();
+}
 
 
 }
