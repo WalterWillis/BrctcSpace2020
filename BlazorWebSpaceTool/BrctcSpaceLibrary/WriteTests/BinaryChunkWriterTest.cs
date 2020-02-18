@@ -43,6 +43,10 @@ namespace BrctcSpaceLibrary.WriteTests
             Span<byte> rtcSegment = new Span<byte>(new byte[rtcBytes]);
             Span<byte> cpuSegment = new Span<byte>(new byte[cpuBytes]);
 
+            bool shown = false;
+            int gyroCounter = 0;
+            const int gyroTrigger = 200;
+
 
             try
             {
@@ -57,17 +61,41 @@ namespace BrctcSpaceLibrary.WriteTests
                         {
                             _accelerometerDevice.GetRaws(accelSegment);
                             stream.Write(accelSegment);
-                            //_gyroscopeDevice.AquireData(gyroSegment);
+
+                            if (gyroCounter++ >= gyroTrigger)
+                            {
+                                _gyroscopeDevice.AquireData(gyroSegment);
+                                gyroCounter = 0;
+                            }
+                            else
+                                gyroSegment.Fill(0);
                             stream.Write(gyroSegment);
-                           // GetCurrentDate(rtcSegment);
+
+                            GetCurrentDate(rtcSegment);
                             stream.Write(rtcSegment);
-                           // GetCpuTemp(cpuSegment);
+
+                            GetCpuTemp(cpuSegment);
                             stream.Write(cpuSegment);
 
-                            DataSetCounter++; ;
+                            DataSetCounter++;
+
+                            if (!shown)
+                            {
+                                Console.WriteLine($"{string.Join(',', accelSegment.ToArray())}\t{BitConverter.ToInt32(accelSegment.ToArray(), 0)}\t{BitConverter.ToInt32(accelSegment.ToArray(), 4)}\t{BitConverter.ToInt32(accelSegment.ToArray(), 8)}");
+                                Console.WriteLine(string.Join(',', gyroSegment.ToArray()));
+                                Console.WriteLine(string.Join(',', rtcSegment.ToArray()));
+                                Console.WriteLine(string.Join(',', cpuSegment.ToArray()));
+                                shown = true;
+                            }
+
+                            accelSegment.Clear();
+                            gyroSegment.Clear();
+                            rtcSegment.Clear();
+                            cpuSegment.Clear();
                         }
                         stream.WriteTo(fs);
                         fs.Flush();
+                       
                     }
                 }
             }

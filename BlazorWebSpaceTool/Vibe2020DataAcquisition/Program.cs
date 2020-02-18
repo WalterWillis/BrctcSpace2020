@@ -1,4 +1,5 @@
-﻿using BrctcSpaceLibrary.WriteTests;
+﻿using BrctcSpaceLibrary;
+using BrctcSpaceLibrary.WriteTests;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -145,7 +146,6 @@ namespace Vibe2020DataAcquisition
 
                         for (long i = 0; i < fs.Length; i += segmentSize)
                         {
-                            fs.Seek(i, SeekOrigin.Begin);
                             byte[] bytes = new byte[segmentSize];
 
                             fs.Read(bytes, 0, segmentSize);
@@ -153,10 +153,12 @@ namespace Vibe2020DataAcquisition
                             Span<byte> segment = new Span<byte>(bytes);
 
                             var accelSlice = segment.Slice(0, accelBytes);
-                            var accel = MemoryMarshal.Cast<byte, int>(accelSlice).ToArray();
+                            var accelX = BitConverter.ToInt32(accelSlice.ToArray(), 0);
+                            var accelY = BitConverter.ToInt32(accelSlice.ToArray(), 4);
+                            var accelZ = BitConverter.ToInt32(accelSlice.ToArray(), 8);
 
                             var gyroSlice = segment.Slice(accelBytes, gyroBytes);
-                            var gyro = MemoryMarshal.Cast<byte, short>(accelSlice).ToArray();
+                            var gyro = MemoryMarshal.Cast<byte, short>(gyroSlice).ToArray();
 
                             var rtcSlice = segment.Slice((accelBytes + gyroBytes), rtcBytes);
                             var time = BitConverter.ToInt64(rtcSlice);
@@ -164,9 +166,15 @@ namespace Vibe2020DataAcquisition
                             var cpuSlice = segment.Slice((accelBytes + gyroBytes + rtcBytes), cpuBytes);
                             var cpuTemp = BitConverter.ToDouble(cpuSlice);
 
-                            string line = string.Join(comma, accel);
+                            string line = string.Join(comma, accelX);
                             line += comma;
-                            line += string.Join(comma, gyro);
+                            line += string.Join(comma, accelY);
+                            line += comma;
+                            line += string.Join(comma, accelZ);
+                            line += comma;
+                            line += string.Join(comma, gyro); //Non scaled
+                            line += comma;
+                            line += string.Join(comma, GyroConversionHelper.GetGyroscopeDetails(gyroSlice).ToArray()); //scaled
                             line += comma;
                             line += time;
                             line += comma;
