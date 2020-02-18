@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BlazorWebSpaceTool\BrctcSpaceLibrary\BrctcSpaceLibrary.csproj" />
+    <ProjectReference Include="..\BrctcSpaceLibrary\BrctcSpaceLibrary.csproj" />
   </ItemGroup>
 
 </Project>

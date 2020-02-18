@@ -50,11 +50,11 @@ namespace BrctcSpaceLibrary.WriteTests
 
                     _accelerometerDevice.GetRaws(accelSegment);
                     stream.Write(accelSegment);
-                    _gyroscopeDevice.AquireData(gyroSegment);
+                    //_gyroscopeDevice.AquireData(gyroSegment);
                     stream.Write(gyroSegment);
-                    GetCurrentDate(rtcSegment);
+                    //GetCurrentDate(rtcSegment);
                     stream.Write(rtcSegment);
-                    GetCpuTemp(cpuSegment);
+                   // GetCpuTemp(cpuSegment);
                     stream.Write(cpuSegment);
 
                     DataSetCounter++;

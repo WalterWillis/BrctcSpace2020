@@ -48,15 +48,15 @@ namespace BrctcSpaceLibrary.WriteTests
                             writer.Write(accl[0]);
                             writer.Write(accl[1]);
                             writer.Write(accl[2]);
-                            var gyro = _gyroscopeDevice.BurstRead();
+                            var gyro = new int[4];//_gyroscopeDevice.BurstRead();
                             writer.Write(gyro[0]);
                             writer.Write(gyro[1]);
                             writer.Write(gyro[2]);
                             writer.Write(gyro[3]);
 
-                            writer.Write(DateTime.Now.Ticks);
+                            writer.Write((Int64)0);
 
-                            writer.Write(_cpuDevice.Temperature.Fahrenheit);
+                            writer.Write(30.00);
 
                             DataSetCounter++;
                         }

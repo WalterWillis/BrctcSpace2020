@@ -8,32 +8,25 @@ using System.Threading.Tasks;
 
 namespace BrctcSpaceLibrary.WriteTests
 {
-    public class SingleThreadBinaryChunkkTest
+    public class PureMemoryTest
     {
         private Accelerometer _accelerometerDevice;
         private Gyroscope _gyroscopeDevice;
         private CpuTemperature _cpuDevice;
 
-        private string fileName;
-
-        /// <summary>
-        /// Keeps track of the amount of data sets for our test
-        /// </summary>
         public long DataSetCounter { get; set; } = 0;
 
-        public SingleThreadBinaryChunkkTest(string fileName)
+        public PureMemoryTest()
         {
             _accelerometerDevice = new Accelerometer();
             _gyroscopeDevice = new Gyroscope();
             _cpuDevice = new CpuTemperature();
-
-            this.fileName = fileName;
         }
 
         public void Start(System.Threading.CancellationToken token)
         {
             const int segmentSize = 48;
-            const int chunkSize = (4096 / segmentSize) * 1024;
+            const int chunkSize = (4096 / segmentSize);
             const int accelBytes = 12;
             const int gyroBytes = 20;
             const int rtcBytes = 8;
@@ -46,37 +39,27 @@ namespace BrctcSpaceLibrary.WriteTests
             Span<byte> rtcSegment = data.Slice(accelBytes + gyroBytes, rtcBytes);
             Span<byte> cpuSegment = data.Slice(accelBytes + gyroBytes + rtcBytes, cpuBytes);
 
-            byte[] array = data.ToArray();
-
-            Action dataHandler = () => { WriteData(array); };
-
             try
             {
                 using (MemoryStream stream = new MemoryStream())
                 {
                     while (!token.IsCancellationRequested)
                     {
-
-
                         if (token.IsCancellationRequested)
                             token.ThrowIfCancellationRequested();
 
                         for (int i = 0; i < chunkSize; i++)
                         {
                             _accelerometerDevice.GetRaws(accelSegment);
-                            stream.Write(accelSegment);
                             //_gyroscopeDevice.AquireData(gyroSegment);
-                            stream.Write(gyroSegment);
-                            //GetCurrentDate(rtcSegment);
-                            stream.Write(rtcSegment);
+                           // GetCurrentDate(rtcSegment);
                            // GetCpuTemp(cpuSegment);
-                            stream.Write(cpuSegment);
+
+                            stream.Write(data);
                             DataSetCounter++;
                         }
 
-                        array = stream.ToArray();
-
-                        Parallel.Invoke(dataHandler);
+                        stream.Position = 0;
                     }
                 }
             }
@@ -85,17 +68,6 @@ namespace BrctcSpaceLibrary.WriteTests
 
             }
 
-        }
-
-        private void WriteData(byte[] data)
-        {
-            using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
-            {
-                using (BinaryWriter writer = new BinaryWriter(stream))
-                {
-                    stream.Write(data);
-                }
-            }
         }
 
         private void GetCpuTemp(Span<byte> buffer)
@@ -126,11 +98,10 @@ namespace BrctcSpaceLibrary.WriteTests
             buffer[6] = bytes[6];
         }
 
-        ~SingleThreadBinaryChunkkTest()
+        ~PureMemoryTest()
         {
             _accelerometerDevice.Dispose();
             _gyroscopeDevice.Dispose();
         }
-
     }
 }

@@ -1,5 +1,6 @@
 ﻿using BrctcSpaceLibrary.WriteTests;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -17,14 +18,16 @@ namespace Vibe2020DataAcquisition
             string convertedfile = Path.Combine(Directory.GetCurrentDirectory(), "converted.txt");
             const int timeLimit = 1000 * 300; //timelimit in miliseconds
 
-            PerformBinaryTest(fileName, timeLimit);
-            ReadFile(fileName, convertedfile, timeLimit);
+            //PerformBinaryTest(fileName, timeLimit);
+            //ReadFile(fileName, convertedfile, timeLimit);
             PerformBinaryChunkTest(fileName, timeLimit);
             ReadFile(fileName, convertedfile, timeLimit);
-            PerformSingleThreadBinaryChunkTest(fileName, timeLimit);
-            ReadFile(fileName, convertedfile, timeLimit);
-            PerformSimpleBinaryTest(fileName, timeLimit);
-            ReadFile(fileName, convertedfile, timeLimit);
+            //PerformSingleThreadBinaryChunkTest(fileName, timeLimit);
+            //ReadFile(fileName, convertedfile, timeLimit);
+            //PerformSimpleBinaryTest(fileName, timeLimit);
+            //ReadFile(fileName, convertedfile, timeLimit);
+
+            //PerformInMemoryTest(timeLimit);
         }
 
         private static void PerformBinaryTest(string fileName, int timeLimit)
@@ -34,14 +37,13 @@ namespace Vibe2020DataAcquisition
             CancellationTokenSource source = new CancellationTokenSource();
             source.CancelAfter(timeLimit);
             CancellationToken token = source.Token;
-            DateTime startTime = DateTime.Now;
-            DateTime endTime;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
 
             binary.Start(token);
 
-            endTime = DateTime.Now;
-
-            Console.WriteLine($"Test complete! Took {endTime.Subtract(startTime).TotalSeconds} seconds to create {binary.DataSetCounter} datasets.");
+            stopwatch.Stop();
+            Console.WriteLine($"Test complete! Took {stopwatch.Elapsed.TotalSeconds} seconds to create {binary.DataSetCounter} datasets.");
             GC.Collect();
             GC.WaitForPendingFinalizers(); //ensure file handle from aquisition has ended
         }
@@ -53,14 +55,14 @@ namespace Vibe2020DataAcquisition
             CancellationTokenSource source = new CancellationTokenSource();
             source.CancelAfter(timeLimit);
             CancellationToken token = source.Token;
-            DateTime startTime = DateTime.Now;
-            DateTime endTime;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
 
             binary.Start(token);
 
-            endTime = DateTime.Now;
+            stopwatch.Stop();
 
-            Console.WriteLine($"Test complete! Took {endTime.Subtract(startTime).TotalSeconds} seconds to create {binary.DataSetCounter} datasets.");
+            Console.WriteLine($"Test complete! Took {stopwatch.Elapsed.TotalSeconds} seconds to create {binary.DataSetCounter} datasets.");
             GC.Collect();
             GC.WaitForPendingFinalizers(); //ensure file handle from aquisition has ended
         }
@@ -72,14 +74,14 @@ namespace Vibe2020DataAcquisition
             CancellationTokenSource source = new CancellationTokenSource();
             source.CancelAfter(timeLimit);
             CancellationToken token = source.Token;
-            DateTime startTime = DateTime.Now;
-            DateTime endTime;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
 
             binary.Start(token);
 
-            endTime = DateTime.Now;
+            stopwatch.Stop();
 
-            Console.WriteLine($"Test complete! Took {endTime.Subtract(startTime).TotalSeconds} seconds to create {binary.DataSetCounter} datasets.");
+            Console.WriteLine($"Test complete! Took {stopwatch.Elapsed.TotalSeconds} seconds to create {binary.DataSetCounter} datasets.");
             GC.Collect();
             GC.WaitForPendingFinalizers(); //ensure file handle from aquisition has ended
         }
@@ -91,14 +93,33 @@ namespace Vibe2020DataAcquisition
             CancellationTokenSource source = new CancellationTokenSource();
             source.CancelAfter(timeLimit);
             CancellationToken token = source.Token;
-            DateTime startTime = DateTime.Now;
-            DateTime endTime;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
 
             binary.Start(token);
 
-            endTime = DateTime.Now;
+            stopwatch.Stop();
 
-            Console.WriteLine($"Test complete! Took {endTime.Subtract(startTime).TotalSeconds} seconds to create {binary.DataSetCounter} datasets. Ignore next metric.");
+            Console.WriteLine($"Test complete! Took {stopwatch.Elapsed.TotalSeconds} seconds to create {binary.DataSetCounter} datasets. Ignore next metric.");
+            GC.Collect();
+            GC.WaitForPendingFinalizers(); //ensure file handle from aquisition has ended
+        }
+
+        private static void PerformInMemoryTest(int timeLimit)
+        {
+            Console.WriteLine("Simple PureMemory (No SaveFile) Test using 4KB chunk");
+            PureMemoryTest binary = new PureMemoryTest();
+            CancellationTokenSource source = new CancellationTokenSource();
+            source.CancelAfter(timeLimit);
+            CancellationToken token = source.Token;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            binary.Start(token);
+
+            stopwatch.Stop();
+
+            Console.WriteLine($"Test complete! Took {stopwatch.Elapsed.TotalSeconds} seconds to create {binary.DataSetCounter / (timeLimit / 1000)} datasets.");
             GC.Collect();
             GC.WaitForPendingFinalizers(); //ensure file handle from aquisition has ended
         }
@@ -120,7 +141,7 @@ namespace Vibe2020DataAcquisition
                         const int cpuBytes = 8;
                         const char comma = ',';
 
-                        Console.WriteLine($"File size is {fs.Length} bytes and estimated datasets is {fs.Length / segmentSize}.  Write Speed is estimated at {(fs.Length / segmentSize) / (timeLimit /1000)} datasets per second!");
+                        Console.WriteLine($"File size is {fs.Length} bytes and estimated datasets is {fs.Length / segmentSize}.  Write Speed is estimated at {(fs.Length / segmentSize) / (timeLimit / 1000)} datasets per second!");
 
                         for (long i = 0; i < fs.Length; i += segmentSize)
                         {
