@@ -3,7 +3,7 @@ using System.Device.I2c;
 using System.Diagnostics;
 using Iot.Device.Rtc;
 
-namespace GrpcSpaceServer.Device
+namespace BrctcSpaceLibrary.Device
 {
     public class RTC : IDisposable
     {
@@ -46,6 +46,20 @@ namespace GrpcSpaceServer.Device
         public DateTime GetCurrentDate()
         {
             return _rtc.DateTime;
+        }
+        public void GetCurrentDate(Span<byte> buffer)
+        {
+            byte[] bytes = BitConverter.GetBytes(_rtc.DateTime.Ticks);
+
+            //assign the values, not the variable for reference assignment
+            buffer[0] = bytes[0];
+            buffer[1] = bytes[1];
+            buffer[2] = bytes[2];
+            buffer[3] = bytes[3];
+            buffer[4] = bytes[4];
+            buffer[5] = bytes[5];
+            buffer[6] = bytes[6];
+            buffer[7] = bytes[7];
         }
 
         public void SetDate(DateTime newDate)

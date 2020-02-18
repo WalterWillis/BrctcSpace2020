@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Device.Spi;
 using Iot.Device.Adc;
 
-namespace GrpcSpaceServer.Device
+namespace BrctcSpaceLibrary.Device
 {
     /// <summary>
     /// Methods for communicating with our accelerometers. Uses three accelerometers through an MCP3208 ADC Pi hat.
@@ -12,11 +12,7 @@ namespace GrpcSpaceServer.Device
     {
         private bool _isdisposing = false;
         private SpiConnectionSettings _settings;
-        //We use pins 0, 2 and 4 as X, Y, and Z respectively
-        private Dictionary<Channel, int> _channels =
-            new Dictionary<Channel, int> { { Channel.X, 0 }, { Channel.Y, 2 }, { Channel.Z, 4 } };
         private double _resolution = 4095 * 3.3;
-
         private Mcp3208 _adc;
 
         /// <summary>
@@ -48,8 +44,6 @@ namespace GrpcSpaceServer.Device
             }
 
             _settings = settings;
-            _channels = new Dictionary<Channel, int>
-            { { Channel.X, channel_x }, { Channel.Y, channel_y }, { Channel.Z, channel_z } };
 
             _resolution = 4095 * voltRef;
 
@@ -66,7 +60,7 @@ namespace GrpcSpaceServer.Device
         /// <returns></returns>
         public int GetRaw(Channel channel)
         {
-            return _adc.Read(_channels[channel]);
+            return _adc.Read((int)channel);
         }
 
         /// <summary>
@@ -75,12 +69,32 @@ namespace GrpcSpaceServer.Device
         /// <returns></returns>
         public int[] GetRaws()
         {
-            int[] values = new int[] {
-                _adc.Read(_channels[Channel.X]),
-                _adc.Read(_channels[Channel.Y]),
-                _adc.Read(_channels[Channel.Z])
+            return new int[] {
+                _adc.Read((int)Channel.X),
+                _adc.Read((int)Channel.Y),
+                _adc.Read((int)Channel.Z)
             };
-            return values;
+        }
+
+        public void GetRaws(Span<byte> buffer)
+        {
+            byte[] bytes = BitConverter.GetBytes(_adc.Read((int)Channel.X));
+            buffer[0] = bytes[0];
+            buffer[1] = bytes[1];
+            buffer[2] = bytes[2];
+            buffer[3] = bytes[3];
+
+            bytes = BitConverter.GetBytes(_adc.Read((int)Channel.Y));
+            buffer[4] = bytes[0];
+            buffer[5] = bytes[1];
+            buffer[6] = bytes[2];
+            buffer[7] = bytes[3];
+
+            bytes = BitConverter.GetBytes(_adc.Read((int)Channel.Z));
+            buffer[8] = bytes[0];
+            buffer[9] = bytes[1];
+            buffer[10] = bytes[2];
+            buffer[11] = bytes[3];
         }
 
         /// <summary>
@@ -90,7 +104,7 @@ namespace GrpcSpaceServer.Device
         /// <returns></returns>
         public double GetScaledValue(Channel channel)
         {
-            return _adc.Read(_channels[channel]) / _resolution;
+            return _adc.Read((int)channel) / _resolution;
         }
 
 
@@ -102,14 +116,15 @@ namespace GrpcSpaceServer.Device
         {
 
             return new double[] {
-                _adc.Read(_channels[Channel.X]) / _resolution,
-                _adc.Read(_channels[Channel.Y]) / _resolution,
-                _adc.Read(_channels[Channel.Z]) / _resolution
+                _adc.Read((int)Channel.X) / _resolution,
+                _adc.Read((int)Channel.Y) / _resolution,
+                _adc.Read((int)Channel.Z) / _resolution
             };
 
         }
 
-        public enum Channel { X, Y, Z }
+        //We use pins 0, 2 and 4 as X, Y, and Z respectively
+        public enum Channel : int { X = 0, Y = 2, Z = 4 }
 
 
         public void Dispose()

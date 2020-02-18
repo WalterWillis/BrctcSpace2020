@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO.Ports;
 
-namespace GrpcSpaceServer.Device
+namespace BrctcSpaceLibrary.Device
 {
     public class UART: IDisposable
     {

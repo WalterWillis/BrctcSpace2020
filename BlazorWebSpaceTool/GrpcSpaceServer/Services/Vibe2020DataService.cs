@@ -1,6 +1,6 @@
 ﻿using BrctcSpaceLibrary;
 using BrctcSpace;
-using GrpcSpaceServer.Device;
+using BrctcSpaceLibrary.Device;
 using GrpcSpaceServer.Services.Interfaces;
 using Iot.Device.CpuTemperature;
 using Microsoft.Extensions.Logging;

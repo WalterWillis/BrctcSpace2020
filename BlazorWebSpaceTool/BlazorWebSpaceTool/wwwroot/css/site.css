@@ -83,26 +83,26 @@ app {
         top: 0.5rem;
     }
 
-.results {
+.subgrid {
     display: grid;
-    grid-template-areas: "resultsleft resultscenter resultsright" "footer footer footer";
+    grid-template-areas: "subgridleft subgridcenter subgridright" "footer footer footer";
     grid-template-columns: minmax(min-content, 1fr) 3fr minmax(min-content, 1fr);
     grid-template-rows: 1fr min-content;
     grid-gap: 10px;
 }
 
-.results-left {
-    grid-area: resultsleft;
+.subgrid-left {
+    grid-area: subgridleft;
 }
 
-.results-center {
-    grid-area: resultscenter;
+.subgrid-center {
+    grid-area: subgridcenter;
 }
 
-.results-right {
-    grid-area: resultsright;
+.subgrid-right {
+    grid-area: subgridright;
 }
 
-.results-footer {
+.subgrid-footer {
     grid-area: footer;
 }

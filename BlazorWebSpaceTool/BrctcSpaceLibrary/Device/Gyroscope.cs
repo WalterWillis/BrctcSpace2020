@@ -3,7 +3,7 @@ using System.Device.Spi;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace GrpcSpaceServer.Device
+namespace BrctcSpaceLibrary.Device
 {
     public class Gyroscope : IDisposable
     {
@@ -77,6 +77,41 @@ namespace GrpcSpaceServer.Device
             return MemoryMarshal.Cast<byte, int>(burstData); //remove the leading empty bytes
         }
 
+        public void AquireData(Span<byte> buffer)
+        {
+            Span<byte> Diag = FastRegisterRead(Register.DIAG_STAT);
+            Span<byte> GyroX = FastRegisterRead(Register.X_GYRO_OUT);
+            Span<byte> GyroY = FastRegisterRead(Register.Y_GYRO_OUT);
+            Span<byte> GyroZ = FastRegisterRead(Register.Z_GYRO_OUT);
+            Span<byte> AccelX = FastRegisterRead(Register.X_ACCL_OUT);
+            Span<byte> AccelY = FastRegisterRead(Register.Y_ACCL_OUT);
+            Span<byte> AccelZ = FastRegisterRead(Register.Z_ACCL_OUT);
+            Span<byte> Temp = FastRegisterRead(Register.TEMP_OUT);
+            Span<byte> Sample = FastRegisterRead(Register.SMPL_CNTR);
+            Span<byte> Checksum = FastRegisterRead(Register.CAL_CRC);
+
+            buffer[0] = Diag[0];
+            buffer[1] = Diag[1];
+            buffer[2] = GyroX[0];
+            buffer[3] = GyroX[1];
+            buffer[4] = GyroY[0];
+            buffer[5] = GyroY[1];
+            buffer[6] = GyroZ[0];
+            buffer[7] = GyroZ[1];
+            buffer[8] = AccelX[0];
+            buffer[9] = AccelX[1];
+            buffer[10] = AccelY[0];
+            buffer[11] = AccelY[1];
+            buffer[12] = AccelZ[0];
+            buffer[13] = AccelZ[1];
+            buffer[14] = Temp[0];
+            buffer[15] = Temp[1];
+            buffer[16] = Sample[0];
+            buffer[17] = Sample[1];
+            buffer[18] = Checksum[0];
+            buffer[19]= Checksum[1];
+        }
+
         public short RegisterRead(Register regAddr)
         {
             short result;
@@ -98,6 +133,12 @@ namespace GrpcSpaceServer.Device
             _gyro.TransferFullDuplex(new byte[] { (byte)regAddr, 0x00 }, reply);
             _gyro.TransferFullDuplex(new byte[] { 0x00, 0x00 }, reply);
             return reply;
+        }
+
+        private void FastRegisterRead(Span<byte> replyBuffer, Register regAddr)
+        {
+            _gyro.TransferFullDuplex(new byte[] { (byte)regAddr, 0x00 }, replyBuffer);
+            _gyro.TransferFullDuplex(new byte[] { 0x00, 0x00 }, replyBuffer);
         }
 
 

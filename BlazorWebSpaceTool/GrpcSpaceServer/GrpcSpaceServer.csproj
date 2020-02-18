@@ -10,9 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore" Version="2.26.0" />
-    <PackageReference Include="Iot.Device.Bindings" Version="1.0.0" />
     <PackageReference Include="System.Device.Gpio" Version="1.0.0" />
-    <PackageReference Include="System.IO.Ports" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>
