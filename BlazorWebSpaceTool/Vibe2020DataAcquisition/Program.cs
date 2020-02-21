@@ -21,8 +21,10 @@ namespace Vibe2020DataAcquisition
 
             //PerformBinaryTest(fileName, timeLimit);
             //ReadFile(fileName, convertedfile, timeLimit);
-            PerformBinaryChunkTest(fileName, timeLimit);
-            ReadFile(fileName, convertedfile, timeLimit);
+            //PerformBinaryChunkTest(fileName, timeLimit);
+            //ReadFile(fileName, convertedfile, timeLimit);
+            PerformScaledBinaryChunkTest(fileName, timeLimit);
+            ReadFile(fileName, convertedfile, timeLimit, accelBytes:60);
             //PerformSingleThreadBinaryChunkTest(fileName, timeLimit);
             //ReadFile(fileName, convertedfile, timeLimit);
             //PerformSimpleBinaryTest(fileName, timeLimit);
@@ -53,6 +55,25 @@ namespace Vibe2020DataAcquisition
         {
             Console.WriteLine("Binary Test using 4KB chunk");
             BinaryChunkWriterTest binary = new BinaryChunkWriterTest(fileName);
+            CancellationTokenSource source = new CancellationTokenSource();
+            source.CancelAfter(timeLimit);
+            CancellationToken token = source.Token;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            binary.Start(token);
+
+            stopwatch.Stop();
+
+            Console.WriteLine($"Test complete! Took {stopwatch.Elapsed.TotalSeconds} seconds to create {binary.DataSetCounter} datasets.");
+            GC.Collect();
+            GC.WaitForPendingFinalizers(); //ensure file handle from aquisition has ended
+        }
+
+        private static void PerformScaledBinaryChunkTest(string fileName, int timeLimit)
+        {
+            Console.WriteLine("Binary Test using 4KB chunk");
+            BinaryChunkWriterScaledTest binary = new BinaryChunkWriterScaledTest(fileName);
             CancellationTokenSource source = new CancellationTokenSource();
             source.CancelAfter(timeLimit);
             CancellationToken token = source.Token;
@@ -125,7 +146,7 @@ namespace Vibe2020DataAcquisition
             GC.WaitForPendingFinalizers(); //ensure file handle from aquisition has ended
         }
 
-        private static void ReadFile(string fileName, string convertedFile, int timeLimit)
+        private static void ReadFile(string fileName, string convertedFile, int timeLimit, int accelBytes = 12, int gyroBytes = 20, int rtcBytes = 8, int cpuBytes = 8)
         {
             using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
             {
@@ -135,11 +156,8 @@ namespace Vibe2020DataAcquisition
                     {
                         long fileLength = fs.Length;
 
-                        const int segmentSize = 48;
-                        const int accelBytes = 12;
-                        const int gyroBytes = 20;
-                        const int rtcBytes = 8;
-                        const int cpuBytes = 8;
+                        int segmentSize = accelBytes + gyroBytes + rtcBytes + cpuBytes;
+
                         const char comma = ',';
 
                         Console.WriteLine($"File size is {fs.Length} bytes and estimated datasets is {fs.Length / segmentSize}.  Write Speed is estimated at {(fs.Length / segmentSize) / (timeLimit / 1000)} datasets per second!");

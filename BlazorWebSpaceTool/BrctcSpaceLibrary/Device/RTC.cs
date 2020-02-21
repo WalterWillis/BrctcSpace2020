@@ -9,7 +9,7 @@ namespace BrctcSpaceLibrary.Device
     {
         private bool _isdisposing = false;
         private I2cConnectionSettings _settings;
-        private Ds1307 _rtc;
+        private Ds3231 _rtc;
 
         /// <summary>
         /// Ds3231 RTC
@@ -20,7 +20,7 @@ namespace BrctcSpaceLibrary.Device
 
             using (I2cDevice device = I2cDevice.Create(_settings))
             {
-                _rtc = new Ds1307(device);
+                _rtc = new Ds3231(device);
             }
         }
 
@@ -39,7 +39,7 @@ namespace BrctcSpaceLibrary.Device
 
             using (I2cDevice device = I2cDevice.Create(_settings))
             {
-                _rtc = new Ds1307(device);
+                _rtc = new Ds3231(device);
             }
         }
 

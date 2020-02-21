@@ -7,7 +7,7 @@ using System.Text;
 
 namespace BrctcSpaceLibrary.WriteTests
 {
-    public class BinaryChunkWriterTest
+    public class BinaryChunkWriterScaledTest
     {
         private Accelerometer _accelerometerDevice;
         private Gyroscope _gyroscopeDevice;
@@ -21,7 +21,7 @@ namespace BrctcSpaceLibrary.WriteTests
         /// </summary>
         public long DataSetCounter { get; set; } = 0;
 
-        public BinaryChunkWriterTest(string fileName)
+        public BinaryChunkWriterScaledTest(string fileName)
         {
             _accelerometerDevice = new Accelerometer();
             _gyroscopeDevice = new Gyroscope();
@@ -33,9 +33,9 @@ namespace BrctcSpaceLibrary.WriteTests
 
         public void Start(System.Threading.CancellationToken token)
         {
-            const int segmentSize = 48;
+            const int segmentSize = 60;
             const int chunkSize = (4096 / segmentSize) * 1024;
-            const int accelBytes = 12;
+            const int accelBytes = 24;
             const int gyroBytes = 20;
             const int rtcBytes = 8;
             const int cpuBytes = 8;
@@ -47,10 +47,8 @@ namespace BrctcSpaceLibrary.WriteTests
 
             bool shown = false;
             int gyroCounter = 0;
-            int rtcCounter = 0;
 
             const int gyroTrigger = 200;
-            const int rtcTrigger = 8000;
 
 
             try
@@ -64,7 +62,7 @@ namespace BrctcSpaceLibrary.WriteTests
 
                         for (int i = 0; i < chunkSize; i++)
                         {
-                            _accelerometerDevice.GetRaws(accelSegment);
+                            _accelerometerDevice.GetScaledValues(accelSegment);
                             stream.Write(accelSegment);
 
                             if (gyroCounter++ >= gyroTrigger)
@@ -75,13 +73,8 @@ namespace BrctcSpaceLibrary.WriteTests
                             else
                                 gyroSegment.Fill(0);
                             stream.Write(gyroSegment);
-                            if (rtcCounter++ >= rtcTrigger)
-                            {
-                                _rtcDevice.GetCurrentDate(rtcSegment);
-                                rtcCounter = 0;
-                            }
-                            else
-                                rtcSegment.Fill(0);
+
+                            GetCurrentDate(rtcSegment);
                             stream.Write(rtcSegment);
 
                             GetCpuTemp(cpuSegment);
@@ -105,7 +98,7 @@ namespace BrctcSpaceLibrary.WriteTests
                         }
                         stream.WriteTo(fs);
                         fs.Flush();
-                       
+
                     }
                 }
             }
@@ -144,12 +137,11 @@ namespace BrctcSpaceLibrary.WriteTests
             buffer[6] = bytes[6];
         }
 
-        ~BinaryChunkWriterTest()
+        ~BinaryChunkWriterScaledTest()
         {
             _accelerometerDevice.Dispose();
             _gyroscopeDevice.Dispose();
             fs.Dispose();
         }
-
     }
 }

@@ -12,7 +12,7 @@ namespace BrctcSpaceLibrary.Device
     {
         private bool _isdisposing = false;
         private SpiConnectionSettings _settings;
-        private double _resolution = 4095 * 3.3;
+        private double _resRatio = 5 / 4095;
         private Mcp3208 _adc;
 
         /// <summary>
@@ -20,7 +20,7 @@ namespace BrctcSpaceLibrary.Device
         /// </summary>
         public Accelerometer()
         {
-            _settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode1, ClockFrequency = 1000000 };
+            _settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1000000 };
 
             using (SpiDevice spi = SpiDevice.Create(_settings))
             {
@@ -36,16 +36,16 @@ namespace BrctcSpaceLibrary.Device
         /// <param name="channel_y">Defaults to channel 1</param>
         /// <param name="channel_z">Defaults to channel 2</param>
         /// <param name="voltRef">Defaults to 3.3 volts</param>
-        public Accelerometer(SpiConnectionSettings settings, int channel_x = 0, int channel_y = 1, int channel_z = 2, double voltRef = 3.3)
+        public Accelerometer(SpiConnectionSettings settings, int channel_x = 0, int channel_y = 1, int channel_z = 2, double voltRef = 5)
         {
             if (settings == null)
             {
-                settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode1, ClockFrequency = 1000000 };
+                settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1000000 };
             }
 
             _settings = settings;
 
-            _resolution = 4095 * voltRef;
+            _resRatio = voltRef / 4095;
 
             using (SpiDevice spi = SpiDevice.Create(_settings))
             {
@@ -104,7 +104,7 @@ namespace BrctcSpaceLibrary.Device
         /// <returns></returns>
         public double GetScaledValue(Channel channel)
         {
-            return _adc.Read((int)channel) / _resolution;
+            return _adc.Read((int)channel) / _resRatio;
         }
 
 
@@ -116,11 +116,48 @@ namespace BrctcSpaceLibrary.Device
         {
 
             return new double[] {
-                _adc.Read((int)Channel.X) / _resolution,
-                _adc.Read((int)Channel.Y) / _resolution,
-                _adc.Read((int)Channel.Z) / _resolution
+                _adc.Read((int)Channel.X) * _resRatio,
+                _adc.Read((int)Channel.Y) * _resRatio,
+                _adc.Read((int)Channel.Z) * _resRatio
             };
 
+        }
+
+        /// <summary>
+        /// fills a 24 bit buffer with 3 double values
+        /// </summary>
+        /// <param name="buffer"></param>
+        public void GetScaledValues(Span<byte> buffer)
+        {
+            byte[] bytes = BitConverter.GetBytes(_adc.Read((int)Channel.X) * _resRatio);
+            buffer[0] = bytes[0];
+            buffer[1] = bytes[1];
+            buffer[2] = bytes[2];
+            buffer[3] = bytes[3];
+            buffer[4] = bytes[4];
+            buffer[5] = bytes[5];
+            buffer[6] = bytes[6];
+            buffer[7] = bytes[7];
+
+            bytes = BitConverter.GetBytes(_adc.Read((int)Channel.Y) * _resRatio);
+            buffer[8] = bytes[0];
+            buffer[9] = bytes[1];
+            buffer[10] = bytes[2];
+            buffer[11] = bytes[3];
+            buffer[12] = bytes[4];
+            buffer[13] = bytes[5];
+            buffer[14] = bytes[6];
+            buffer[15] = bytes[7];
+
+            bytes = BitConverter.GetBytes(_adc.Read((int)Channel.Z) * _resRatio);
+            buffer[16] = bytes[0];
+            buffer[17] = bytes[1];
+            buffer[18] = bytes[2];
+            buffer[19] = bytes[3];
+            buffer[20] = bytes[4];
+            buffer[21] = bytes[5];
+            buffer[22] = bytes[6];
+            buffer[23] = bytes[7];
         }
 
         //We use pins 0, 2 and 4 as X, Y, and Z respectively
