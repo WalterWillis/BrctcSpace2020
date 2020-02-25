@@ -18,47 +18,31 @@
 
 <div class="subgrid">
     <div class="subgrid-left">
-        <h5>Single data point testing</h5>
+
+        <div class="btn-group">
+            <button class="@singleClass" @onclick="ActivateSingle">Single</button>
+            <button class="@streamClass" @onclick="ActivateStream">Stream</button>
+            <button class="@bulkClass" @onclick="ActivateBulk">Bulk</button>
+        </div>
+
         <br />
-        <button disabled="@isRunning" @onclick="GetResult" class="btn btn-primary">Get Data</button>
 
-        <button @onclick="SaveSingleToJson" class="btn btn-info">Save To Json</button>
-        <button @onclick="SaveSingleToCsv" class="btn btn-info">Save To CSV</button>
-
-        <br />
-        <p>Rows: @SingleResults.Count</p>
-
-        <GenericListTable Items="SingleResults">
-            <TableHeader>
-                <th>Accelerometer</th>
-                <th>Raw Gyroscope</th>
-                <th>Gyroscope</th>
-                <th>Cpu Temp</th>
-                <th>Transaction Timestamp</th>
-            </TableHeader>
-            <RowTemplate>
-                <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
-                <td>@(context.GyroData_Raw != null ? string.Join(',', context.GyroData_Raw) : "None")</td>
-                <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
-                <td>@context.CpuTemp</td>
-                <td>@context.TransactionTime</td>
-            </RowTemplate>
-        </GenericListTable>
+        <button @onclick="SaveResultsToJson" disabled="@(Results == null || Results.Count <= 0)" class="btn btn-info">Save To Json</button>
+        <button @onclick="SaveResultsToCsv" disabled="@(Results == null || Results.Count <= 0)" class="btn btn-info">Save To CSV</button>
     </div>
-
     <div class="subgrid-center">
-        <h5>Service call data block testing</h5>
+        <h5>@resultTile</h5>
         <br />
-        <button disabled="@isRunning" @onclick="GetBulkResults" class="btn btn-primary">Gather all Async Data</button>
 
-        <button @onclick="SaveBulkToJson" class="btn btn-info">Save To Json</button>
-        <button @onclick="SaveBulkToCsv" class="btn btn-info">Save To CSV</button>
+        <button disabled="@isRunning" @onclick="GetResults" class="btn btn-primary">Get Data</button>
+        <button disabled="@(!isRunning)" hidden="@(!resultQueryType.Equals(ResultQueryType.Stream))" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel Stream</button>
 
         <br />
-        <p>Rows: @BulkResults.Count</p>
+        <p>Rows: @Results.Count</p>
 
-        <GenericListTable Items="BulkResults">
+        <GenericListTable Items="Results">
             <TableHeader>
+                <th>Raw Accelerometer</th>
                 <th>Accelerometer</th>
                 <th>Raw Gyroscope</th>
                 <th>Gyroscope</th>
@@ -66,36 +50,7 @@
                 <th>Transaction Timestamp</th>
             </TableHeader>
             <RowTemplate>
-                <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
-                <td>@(context.GyroData_Raw != null ? string.Join(',', context.GyroData_Raw) : "None")</td>
-                <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
-                <td>@(context.CpuTemp)</td>
-                <td>@context.TransactionTime</td>
-            </RowTemplate>
-        </GenericListTable>
-    </div>
-
-    <div class="subgrid-right">
-        <h5>Data stream testing</h5>
-        <br />
-        <button disabled="@isRunning" @onclick="GetStreamResults" class="btn btn-primary btn-sm">Stream Data</button>
-        <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel Stream</button>
-
-        <button @onclick="SaveStreamToJson" class=" btn btn-info">Save To Json</button>
-        <button @onclick="SaveStreamToCsv" class="btn btn-info">Save To CSV</button>
-
-        <br />
-        <p>Rows: @StreamResults.Count</p>
-
-        <GenericListTable Items="StreamResults">
-            <TableHeader>
-                <th>Accelerometer</th>
-                <th>Raw Gyroscope</th>
-                <th>Gyroscope</th>
-                <th>Cpu Temp</th>
-                <th>Transaction Timestamp</th>
-            </TableHeader>
-            <RowTemplate>
+                <td>@(context.AccelData_Raw != null ? string.Join(',', context.AccelData_Raw) : "None")</td>
                 <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
                 <td>@(context.GyroData_Raw != null ? string.Join(',', context.GyroData_Raw) : "None")</td>
                 <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
@@ -116,8 +71,8 @@
         </div>
 
         @*<div class="card bg-secondary" style="max-width: 12%;margin:auto; float:left">
-            Second card for more health checks
-        </div>*@
+                Second card for more health checks
+            </div>*@
     </div>
 
 </div>
@@ -125,9 +80,7 @@
 
 @code {
 
-    public List<Vibe2020DataModel> SingleResults { get; set; } = new List<Vibe2020DataModel>();
-    public List<Vibe2020DataModel> StreamResults { get; set; } = new List<Vibe2020DataModel>();
-    public List<Vibe2020DataModel> BulkResults { get; set; } = new List<Vibe2020DataModel>();
+    public List<Vibe2020DataModel> Results { get; set; } = new List<Vibe2020DataModel>();
 
     //Used to disable all buttons when streaming data. Not technically necessary, but better safe than sorry.
     public bool isRunning { get; set; } = false;
@@ -136,75 +89,117 @@
 
     private CancellationTokenSource CancellationToken { get; set; }
 
+    private const string subButton = "btn btn-primary";
+    private const string subActiveButton = "active btn btn-primary";
+
+    private string singleClass = subActiveButton;
+    private string streamClass = subButton;
+    private string bulkClass = subButton;
+
+    private const string singleTitle = "Get Single Results";
+    private const string streamTitle = "Get Stream Results";
+    private const string bulkTitle = "Get Bulk Results";
+
+    private string resultTile = singleTitle;
+    private ResultQueryType resultQueryType = ResultQueryType.Single;
+
     protected override Task OnInitializedAsync()
     {
+        //Create token before it's called
         CancellationToken = new CancellationTokenSource();
         CancellationToken.Token.Register(Cancel);
         return base.OnInitializedAsync();
     }
 
-    public async void GetStreamResults()
+    public async void GetResults()
     {
         if (!isRunning)
         {
-            //Prevent multiple attempts
-            isRunning = true;
-            try
+            //setup the request once for brevity. 
+            var request = new DeviceDataRequest();
+
+            switch (resultQueryType)
             {
-                using (var call = vibeClient.StreamDeviceData(
-            new DeviceDataRequest(),
-            cancellationToken: CancellationToken.Token))
-                {
+                case ResultQueryType.Single:
+                    var result = await vibeClient.GetSingleDeviceDataAsync(request);
+
+                    Results.Add(Utilities.ConvertToDataModel(result));
+                    break;
+                case ResultQueryType.Stream:
+                    //Prevent multiple attempts
+                    isRunning = true;
                     try
                     {
-                        if (CancellationToken.IsCancellationRequested)
-                            CancellationToken.Token.ThrowIfCancellationRequested();
-                        while (await call.ResponseStream.MoveNext(CancellationToken.Token))
+                        using (var call = vibeClient.StreamDeviceData(
+                        request,
+                        cancellationToken: CancellationToken.Token))
                         {
-                            StreamResults.Add(Utilities.ConvertToDataModel(call.ResponseStream.Current));
-                            StateHasChanged();
+                            try
+                            {
+                                if (CancellationToken.IsCancellationRequested)
+                                    CancellationToken.Token.ThrowIfCancellationRequested();
+                                while (await call.ResponseStream.MoveNext(CancellationToken.Token))
+                                {
+                                    Results.Add(Utilities.ConvertToDataModel(call.ResponseStream.Current));
+                                    StateHasChanged();
+                                }
+                            }
+                            catch
+                            {
+
+                            }
+
                         }
                     }
-                    catch
+                    finally
                     {
-
+                        isRunning = false;
                     }
+                    break;
+                case ResultQueryType.Bulk:
+                    isRunning = true;
+                    request.DataIterations = 1000;
+                    var data = await vibeClient.GetBulkDeviceDataAsync(request);
 
-                }
+                    Results.AddRange(Utilities.ConvertToDataModel(data.Items.ToList()));
+                    isRunning = false;
+                    break;
+                default:
+                    break;
             }
-            finally
-            {
-                isRunning = false;
-                StateHasChanged();
-            }
-        }
-    }
 
-    public async void GetResult()
-    {
-        if (!isRunning)
-        {
-            var result = await vibeClient.GetSingleDeviceDataAsync(new DeviceDataRequest());
-
-            SingleResults.Add(Utilities.ConvertToDataModel(result));
-
-            //Update the state when result is received
             StateHasChanged();
         }
     }
 
-    public async void GetBulkResults()
+    public void ActivateSingle()
     {
-        if (!isRunning)
-        {
-            isRunning = true;
-            StateHasChanged();
-            var data = await vibeClient.GetBulkDeviceDataAsync(new DeviceDataRequest() { DataIterations = 1000 });
+        resultQueryType = ResultQueryType.Single;
+        resultTile = singleTitle;
+        singleClass = subActiveButton;
+        streamClass = subButton;
+        bulkClass = subButton;
+        StateHasChanged();
+    }
 
-            BulkResults = Utilities.ConvertToDataModel(data.Items.ToList());
-            isRunning = false;
-            StateHasChanged();
-        }
+    public void ActivateStream()
+    {
+        resultQueryType = ResultQueryType.Stream;
+        resultTile = streamTitle;
+        singleClass = subButton;
+        streamClass = subActiveButton;
+        bulkClass = subButton;
+        StateHasChanged();
+    }
+
+    public void ActivateBulk()
+    {
+        resultQueryType = ResultQueryType.Bulk;
+        resultTile = bulkTitle;
+        singleClass = subButton;
+        streamClass = subButton;
+        bulkClass = subActiveButton;
+        StateHasChanged();
     }
 
     public void Cancel()
@@ -216,34 +211,14 @@
         StateHasChanged();
     }
 
-    public void SaveSingleToJson()
+    public void SaveResultsToJson()
     {
-        Utilities.SaveToJson(SingleResults, this.JS, "SingleResults");
+        Utilities.SaveToJson(Results, this.JS, "SingleResults");
     }
 
-    public void SaveBulkToJson()
+    public void SaveResultsToCsv()
     {
-        Utilities.SaveToJson(BulkResults, this.JS, "ServiceResults");
-    }
-
-    public void SaveStreamToJson()
-    {
-        Utilities.SaveToJson(StreamResults, this.JS, "StreamResults");
-    }
-
-    public void SaveSingleToCsv()
-    {
-        Utilities.SaveToCsv(SingleResults, this.JS, "SingleResults");
-    }
-
-    public void SaveBulkToCsv()
-    {
-        Utilities.SaveToCsv(BulkResults, this.JS, "ServiceResults");
-    }
-
-    public void SaveStreamToCsv()
-    {
-        Utilities.SaveToCsv(StreamResults, this.JS, "StreamResults");
+        Utilities.SaveToCsv(Results, this.JS, "SingleResults");
     }
 
     public async void GetStatus()
@@ -251,11 +226,13 @@
         var result = await vibeClient.GetDeviceStatusAsync(new DeviceStatusRequest());
 
         if (result.GyroStatus)
-            GyroStatus = @<p class="bg-success card-text text-center">Gyroscope Valid</p>;
-        else
-            GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
-        StateHasChanged();
+            GyroStatus =@<p class="bg-success card-text text-center">Gyroscope Valid</p>;
+else
+GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
+StateHasChanged();
 }
+
+private enum ResultQueryType { Single, Stream, Bulk }
 
 
 }

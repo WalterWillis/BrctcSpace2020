@@ -9,7 +9,9 @@ namespace BrctcSpaceLibrary.DataModels
     /// </summary>
     public class Vibe2020DataModel
     {
-        public int[] AccelData { get; set; }
+        public int[] AccelData_Raw { get; set; }
+
+        public double[] AccelData { get; set; }
 
         public short[] GyroData_Raw { get; set; }
 
@@ -32,6 +34,17 @@ namespace BrctcSpaceLibrary.DataModels
             const string accelEmpty = "NA,NA,NA";
             const string gyroEmpty = "NA,NA,NA,NA,NA,NA,NA,NA,NA,NA";
             const char comma = ',';
+
+            if (AccelData_Raw != null && AccelData_Raw.Length > 0)
+            {
+                line += string.Join(comma, AccelData_Raw);
+            }
+            else
+            {
+                line += accelEmpty;
+            }
+
+            line += comma;
 
             if (AccelData != null && AccelData.Length > 0)
             {
@@ -81,7 +94,7 @@ namespace BrctcSpaceLibrary.DataModels
         /// <returns></returns>
         public static string GetHeader()
         {
-            const string header = "ACCEL_X,ACCEL_Y,ACCEL_Z," +
+            const string header = "ACCEL_X_RAW,ACCEL_Y_RAW,ACCEL_Z_RAW,ACCEL_X,ACCEL_Y,ACCEL_Z," +
                  "DIAG_STAT_RAW,GYRO_X_Raw,GYRO_Y_RAW,GYRO_Z_RAW,ACCEL_X_RAW,ACCEL_Y_RAW,ACCEL_Z_RAW,TEMP_RAW,SPS_RAW,CHECKSUM_RAW," +
                  "DIAG_STAT,GYRO_X,GYRO_Y,GYRO_Z,ACCEL_X,ACCEL_Y,ACCEL_Z,TEMP,SPS,CHECKSUM," +
                  "TRANSACTION_TIME_TICKS,CPU_TEMP,RESULT_STATUS";

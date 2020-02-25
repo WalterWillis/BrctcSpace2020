@@ -20,7 +20,11 @@ namespace BlazorWebSpaceTool.Utilities
 
             if (deviceData?.AccelData != null && deviceData.AccelData.Count > 0)
             {
-                model.AccelData = new int[] { deviceData.AccelData[0], deviceData.AccelData[1], deviceData.AccelData[2] };
+                model.AccelData_Raw = new int[] { deviceData.AccelData[0], deviceData.AccelData[1], deviceData.AccelData[2] };
+
+                double resRatio = 5 / 4095;
+
+                model.AccelData = new double[] { deviceData.AccelData[0] * resRatio, deviceData.AccelData[1] * resRatio, deviceData.AccelData[2] * resRatio };
             }
 
             if (deviceData?.GyroData != null && deviceData.GyroData.Count > 0)

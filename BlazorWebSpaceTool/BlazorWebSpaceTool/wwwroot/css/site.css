@@ -106,3 +106,7 @@ app {
 .subgrid-footer {
     grid-area: footer;
 }
+
+.hidden{
+    visibility: hidden;
+}
