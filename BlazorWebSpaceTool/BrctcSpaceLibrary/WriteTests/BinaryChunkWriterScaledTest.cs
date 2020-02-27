@@ -84,7 +84,7 @@ namespace BrctcSpaceLibrary.WriteTests
 
                             if (!shown)
                             {
-                                Console.WriteLine($"{string.Join(',', accelSegment.ToArray())}\t{BitConverter.ToInt32(accelSegment.ToArray(), 0)}\t{BitConverter.ToInt32(accelSegment.ToArray(), 4)}\t{BitConverter.ToInt32(accelSegment.ToArray(), 8)}");
+                                Console.WriteLine($"{string.Join(',', accelSegment.ToArray())}\t{BitConverter.ToDouble(accelSegment.ToArray(), 0)}\t{BitConverter.ToDouble(accelSegment.ToArray(), 8)}\t{BitConverter.ToDouble(accelSegment.ToArray(), 16)}");
                                 Console.WriteLine(string.Join(',', gyroSegment.ToArray()));
                                 Console.WriteLine(string.Join(',', rtcSegment.ToArray()));
                                 Console.WriteLine(string.Join(',', cpuSegment.ToArray()));

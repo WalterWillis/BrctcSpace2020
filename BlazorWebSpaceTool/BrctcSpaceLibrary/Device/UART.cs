@@ -23,9 +23,11 @@ namespace BrctcSpaceLibrary.Device
             _serialDevice.Close();
         }
 
-        public void SendBytes(byte[] message)
+        public void SendBytes(Span<byte> buffer)
         {
             _serialDevice.Open();
+
+            byte[] message = buffer.ToArray();
 
             _serialDevice.Write(message, 0, message.Length);
 

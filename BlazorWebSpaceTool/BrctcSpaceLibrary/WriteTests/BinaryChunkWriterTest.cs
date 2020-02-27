@@ -2,8 +2,10 @@
 using Iot.Device.CpuTemperature;
 using System;
 using System.Collections.Generic;
+using System.Device.Spi;
 using System.IO;
 using System.Text;
+using static BrctcSpaceLibrary.Device.Accelerometer;
 
 namespace BrctcSpaceLibrary.WriteTests
 {
@@ -13,6 +15,7 @@ namespace BrctcSpaceLibrary.WriteTests
         private Gyroscope _gyroscopeDevice;
         private RTC _rtcDevice;
         private CpuTemperature _cpuDevice;
+        private UART _uart;
 
         private FileStream fs;
 
@@ -23,10 +26,15 @@ namespace BrctcSpaceLibrary.WriteTests
 
         public BinaryChunkWriterTest(string fileName)
         {
-            _accelerometerDevice = new Accelerometer();
-            _gyroscopeDevice = new Gyroscope();
+            //using (SpiDevice spi = SpiDevice.Create(new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 2000000 }))
+            //{
+            //    _accelerometerDevice = new Mcp3208Custom(spi, (int)Channel.X, (int)Channel.Y, (int)Channel.Z);
+            //}
+            _accelerometerDevice = new Accelerometer(new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 2000000 });
+            _gyroscopeDevice = new Gyroscope(new SpiConnectionSettings(0, 1) { Mode = SpiMode.Mode3, ClockFrequency = 2000000 });
             _cpuDevice = new CpuTemperature();
             _rtcDevice = new RTC();
+            _uart = new UART();
 
             fs = new FileStream(fileName, FileMode.Create, FileAccess.Write);
         }
@@ -46,11 +54,9 @@ namespace BrctcSpaceLibrary.WriteTests
             Span<byte> cpuSegment = new Span<byte>(new byte[cpuBytes]);
 
             bool shown = false;
-            int gyroCounter = 0;
-            int rtcCounter = 0;
+            int secondaryDataCounter = 0;
 
-            const int gyroTrigger = 200;
-            const int rtcTrigger = 8000;
+            const int secondaryDataTrigger = 200;
 
 
             try
@@ -67,24 +73,24 @@ namespace BrctcSpaceLibrary.WriteTests
                             _accelerometerDevice.GetRaws(accelSegment);
                             stream.Write(accelSegment);
 
-                            if (gyroCounter++ >= gyroTrigger)
+                            if (secondaryDataCounter++ >= secondaryDataTrigger)
                             {
                                 _gyroscopeDevice.AquireData(gyroSegment);
-                                gyroCounter = 0;
-                            }
-                            else
-                                gyroSegment.Fill(0);
-                            stream.Write(gyroSegment);
-                            if (rtcCounter++ >= rtcTrigger)
-                            {
                                 _rtcDevice.GetCurrentDate(rtcSegment);
-                                rtcCounter = 0;
+                                GetCpuTemp(cpuSegment);
+                                secondaryDataCounter = 0;
                             }
                             else
+                            {
+                                gyroSegment.Fill(0);
                                 rtcSegment.Fill(0);
-                            stream.Write(rtcSegment);
+                                cpuSegment.Fill(0);
+                            }
 
-                            GetCpuTemp(cpuSegment);
+                            stream.Write(gyroSegment);
+
+                            stream.Write(rtcSegment);
+                            
                             stream.Write(cpuSegment);
 
                             DataSetCounter++;
@@ -105,7 +111,7 @@ namespace BrctcSpaceLibrary.WriteTests
                         }
                         stream.WriteTo(fs);
                         fs.Flush();
-                       
+                        stream.Position = 0;                      
                     }
                 }
             }

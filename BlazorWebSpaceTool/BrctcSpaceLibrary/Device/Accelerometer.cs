@@ -36,7 +36,7 @@ namespace BrctcSpaceLibrary.Device
         /// <param name="channel_y">Defaults to channel 1</param>
         /// <param name="channel_z">Defaults to channel 2</param>
         /// <param name="voltRef">Defaults to 3.3 volts</param>
-        public Accelerometer(SpiConnectionSettings settings, int channel_x = 0, int channel_y = 1, int channel_z = 2, double voltRef = 5)
+        public Accelerometer(SpiConnectionSettings settings, double voltRef = 5)
         {
             if (settings == null)
             {
@@ -129,7 +129,7 @@ namespace BrctcSpaceLibrary.Device
         /// <param name="buffer"></param>
         public void GetScaledValues(Span<byte> buffer)
         {
-            byte[] bytes = BitConverter.GetBytes(_adc.Read((int)Channel.X) * _resRatio);
+            byte[] bytes = BitConverter.GetBytes((double)(_adc.Read((int)Channel.X) * _resRatio));
             buffer[0] = bytes[0];
             buffer[1] = bytes[1];
             buffer[2] = bytes[2];
@@ -139,7 +139,7 @@ namespace BrctcSpaceLibrary.Device
             buffer[6] = bytes[6];
             buffer[7] = bytes[7];
 
-            bytes = BitConverter.GetBytes(_adc.Read((int)Channel.Y) * _resRatio);
+            bytes = BitConverter.GetBytes((double)(_adc.Read((int)Channel.Y) * _resRatio));
             buffer[8] = bytes[0];
             buffer[9] = bytes[1];
             buffer[10] = bytes[2];
@@ -149,7 +149,7 @@ namespace BrctcSpaceLibrary.Device
             buffer[14] = bytes[6];
             buffer[15] = bytes[7];
 
-            bytes = BitConverter.GetBytes(_adc.Read((int)Channel.Z) * _resRatio);
+            bytes = BitConverter.GetBytes((double)(_adc.Read((int)Channel.Z) * _resRatio));
             buffer[16] = bytes[0];
             buffer[17] = bytes[1];
             buffer[18] = bytes[2];
