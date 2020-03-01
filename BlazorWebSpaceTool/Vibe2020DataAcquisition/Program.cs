@@ -17,7 +17,7 @@ namespace Vibe2020DataAcquisition
 
             string fileName = Path.Combine(Directory.GetCurrentDirectory(), "test.txt");
             string convertedfile = Path.Combine(Directory.GetCurrentDirectory(), "converted.txt");
-            const int timeLimit = 1000 * 60 * 10; //timelimit in miliseconds - millisceonds * seconds * minutes
+            const int timeLimit = 1000 * 60 * 2; //timelimit in miliseconds - millisceonds * seconds * minutes
 
             double timeTaken;
             //timeTaken = PerformBinaryTest(fileName, timeLimit);
@@ -31,7 +31,7 @@ namespace Vibe2020DataAcquisition
             //timeTaken = PerformSimpleBinaryTest(fileName, timeLimit);
             //ReadFile(fileName, convertedfile, timeTaken);
 
-            PerformInMemoryTest(timeLimit);
+            //PerformInMemoryTest(timeLimit);
         }
 
         private static double PerformBinaryTest(string fileName, int timeLimit)

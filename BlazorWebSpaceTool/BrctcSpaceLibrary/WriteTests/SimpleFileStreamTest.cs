@@ -48,7 +48,7 @@ namespace BrctcSpaceLibrary.WriteTests
                     if (token.IsCancellationRequested)
                         token.ThrowIfCancellationRequested();
 
-                    _accelerometerDevice.GetRaws(accelSegment);
+                    _accelerometerDevice.Read(accelSegment);
                     stream.Write(accelSegment);
                     //_gyroscopeDevice.AquireData(gyroSegment);
                     stream.Write(gyroSegment);

@@ -9,7 +9,31 @@ service Vibe {
   rpc StreamDeviceData (DeviceDataRequest) returns (stream DeviceDataModel);
   rpc GetBulkDeviceData (DeviceDataRequest) returns (DeviceDataArray);
   rpc GetDeviceStatus (DeviceStatusRequest) returns (DeviceStatus);
+  rpc RunTimedProgram (SingleDeviceRequest) returns (SingleDeviceResponse);
+  rpc GetProgramResults (ProgramPageRequest) returns (DeviceDataArray);
 }
+
+message SingleDeviceRequest{
+bool RunAccelerometer = 1;
+bool useCustomeADC = 2;
+bool RunGyroscope = 3;
+double MinutesToRun = 4;
+}
+
+message SingleDeviceResponse{
+    int64 DataSets = 1;
+    string ResultFileName = 2;
+    int32 SegmentSize = 3;
+}
+
+message ProgramPageRequest{
+    int64 DataSetStart = 1;
+    int32 Rows = 2;
+    int32 SegmentSize = 3;
+    bool RunAccelerometer = 4;
+    bool RunGyroscope = 5;
+}
+
 
 message DeviceDataRequest{
     int32 DataIterations = 1;

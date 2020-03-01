@@ -4,7 +4,6 @@
 @using BrctcSpaceLibrary.DataModels;
 @using BlazorWebSpaceTool.Components;
 @using System.Threading;
-@using System.Text.Json;
 @inject Vibe.VibeClient vibeClient;
 @inject Microsoft.JSInterop.IJSRuntime JS;
 
@@ -23,6 +22,7 @@
             <button class="@singleClass" @onclick="ActivateSingle">Single</button>
             <button class="@streamClass" @onclick="ActivateStream">Stream</button>
             <button class="@bulkClass" @onclick="ActivateBulk">Bulk</button>
+            <button class="@singleDeviceClass" @onclick="ActivateSingleDevice">SingleDevice</button>
         </div>
 
         <br />
@@ -31,12 +31,62 @@
         <button @onclick="SaveResultsToCsv" disabled="@(Results == null || Results.Count <= 0)" class="btn btn-info">Save To CSV</button>
     </div>
     <div class="subgrid-center">
-        <h5>@resultTile</h5>
+        <h5>@resultTitle</h5>
+        @if (resultQueryType.Equals(ResultQueryType.SingleDevice))
+        {
+            <EditForm Model="inputModel" OnValidSubmit="TestSingleDevice">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                
+                <div>
+                    <input type="radio" name="AccelRadio" id="AccelRadio" value="@SingleDeviceType.Accelerometer"
+                           @onchange="SelectionChanged" checked=@(selectedDevice.Equals(SingleDeviceType.Accelerometer)) />
+                    <label for="AccelRadio">Accelerometers</label>
+                </div>
+                <div>
+                    <input type="radio" name="GyroRadio" id="GyroRadio" value="@SingleDeviceType.Gyroscope"
+                           @onchange="SelectionChanged" checked=@(selectedDevice.Equals(SingleDeviceType.Gyroscope)) />
+                    <label for="GyroRadio">Gyroscope</label>
+                </div>
+                <label>
+                    Minutes to run:
+                    <InputNumber @bind-Value="inputModel.Minutes"></InputNumber>
+                </label>
+                <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Run Test</button>
+                <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
+            </EditForm>
+            <br />
+        }
+        <button disabled="@isRunning" hidden="@resultQueryType.Equals(ResultQueryType.SingleDevice)" @onclick="GetResults" class="btn btn-primary">Get Data</button>
+        <button disabled="@(!isRunning)" hidden="@(!resultQueryType.Equals(ResultQueryType.Stream))"
+                @onclick="Cancel" class="btn btn-primary btn-sm">
+            Cancel Stream
+        </button>
         <br />
+        @if (resultQueryType.Equals(ResultQueryType.SingleDevice) && inputModel.HasRun)
+        {
+            <EditForm Model="inputModel" OnValidSubmit="GetProgramResults">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <label>
+                    Select rows to display:
+                    <InputNumber @bind-Value="inputModel.DataSetsPerPage"></InputNumber>
+                </label>
+                <label>
+                    Page Index:
+                    <NumericInputSelect @bind-Value="inputModel.SelectedPage">
+                        <option value="0">Select page ...</option>
+                        @for (long i = 1; i <= inputModel.AmountOfPages; i++)
+                            {
+                            <option value="@i">Page @i</option>
+                            }
+                    </NumericInputSelect>
+                </label>
 
-        <button disabled="@isRunning" @onclick="GetResults" class="btn btn-primary">Get Data</button>
-        <button disabled="@(!isRunning)" hidden="@(!resultQueryType.Equals(ResultQueryType.Stream))" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel Stream</button>
-
+                <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Get Results</button>
+                <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
+            </EditForm>
+        }
         <br />
         <p>Rows: @Results.Count</p>
 
@@ -95,13 +145,24 @@
     private string singleClass = subActiveButton;
     private string streamClass = subButton;
     private string bulkClass = subButton;
+    private string singleDeviceClass = subButton;
 
     private const string singleTitle = "Get Single Results";
     private const string streamTitle = "Get Stream Results";
     private const string bulkTitle = "Get Bulk Results";
+    private const string singleDeviceTitle = "Test either the accelerometers or gyroscope for a specified period of time";
 
-    private string resultTile = singleTitle;
+    private string resultTitle = singleTitle;
     private ResultQueryType resultQueryType = ResultQueryType.Single;
+
+    private SingleDeviceType selectedDevice = SingleDeviceType.Accelerometer;
+
+    private InputModels.SingleDeviceInputModel inputModel { get; set; } = new InputModels.SingleDeviceInputModel();
+
+    public void SelectionChanged(ChangeEventArgs args)
+    {
+        selectedDevice = (SingleDeviceType)Enum.Parse(typeof(SingleDeviceType), args.Value.ToString(), true);
+    }
 
     protected override Task OnInitializedAsync()
     {
@@ -111,11 +172,11 @@
         return base.OnInitializedAsync();
     }
 
-    public async void GetResults()
+    public async Task GetResults()
     {
         if (!isRunning)
         {
-            //setup the request once for brevity. 
+            //setup the request once for brevity.
             var request = new DeviceDataRequest();
 
             switch (resultQueryType)
@@ -148,7 +209,6 @@
                             {
 
                             }
-
                         }
                     }
                     finally
@@ -172,35 +232,109 @@
         }
     }
 
+    public async Task TestSingleDevice()
+    {
+        if (!isRunning)
+        {
+            isRunning = true;
+
+            bool runAccel = selectedDevice.Equals(SingleDeviceType.Accelerometer) ? true : false;
+            bool runGyro = selectedDevice.Equals(SingleDeviceType.Gyroscope) ? true : false;
+            var request = new SingleDeviceRequest()
+            {
+                MinutesToRun = inputModel.Minutes,
+                RunAccelerometer = runAccel,
+                UseCustomeADC = true,
+                RunGyroscope = runGyro
+            };
+
+            var result = await vibeClient.RunTimedProgramAsync(
+                                request,
+                                deadline: DateTime.UtcNow.AddMinutes(inputModel.Minutes + 1)); //Add padding to time to wait for I/O and other variables
+
+            inputModel.SelectedPage = 1;
+            inputModel.DataSets = result.DataSets;
+            inputModel.HasRun = true;
+            inputModel.RunAccelerometer = runAccel;
+            inputModel.RunGyroscope = runGyro;
+            inputModel.SegmentSize = result.SegmentSize;
+
+            StateHasChanged();
+
+            isRunning = false;
+        }
+    }
+
+    public async Task GetProgramResults()
+    {
+        if (!isRunning)
+        {
+            isRunning = true;
+
+            var request = new ProgramPageRequest()
+            {
+                RunAccelerometer = inputModel.RunAccelerometer,
+                DataSetStart = inputModel.PageStart,
+                RunGyroscope = inputModel.RunGyroscope,
+                Rows = inputModel.DataSetsPerPage,
+                SegmentSize = inputModel.SegmentSize
+            };
+
+            var data = await vibeClient.GetProgramResultsAsync(
+                           request,
+                           deadline: DateTime.UtcNow.AddMinutes(5)); //Give it some time to read the data
+
+            Results = Utilities.ConvertToDataModel(data.Items.ToList());
+
+            StateHasChanged();
+
+            isRunning = false;
+        }
+    }
+
     public void ActivateSingle()
     {
         resultQueryType = ResultQueryType.Single;
-        resultTile = singleTitle;
+        resultTitle = singleTitle;
         singleClass = subActiveButton;
         streamClass = subButton;
         bulkClass = subButton;
+        singleDeviceClass = subButton;
         StateHasChanged();
     }
 
     public void ActivateStream()
     {
         resultQueryType = ResultQueryType.Stream;
-        resultTile = streamTitle;
+        resultTitle = streamTitle;
         singleClass = subButton;
         streamClass = subActiveButton;
         bulkClass = subButton;
+        singleDeviceClass = subButton;
         StateHasChanged();
     }
 
     public void ActivateBulk()
     {
         resultQueryType = ResultQueryType.Bulk;
-        resultTile = bulkTitle;
+        resultTitle = bulkTitle;
         singleClass = subButton;
         streamClass = subButton;
         bulkClass = subActiveButton;
+        singleDeviceClass = subButton;
         StateHasChanged();
     }
+    public void ActivateSingleDevice()
+    {
+        resultQueryType = ResultQueryType.SingleDevice;
+        resultTitle = singleDeviceTitle;
+        singleClass = subButton;
+        streamClass = subButton;
+        bulkClass = subButton;
+        singleDeviceClass = subActiveButton;
+        StateHasChanged();
+    }
+
 
     public void Cancel()
     {
@@ -232,7 +366,8 @@ GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
 StateHasChanged();
 }
 
-private enum ResultQueryType { Single, Stream, Bulk }
+private enum ResultQueryType { Single, Stream, Bulk, SingleDevice }
+private enum SingleDeviceType { Accelerometer, Gyroscope }
 
 
 }

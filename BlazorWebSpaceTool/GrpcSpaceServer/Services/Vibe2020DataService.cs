@@ -69,8 +69,8 @@ namespace GrpcSpaceServer.Services
 
             DeviceDataModel model = new DeviceDataModel();
 
-            model.AccelData.AddRange(GetAccelerometerResults() ?? new int[0]);
-            model.GyroData.AddRange(GetGyroscopeResults() ?? new int[0]);
+            model.AccelData.Add(GetAccelerometerResults() ?? new int[0]);
+            model.GyroData.Add(GetGyroscopeResults() ?? new int[0]);
             model.TransactionTime = GetRTCResults();
             model.CpuTemp = GetCPUTemperatureResults();
 

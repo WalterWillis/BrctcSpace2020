@@ -48,7 +48,7 @@ namespace BrctcSpaceLibrary.WriteTests
 
             byte[] array = data.ToArray();
 
-            Action dataHandler = () => { WriteData(array); };
+            Task dataHandler = null;
 
             try
             {
@@ -63,20 +63,25 @@ namespace BrctcSpaceLibrary.WriteTests
 
                         for (int i = 0; i < chunkSize; i++)
                         {
-                            _accelerometerDevice.GetRaws(accelSegment);
+                            _accelerometerDevice.Read(accelSegment);
                             stream.Write(accelSegment);
                             //_gyroscopeDevice.AquireData(gyroSegment);
                             stream.Write(gyroSegment);
                             //GetCurrentDate(rtcSegment);
                             stream.Write(rtcSegment);
-                           // GetCpuTemp(cpuSegment);
+                            // GetCpuTemp(cpuSegment);
                             stream.Write(cpuSegment);
                             DataSetCounter++;
                         }
 
                         array = stream.ToArray();
 
-                        Parallel.Invoke(dataHandler);
+                        if(dataHandler != null)
+                        {
+                            dataHandler.Wait();
+                        }
+
+                       dataHandler = WriteData(array);
                     }
                 }
             }
@@ -87,15 +92,18 @@ namespace BrctcSpaceLibrary.WriteTests
 
         }
 
-        private void WriteData(byte[] data)
+        private Task WriteData(byte[] data)
         {
-            using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
+            return Task.Run(() =>
             {
-                using (BinaryWriter writer = new BinaryWriter(stream))
-                {
-                    stream.Write(data);
-                }
-            }
+               using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
+               {
+                   using (BinaryWriter writer = new BinaryWriter(stream))
+                   {
+                       stream.Write(data);
+                   }
+               }
+           });
         }
 
         private void GetCpuTemp(Span<byte> buffer)

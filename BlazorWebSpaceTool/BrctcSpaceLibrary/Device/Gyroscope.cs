@@ -79,6 +79,8 @@ namespace BrctcSpaceLibrary.Device
 
         public void AquireData(Span<byte> buffer)
         {
+
+            //TODO: make more efficient by passing a single span and using the values before moving to the next regread
             Span<byte> Diag = FastRegisterRead(Register.DIAG_STAT);
             Span<byte> GyroX = FastRegisterRead(Register.X_GYRO_OUT);
             Span<byte> GyroY = FastRegisterRead(Register.Y_GYRO_OUT);

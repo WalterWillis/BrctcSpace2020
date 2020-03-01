@@ -29,5 +29,7 @@ namespace BrctcSpaceLibrary.Helpers
      *                                              byte3
      *                                              
      *          integer     integer     integer     integer
+     *          
+     *          ||||||||    ||||||||    ||||||||    ||||||||
      */
 }

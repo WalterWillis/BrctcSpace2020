@@ -22,9 +22,11 @@ namespace BlazorWebSpaceTool.Utilities
             {
                 model.AccelData_Raw = new int[] { deviceData.AccelData[0], deviceData.AccelData[1], deviceData.AccelData[2] };
 
-                double resRatio = 5 / 4095;
-
-                model.AccelData = new double[] { deviceData.AccelData[0] * resRatio, deviceData.AccelData[1] * resRatio, deviceData.AccelData[2] * resRatio };
+                model.AccelData = new double[] {
+                    ScaleAccelerometer(deviceData.AccelData[0]), 
+                    ScaleAccelerometer(deviceData.AccelData[1]),
+                    ScaleAccelerometer(deviceData.AccelData[2])
+                };
             }
 
             if (deviceData?.GyroData != null && deviceData.GyroData.Count > 0)
@@ -127,6 +129,12 @@ namespace BlazorWebSpaceTool.Utilities
                 }
                 await JS.SaveAs(fileName, stream.ToArray());
             }
+        }
+
+        private static double ScaleAccelerometer(int value)
+        {
+            double resRatio = 5D / 4095;
+            return value * resRatio;
         }
     }
 

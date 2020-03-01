@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Device.Spi;
+using BrctcSpaceLibrary.Helpers;
 using Iot.Device.Adc;
 
 namespace BrctcSpaceLibrary.Device
@@ -8,12 +9,13 @@ namespace BrctcSpaceLibrary.Device
     /// <summary>
     /// Methods for communicating with our accelerometers. Uses three accelerometers through an MCP3208 ADC Pi hat.
     /// </summary>
-    public class Accelerometer : IDisposable
+    public class Accelerometer : IMcp3208, IDisposable
     {
         private bool _isdisposing = false;
         private SpiConnectionSettings _settings;
-        private double _resRatio = 5 / 4095;
+        private double _resRatio = 5 / 4095; // verified correct - Use: value * _resRatio
         private Mcp3208 _adc;
+        private IntUnion _union = new IntUnion();
 
         /// <summary>
         /// Accelerometer values via SPI 
@@ -76,25 +78,25 @@ namespace BrctcSpaceLibrary.Device
             };
         }
 
-        public void GetRaws(Span<byte> buffer)
+        public void Read(Span<byte> buffer)
         {
-            byte[] bytes = BitConverter.GetBytes(_adc.Read((int)Channel.X));
-            buffer[0] = bytes[0];
-            buffer[1] = bytes[1];
-            buffer[2] = bytes[2];
-            buffer[3] = bytes[3];
+            _union.integer = _adc.Read((int)Channel.X);
+            buffer[0] = _union.byte0;
+            buffer[1] = _union.byte1;
+            buffer[2] = _union.byte2;
+            buffer[3] = _union.byte3;
 
-            bytes = BitConverter.GetBytes(_adc.Read((int)Channel.Y));
-            buffer[4] = bytes[0];
-            buffer[5] = bytes[1];
-            buffer[6] = bytes[2];
-            buffer[7] = bytes[3];
+            _union.integer = _adc.Read((int)Channel.Y);
+            buffer[4] = _union.byte0;
+            buffer[5] = _union.byte1;
+            buffer[6] = _union.byte2;
+            buffer[7] = _union.byte3;
 
-            bytes = BitConverter.GetBytes(_adc.Read((int)Channel.Z));
-            buffer[8] = bytes[0];
-            buffer[9] = bytes[1];
-            buffer[10] = bytes[2];
-            buffer[11] = bytes[3];
+            _union.integer = _adc.Read((int)Channel.Z);
+            buffer[8] = _union.byte0;
+            buffer[9] = _union.byte1;
+            buffer[10] = _union.byte2;
+            buffer[11] = _union.byte3;
         }
 
         /// <summary>
