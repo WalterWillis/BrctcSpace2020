@@ -26,12 +26,12 @@ namespace BrctcSpaceLibrary.WriteTests
 
         public BinaryChunkWriterTest(string fileName)
         {
-            using (SpiDevice spi = SpiDevice.Create(new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 2000000 }))
+            using (SpiDevice spi = SpiDevice.Create(new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 2000000 }))
             {
                 _accelerometerDevice = new Mcp3208Custom(spi, (int)Channel.X, (int)Channel.Y, (int)Channel.Z);
             }
            // _accelerometerDevice = new Accelerometer(new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1900000 });
-            _gyroscopeDevice = new Gyroscope(new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1000000 });
+            _gyroscopeDevice = new Gyroscope(new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1000000 });
             _cpuDevice = new CpuTemperature();
             _rtcDevice = new RTC();
             _uart = new UART();
@@ -54,9 +54,9 @@ namespace BrctcSpaceLibrary.WriteTests
             Span<byte> cpuSegment = new Span<byte>(new byte[cpuBytes]);
 
             bool shown = false;
-            //int secondaryDataCounter = 0;
+            int secondaryDataCounter = 0;
 
-            //const int secondaryDataTrigger = 200;
+            const int secondaryDataTrigger = 200;
 
 
             try
@@ -70,22 +70,24 @@ namespace BrctcSpaceLibrary.WriteTests
 
                         for (int i = 0; i < chunkSize; i++)
                         {
+                            //clear before getting new data to ensure integrity
+                            accelSegment.Clear();
                             _accelerometerDevice.Read(accelSegment);
                             stream.Write(accelSegment);
 
-                            //if (secondaryDataCounter++ >= secondaryDataTrigger)
-                            //{
-                            //    //_gyroscopeDevice.AquireData(gyroSegment);
-                            //    _rtcDevice.GetCurrentDate(rtcSegment);
-                            //    GetCpuTemp(cpuSegment);
-                            //    secondaryDataCounter = 0;
-                            //}
-                            //else
-                            //{
-                            //    gyroSegment.Fill(0);
-                            //    rtcSegment.Fill(0);
-                            //    cpuSegment.Fill(0);
-                            //}
+                            if (secondaryDataCounter++ >= secondaryDataTrigger)
+                            {
+                                gyroSegment.Clear();
+                                _gyroscopeDevice.AcquireData(gyroSegment);
+
+                                rtcSegment.Clear();
+                                _rtcDevice.GetCurrentDate(rtcSegment);
+
+                                cpuSegment.Clear();
+                                GetCpuTemp(cpuSegment);
+
+                                secondaryDataCounter = 0;
+                            }
 
                             stream.Write(gyroSegment);
 
@@ -103,11 +105,6 @@ namespace BrctcSpaceLibrary.WriteTests
                                 Console.WriteLine(string.Join(',', cpuSegment.ToArray()));
                                 shown = true;
                             }
-
-                            accelSegment.Clear();
-                            gyroSegment.Clear();
-                            rtcSegment.Clear();
-                            cpuSegment.Clear();
                         }
                         stream.WriteTo(fs);
                         fs.Flush();

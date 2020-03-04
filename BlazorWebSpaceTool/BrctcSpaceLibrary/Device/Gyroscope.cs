@@ -10,6 +10,10 @@ namespace BrctcSpaceLibrary.Device
         private SpiConnectionSettings _settings;
         private bool _isdisposing = false;
 
+        //Container used to quickly request data without further allocations being necessary
+        //0 and 1 are used for requests, 2 and 3 are used for replies
+        private Memory<byte> FastBuffer = new Memory<byte>(new byte[4]);
+
         SpiDevice _gyro;
 
         /// <summary>
@@ -77,41 +81,49 @@ namespace BrctcSpaceLibrary.Device
             return MemoryMarshal.Cast<byte, int>(burstData); //remove the leading empty bytes
         }
 
-        public void AquireData(Span<byte> buffer)
+        public void AcquireData(Span<byte> buffer)
         {
-
-            //TODO: make more efficient by passing a single span and using the values before moving to the next regread
-            Span<byte> Diag = FastRegisterRead(Register.DIAG_STAT);
-            Span<byte> GyroX = FastRegisterRead(Register.X_GYRO_OUT);
-            Span<byte> GyroY = FastRegisterRead(Register.Y_GYRO_OUT);
-            Span<byte> GyroZ = FastRegisterRead(Register.Z_GYRO_OUT);
-            Span<byte> AccelX = FastRegisterRead(Register.X_ACCL_OUT);
-            Span<byte> AccelY = FastRegisterRead(Register.Y_ACCL_OUT);
-            Span<byte> AccelZ = FastRegisterRead(Register.Z_ACCL_OUT);
-            Span<byte> Temp = FastRegisterRead(Register.TEMP_OUT);
-            Span<byte> Sample = FastRegisterRead(Register.SMPL_CNTR);
-            Span<byte> Checksum = FastRegisterRead(Register.CAL_CRC);
-
-            buffer[0] = Diag[0];
-            buffer[1] = Diag[1];
-            buffer[2] = GyroX[0];
-            buffer[3] = GyroX[1];
-            buffer[4] = GyroY[0];
-            buffer[5] = GyroY[1];
-            buffer[6] = GyroZ[0];
-            buffer[7] = GyroZ[1];
-            buffer[8] = AccelX[0];
-            buffer[9] = AccelX[1];
-            buffer[10] = AccelY[0];
-            buffer[11] = AccelY[1];
-            buffer[12] = AccelZ[0];
-            buffer[13] = AccelZ[1];
-            buffer[14] = Temp[0];
-            buffer[15] = Temp[1];
-            buffer[16] = Sample[0];
-            buffer[17] = Sample[1];
-            buffer[18] = Checksum[0];
-            buffer[19]= Checksum[1];
+            Span<byte> deviceBuffer = FastBuffer.Span.Slice(2, 2);
+            
+            FastRegisterRead(Register.DIAG_STAT, deviceBuffer);
+            buffer[0] = deviceBuffer[0];
+            buffer[1] = deviceBuffer[1];
+           
+            FastRegisterRead(Register.X_GYRO_OUT, deviceBuffer);
+            buffer[2] = deviceBuffer[0];
+            buffer[3] = deviceBuffer[1];
+           
+            FastRegisterRead(Register.Y_GYRO_OUT, deviceBuffer);
+            buffer[4] = deviceBuffer[0];
+            buffer[5] = deviceBuffer[1];
+           
+            FastRegisterRead(Register.Z_GYRO_OUT, deviceBuffer);
+            buffer[6] = deviceBuffer[0];
+            buffer[7] = deviceBuffer[1];
+           
+            FastRegisterRead(Register.X_ACCL_OUT, deviceBuffer);
+            buffer[8] = deviceBuffer[0];
+            buffer[9] = deviceBuffer[1];
+            
+            FastRegisterRead(Register.Y_ACCL_OUT, deviceBuffer);
+            buffer[10] = deviceBuffer[0];
+            buffer[11] = deviceBuffer[1];
+           
+            FastRegisterRead(Register.Z_ACCL_OUT, deviceBuffer);
+            buffer[12] = deviceBuffer[0];
+            buffer[13] = deviceBuffer[1];
+            
+            FastRegisterRead(Register.TEMP_OUT, deviceBuffer);
+            buffer[14] = deviceBuffer[0];
+            buffer[15] = deviceBuffer[1];
+            
+            FastRegisterRead(Register.SMPL_CNTR, deviceBuffer);
+            buffer[16] = deviceBuffer[0];
+            buffer[17] = deviceBuffer[1];
+            
+            FastRegisterRead(Register.CAL_CRC, deviceBuffer);
+            buffer[18] = deviceBuffer[0];
+            buffer[19] = deviceBuffer[1];
         }
 
         public short RegisterRead(Register regAddr)
@@ -137,10 +149,13 @@ namespace BrctcSpaceLibrary.Device
             return reply;
         }
 
-        private void FastRegisterRead(Span<byte> replyBuffer, Register regAddr)
+        private void FastRegisterRead(Register regAddr, Span<byte> replyBuffer)
         {
-            _gyro.TransferFullDuplex(new byte[] { (byte)regAddr, 0x00 }, replyBuffer);
-            _gyro.TransferFullDuplex(new byte[] { 0x00, 0x00 }, replyBuffer);
+            var span = FastBuffer.Span.Slice(0,2);
+            span[0] = (byte)regAddr;
+            _gyro.TransferFullDuplex(span, replyBuffer);
+            span.Fill(0);
+            _gyro.TransferFullDuplex(span, replyBuffer);
         }
 
 

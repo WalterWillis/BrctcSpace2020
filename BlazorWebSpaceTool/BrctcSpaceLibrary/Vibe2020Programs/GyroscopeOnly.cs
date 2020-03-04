@@ -3,40 +3,30 @@ using System;
 using System.Device.Spi;
 using System.Diagnostics;
 using System.IO;
-using static BrctcSpaceLibrary.Device.Accelerometer;
 
 namespace BrctcSpaceLibrary.Vibe2020Programs
 {
-    public class AccelerometerOnly : ISingleDevice
+    public class GyroscopeOnly : ISingleDevice
     {
-        private IMcp3208 _accelerometerDevice;
-        private int _segmentLength = 12;
+        private Gyroscope _gyroscopeDevice;
+        private int _segmentLength = 20;
         private string _fileName;
 
         //Only used by outside methods. Should always be the same as the internal filename
-        public static string FileName { get => Path.Combine(Directory.GetCurrentDirectory(), "AccelerometerOnly.binary"); }
+        public static string FileName { get => Path.Combine(Directory.GetCurrentDirectory(), "GyroscopeOnly.binary"); }
 
         // Keeps track of the amount of data sets for our test
         private long _datasetCounter = 0;
         // Byte chunk size for the MemoryStream -- amount of bytes to hold in memory beforing writing to disk
         private long _chunkSize;
 
-        public AccelerometerOnly(bool useCustomAdcCode = true)
+        public GyroscopeOnly()
         {
-            var settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1900000 };
+            var settings = new SpiConnectionSettings(0, 1) { Mode = SpiMode.Mode3, ClockFrequency = 900000 };
 
-            if (useCustomAdcCode)
-            {
-                using (SpiDevice spi = SpiDevice.Create(settings))
-                {
-                    _accelerometerDevice = new Mcp3208Custom(spi, (int)Channel.X, (int)Channel.Y, (int)Channel.Z);
-                }
-            }
-            else
-            {
-                _accelerometerDevice = new Accelerometer(settings);
-            }
-            _fileName = Path.Combine(Directory.GetCurrentDirectory(), "AccelerometerOnly.binary");
+             _gyroscopeDevice = new Gyroscope(settings);
+
+            _fileName = Path.Combine(Directory.GetCurrentDirectory(), "GyroscopeOnly.binary");
 
             //Initialize to approximately 1 MB (or as close it as possible given the segment size)
             _chunkSize = (4096 / _segmentLength) * 256;
@@ -44,7 +34,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
         public void Run(double timeLimit, System.Threading.CancellationToken token)
         {
-            Span<byte> accelSegment = new Span<byte>(new byte[_segmentLength]);
+            Span<byte> gyroSegment = new Span<byte>(new byte[_segmentLength]);
 
             Stopwatch stopwatch = new Stopwatch();
 
@@ -59,12 +49,12 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
                         for (int i = 0; i < _chunkSize; i++)
                         {
-                            _accelerometerDevice.Read(accelSegment);
-                            stream.Write(accelSegment);
+                            _gyroscopeDevice.AcquireData(gyroSegment);
+                            stream.Write(gyroSegment);
 
                             _datasetCounter++;
 
-                            accelSegment.Clear();
+                            gyroSegment.Clear();
                         }
                         stream.WriteTo(fs);
                         fs.Flush();
@@ -73,7 +63,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
                     stopwatch.Stop();
 
-                    Console.WriteLine($"AccelerometerOnly program ran for {stopwatch.Elapsed.TotalSeconds} seconds" +
+                    Console.WriteLine($"GyroscopeOnly program ran for {stopwatch.Elapsed.TotalSeconds} seconds" +
                         $" creating {_datasetCounter} datasets at {_datasetCounter / stopwatch.Elapsed.TotalSeconds} datasets per second");
                 }
             }
@@ -95,9 +85,9 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
             return _segmentLength;
         }
 
-        ~AccelerometerOnly()
+        ~GyroscopeOnly()
         {
-            _accelerometerDevice.Dispose();
+            _gyroscopeDevice.Dispose();
         }
     }
 }

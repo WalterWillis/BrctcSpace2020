@@ -67,7 +67,7 @@ namespace BrctcSpaceLibrary.WriteTests
 
                             if (gyroCounter++ >= gyroTrigger)
                             {
-                                _gyroscopeDevice.AquireData(gyroSegment);
+                                _gyroscopeDevice.AcquireData(gyroSegment);
                                 gyroCounter = 0;
                             }
                             else

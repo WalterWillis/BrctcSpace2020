@@ -250,7 +250,8 @@
 
             var result = await vibeClient.RunTimedProgramAsync(
                                 request,
-                                deadline: DateTime.UtcNow.AddMinutes(inputModel.Minutes + 1)); //Add padding to time to wait for I/O and other variables
+                                deadline: DateTime.UtcNow.AddMinutes(inputModel.Minutes + 1), //Add padding to time to wait for I/O and other variables
+                                cancellationToken: CancellationToken.Token);
 
             inputModel.SelectedPage = 1;
             inputModel.DataSets = result.DataSets;

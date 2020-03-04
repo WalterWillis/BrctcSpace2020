@@ -163,7 +163,7 @@ namespace BrctcSpaceLibrary.Device
         }
 
         //We use pins 0, 2 and 4 as X, Y, and Z respectively
-        public enum Channel : int { X = 0, Y = 2, Z = 4 }
+        public enum Channel : int { X = 0, Y = 1, Z = 2 }
 
 
         public void Dispose()

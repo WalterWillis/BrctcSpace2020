@@ -74,8 +74,9 @@ namespace GrpcSpaceServer.Services
                 program = new AccelerometerOnly(request.UseCustomeADC);
             }
             else if (request.RunGyroscope)
-            {
-                //Not used yet
+            {               
+                _logger.LogInformation($"Running GyroscopeOnly program for {request.MinutesToRun} minutes.");
+                program = new GyroscopeOnly();
             }
 
             program.Run(request.MinutesToRun, context.CancellationToken);
@@ -93,7 +94,7 @@ namespace GrpcSpaceServer.Services
             List<DeviceDataModel> modelList = new List<DeviceDataModel>();
 
             var response = new DeviceDataArray();
-            string filename = request.RunAccelerometer ? AccelerometerOnly.FileName : "Not Used Yet";
+            string filename = request.RunAccelerometer ? AccelerometerOnly.FileName : GyroscopeOnly.FileName;
 
             using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read))
             {
