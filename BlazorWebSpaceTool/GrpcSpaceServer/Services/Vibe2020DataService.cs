@@ -5,10 +5,7 @@ using GrpcSpaceServer.Services.Interfaces;
 using Iot.Device.CpuTemperature;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Device.Spi;
 
 namespace GrpcSpaceServer.Services
 {
@@ -30,7 +27,9 @@ namespace GrpcSpaceServer.Services
             _logger = logger;
             try
             {
-                _accelerometerDevice = new Accelerometer();
+                var settings = new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1900000 };
+
+                _accelerometerDevice = new Accelerometer(settings);
             }
             catch (Exception ex)
             {
@@ -38,7 +37,9 @@ namespace GrpcSpaceServer.Services
             }
             try
             {
-                _gyroscopeDevice = new Gyroscope();
+                var settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode3, ClockFrequency = 900000 };
+
+                _gyroscopeDevice = new Gyroscope(settings);
             }
             catch (Exception ex)
             {
@@ -108,11 +109,30 @@ namespace GrpcSpaceServer.Services
         public bool isGyroValid()
         {
             bool valid = false;
+            short regValue = 0;
             try
             {
-                short regValue = _gyroscopeDevice.RegisterRead(Gyroscope.Register.PROD_ID);
-                valid = regValue.Equals(gyroProductID);
-                _logger.LogInformation($"ADIS16460 Prod ID Register reads {regValue}.");
+                int attempt = 0;
+                for ( attempt = 0; attempt < 200; attempt++)
+                {
+                    //The ADIS values seem to fluctuate at times, so try a few times to get the right value. 
+                    //If it still cannot be validated, something may be wrong
+                    regValue = _gyroscopeDevice.RegisterRead(Gyroscope.Register.PROD_ID);
+                    valid = regValue.Equals(gyroProductID);
+
+                    if (valid)
+                        break;
+                }
+
+                if (valid)
+                {
+                    _logger.LogInformation($"ADIS16460 Prod ID Register reads {regValue} after {attempt} attempts.");
+                }
+                else
+                {
+                    _logger.LogInformation($"ADIS16460 Prod ID Register could not be validated.");
+                }
+                
             }
             catch (Exception ex)
             {

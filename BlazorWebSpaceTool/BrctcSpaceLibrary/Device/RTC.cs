@@ -49,7 +49,15 @@ namespace BrctcSpaceLibrary.Device
         }
         public void GetCurrentDate(Span<byte> buffer)
         {
-            byte[] bytes = BitConverter.GetBytes(_rtc.DateTime.Ticks);
+            byte[] bytes;
+            try
+            {
+                bytes = BitConverter.GetBytes(_rtc.DateTime.Ticks);
+            }
+            catch
+            {
+                bytes = BitConverter.GetBytes(DateTime.Now.Ticks);
+            }
 
             //assign the values, not the variable for reference assignment
             buffer[0] = bytes[0];

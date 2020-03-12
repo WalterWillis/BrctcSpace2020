@@ -23,7 +23,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
         public AccelerometerOnly(bool useCustomAdcCode = true)
         {
-            var settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1900000 };
+            var settings = new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1900000 };
 
             if (useCustomAdcCode)
             {

@@ -4,6 +4,7 @@
 @using BrctcSpaceLibrary.DataModels;
 @using BlazorWebSpaceTool.Components;
 @using System.Threading;
+@using System.IO;
 @inject Vibe.VibeClient vibeClient;
 @inject Microsoft.JSInterop.IJSRuntime JS;
 
@@ -37,7 +38,7 @@
             <EditForm Model="inputModel" OnValidSubmit="TestSingleDevice">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
-                
+
                 <div>
                     <input type="radio" name="AccelRadio" id="AccelRadio" value="@SingleDeviceType.Accelerometer"
                            @onchange="SelectionChanged" checked=@(selectedDevice.Equals(SingleDeviceType.Accelerometer)) />
@@ -80,12 +81,14 @@
                             {
                             <option value="@i">Page @i</option>
                             }
+                        /**/
                     </NumericInputSelect>
                 </label>
 
                 <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Get Results</button>
                 <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
             </EditForm>
+            <button disabled="@isRunning" @onclick="CopyFileFromServer" class="btn btn-dark btn-sm" style="margin-left:10px;">Save File</button>
         }
         <br />
         <p>Rows: @Results.Count</p>
@@ -293,6 +296,55 @@
         }
     }
 
+    /// <summary>
+    /// Currently, downloads the file to the web-tool's internal directory. Current JS code cannot handle the large files downloading from the browser itself.
+    /// </summary>
+    /// <returns></returns>
+    public async Task CopyFileFromServer()
+    {
+        if (!isRunning)
+        {
+            isRunning = true;
+            FileInfo file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "Temp", $"data_{DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss")}.csv"));
+
+            //write the file first as the list of items will be too large to get all at once
+            //use the inputmodel's logic for finding rows and pages to make this code compatible with inputmodel code changes
+            using (StreamWriter sw = file.CreateText())
+            {
+                sw.WriteLine(Vibe2020DataModel.GetHeader());
+
+                for(int i = 1; i <= inputModel.AmountOfPages; i++)
+                {
+                    var request = new ProgramPageRequest()
+                    {
+                        RunAccelerometer = inputModel.RunAccelerometer,
+                        DataSetStart = i,
+                        RunGyroscope = inputModel.RunGyroscope,
+                        Rows = inputModel.DataSetsPerPage,
+                        SegmentSize = inputModel.SegmentSize
+                    };
+
+                    var data = await vibeClient.GetProgramResultsAsync(
+                                   request,
+                                   deadline: DateTime.UtcNow.AddMinutes(5));
+
+                    List<Vibe2020DataModel> items = Utilities.ConvertToDataModel(data.Items.ToList());
+
+                    foreach (var item in items)
+                    {
+                        await sw.WriteLineAsync(item.ToCsvLine());
+                    }
+
+                    await sw.FlushAsync();
+
+                }
+            }
+
+            isRunning = false;
+        }
+    }
+
+
     public void ActivateSingle()
     {
         resultQueryType = ResultQueryType.Single;
@@ -362,9 +414,9 @@
 
         if (result.GyroStatus)
             GyroStatus =@<p class="bg-success card-text text-center">Gyroscope Valid</p>;
-else
-GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
-StateHasChanged();
+        else
+        GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
+        StateHasChanged();
 }
 
 private enum ResultQueryType { Single, Stream, Bulk, SingleDevice }

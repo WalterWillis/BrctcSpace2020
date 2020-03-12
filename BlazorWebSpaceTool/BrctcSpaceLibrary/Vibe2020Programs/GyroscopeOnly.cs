@@ -22,7 +22,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
         public GyroscopeOnly()
         {
-            var settings = new SpiConnectionSettings(0, 1) { Mode = SpiMode.Mode3, ClockFrequency = 900000 };
+            var settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode3, ClockFrequency = 900000 };
 
              _gyroscopeDevice = new Gyroscope(settings);
 

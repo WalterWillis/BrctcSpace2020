@@ -386,3 +386,4 @@ MigrationBackup/
 *.key
 *.crt
 *.csr
+BlazorWebSpaceTool/BlazorWebSpaceTool/Temp/*

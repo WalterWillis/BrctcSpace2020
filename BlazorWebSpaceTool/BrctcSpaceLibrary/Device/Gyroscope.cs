@@ -13,7 +13,9 @@ namespace BrctcSpaceLibrary.Device
         //Container used to quickly request data without further allocations being necessary
         //0 and 1 are used for requests, 2 and 3 are used for replies
         private Memory<byte> FastBuffer = new Memory<byte>(new byte[4]);
-
+        private ReadOnlyMemory<byte> BurstReadRegisterBuffer = new ReadOnlyMemory<byte>(
+            new byte[22] { 0x3E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
+        private Memory<byte> BurstReadDataBuffer = new Memory<byte>(new byte[22]);
         SpiDevice _gyro;
 
         /// <summary>
@@ -79,6 +81,46 @@ namespace BrctcSpaceLibrary.Device
             //Note that the cast takes data type length into account. An int is 4 bytes.
             //Note: 20 bytes = 5 int array. 22 bytes also = 5 int array. 20 is perfect for multiplicity
             return MemoryMarshal.Cast<byte, int>(burstData); //remove the leading empty bytes
+        }
+
+        public void BurstRead(Span<byte> buffer)
+        {
+            _gyro.TransferFullDuplex(BurstReadRegisterBuffer.Span, BurstReadDataBuffer.Span);
+
+            var span = BurstReadDataBuffer.Span;
+
+            //reverse endianness for ADIS16460, start at second set as the first set is only a reply to the reg call
+            buffer[1] = span[2];
+            buffer[0] = span[3];
+
+            buffer[3] = span[4];
+            buffer[2] = span[5];
+
+            buffer[5] = span[6];
+            buffer[4] = span[7];
+
+            buffer[7] = span[8];
+            buffer[6] = span[9];
+
+            buffer[9] = span[10];
+            buffer[8] = span[11];
+
+            buffer[11] = span[12];
+            buffer[10] = span[13];
+
+            buffer[13] = span[14];
+            buffer[12] = span[15];
+
+            buffer[15] = span[16];
+            buffer[14] = span[17];
+
+            buffer[17] = span[18];
+            buffer[16] = span[19];
+
+            buffer[19] = span[20];
+            buffer[18] = span[21];
+
+            span.Clear();
         }
 
         public void AcquireData(Span<byte> buffer)

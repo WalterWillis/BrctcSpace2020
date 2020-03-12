@@ -26,12 +26,12 @@ namespace BrctcSpaceLibrary.WriteTests
 
         public BinaryChunkWriterTest(string fileName)
         {
-            using (SpiDevice spi = SpiDevice.Create(new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 2000000 }))
+            using (SpiDevice spi = SpiDevice.Create(new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 900000 }))
             {
                 _accelerometerDevice = new Mcp3208Custom(spi, (int)Channel.X, (int)Channel.Y, (int)Channel.Z);
             }
            // _accelerometerDevice = new Accelerometer(new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1900000 });
-            _gyroscopeDevice = new Gyroscope(new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1000000 });
+            _gyroscopeDevice = new Gyroscope(new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 900000 });
             _cpuDevice = new CpuTemperature();
             _rtcDevice = new RTC();
             _uart = new UART();
@@ -54,9 +54,9 @@ namespace BrctcSpaceLibrary.WriteTests
             Span<byte> cpuSegment = new Span<byte>(new byte[cpuBytes]);
 
             bool shown = false;
-            int secondaryDataCounter = 0;
+            //int secondaryDataCounter = 0;
 
-            const int secondaryDataTrigger = 200;
+            //const int secondaryDataTrigger = 200;
 
 
             try
@@ -75,8 +75,8 @@ namespace BrctcSpaceLibrary.WriteTests
                             _accelerometerDevice.Read(accelSegment);
                             stream.Write(accelSegment);
 
-                            if (secondaryDataCounter++ >= secondaryDataTrigger)
-                            {
+                            //if (secondaryDataCounter++ >= secondaryDataTrigger)
+                            //{
                                 gyroSegment.Clear();
                                 _gyroscopeDevice.AcquireData(gyroSegment);
 
@@ -86,8 +86,8 @@ namespace BrctcSpaceLibrary.WriteTests
                                 cpuSegment.Clear();
                                 GetCpuTemp(cpuSegment);
 
-                                secondaryDataCounter = 0;
-                            }
+                            //    secondaryDataCounter = 0;
+                            //}
 
                             stream.Write(gyroSegment);
 
