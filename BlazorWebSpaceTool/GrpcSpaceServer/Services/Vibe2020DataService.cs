@@ -117,7 +117,7 @@ namespace GrpcSpaceServer.Services
                 {
                     //The ADIS values seem to fluctuate at times, so try a few times to get the right value. 
                     //If it still cannot be validated, something may be wrong
-                    regValue = _gyroscopeDevice.RegisterRead(Gyroscope.Register.PROD_ID);
+                    regValue = (short)_gyroscopeDevice.RegisterRead((byte)Register.PROD_ID);
                     valid = regValue.Equals(gyroProductID);
 
                     if (valid)
@@ -141,6 +141,16 @@ namespace GrpcSpaceServer.Services
                 _logger.LogError(ex.StackTrace);
             }
             return valid;
+        }
+
+        public void SetGyroRegister(byte register, short value)
+        {
+            _gyroscopeDevice.RegisterWrite(register, value);
+        }
+
+        public int GetGyroRegister(byte register)
+        {
+            return _gyroscopeDevice.RegisterRead(register);
         }
 
 

@@ -123,9 +123,19 @@
             </div>
         </div>
 
-        @*<div class="card bg-secondary" style="max-width: 12%;margin:auto; float:left">
-                Second card for more health checks
-            </div>*@
+        <div class="card bg-secondary" style="max-width: 12%;margin:auto; float:left">
+            <button @onclick="SetGyroscope" class="btn btn-sm btn-info">Write to MSC_CTRL</button>
+            <br />
+            <div>
+                <EditForm Model="gyroInputModel">
+                    <label>
+                        Register to write
+                        <InputNumber @bind-Value="gyroInputModel.Value"></InputNumber>
+                    </label>
+                    <p>Register Reply: @gyroInputModel.ResultValue</p>
+                </EditForm>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -161,6 +171,8 @@
     private SingleDeviceType selectedDevice = SingleDeviceType.Accelerometer;
 
     private InputModels.SingleDeviceInputModel inputModel { get; set; } = new InputModels.SingleDeviceInputModel();
+
+    private InputModels.GyroRegisterInputModel gyroInputModel { get; set; } = new InputModels.GyroRegisterInputModel() { Register = (byte)BrctcSpaceLibrary.Register.MSC_CTRL };
 
     public void SelectionChanged(ChangeEventArgs args)
     {
@@ -253,7 +265,7 @@
 
             var result = await vibeClient.RunTimedProgramAsync(
                                 request,
-                                deadline: DateTime.UtcNow.AddMinutes(inputModel.Minutes + 1), //Add padding to time to wait for I/O and other variables
+                                deadline: DateTime.UtcNow.AddMinutes(inputModel.Minutes + 2), //Add padding to time to wait for I/O and other variables
                                 cancellationToken: CancellationToken.Token);
 
             inputModel.SelectedPage = 1;
@@ -408,7 +420,7 @@
         Utilities.SaveToCsv(Results, this.JS, "SingleResults");
     }
 
-    public async void GetStatus()
+    public async Task GetStatus()
     {
         var result = await vibeClient.GetDeviceStatusAsync(new DeviceStatusRequest());
 
@@ -417,10 +429,22 @@
         else
         GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
         StateHasChanged();
-}
+    }
 
-private enum ResultQueryType { Single, Stream, Bulk, SingleDevice }
-private enum SingleDeviceType { Accelerometer, Gyroscope }
+    public async Task SetGyroscope()
+    {
+        var result = await vibeClient.SetGyroRegisterAsync(new GyroRegisterData()
+        {
+            Register = gyroInputModel.Register,
+            Value = gyroInputModel.Value
+        });
+
+        gyroInputModel.ResultValue = (short)result.Result;
+        StateHasChanged();
+    }
+
+    private enum ResultQueryType { Single, Stream, Bulk, SingleDevice }
+    private enum SingleDeviceType { Accelerometer, Gyroscope }
 
 
 }

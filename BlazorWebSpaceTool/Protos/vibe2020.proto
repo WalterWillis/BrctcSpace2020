@@ -11,6 +11,8 @@ service Vibe {
   rpc GetDeviceStatus (DeviceStatusRequest) returns (DeviceStatus);
   rpc RunTimedProgram (SingleDeviceRequest) returns (SingleDeviceResponse);
   rpc GetProgramResults (ProgramPageRequest) returns (DeviceDataArray);
+  rpc SetGyroRegister (GyroRegisterData) returns (GyroReply);
+  rpc GetGyroRegisters (GyroRegisterList) returns (GyroRegisterList); // returns a list with mapped register and returned data
 }
 
 message SingleDeviceRequest{
@@ -56,4 +58,17 @@ message DeviceStatusRequest{
 
 message DeviceStatus{
      bool GyroStatus = 1;
+}
+
+message GyroRegisterList{
+    repeated GyroRegisterData RegisterList = 1;
+}
+
+message GyroRegisterData{
+    uint32 register = 1;
+    int32 value = 2;
+}
+
+message GyroReply{
+    int32 result = 1;
 }

@@ -2,6 +2,7 @@
 using System.Device.Spi;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace BrctcSpaceLibrary.Device
 {
@@ -168,22 +169,22 @@ namespace BrctcSpaceLibrary.Device
             buffer[19] = deviceBuffer[1];
         }
 
-        public short RegisterRead(Register regAddr)
+        public int RegisterRead(byte regAddr)
         {
-            short result;
             byte[] reply = new byte[2];
             //ADIS is a 16 bit device. Append a 0 byte to the address
-            _gyro.TransferFullDuplex(new byte[] { (byte)regAddr, 0x00 }, reply);
+            _gyro.Write(new byte[] { regAddr, 0x00 });
+            Thread.SpinWait(40); // delay approximately 40 microseconds
+            _gyro.Read(reply);
+            Thread.SpinWait(40); // delay approximately 40 microseconds
 
-            _gyro.TransferFullDuplex(new byte[] { 0x00, 0x00 }, reply);
+            int result = (reply[1] << 8) | (reply[0] & 0xFF);
 
-            reply = reply.Reverse().ToArray();
-            result = BitConverter.ToInt16(reply);
-
+            Console.WriteLine($"Read Register {regAddr.ToString("x2")} with result {reply[0]} and {reply[1]} reversed and combined into {result}");
             return result;
         }
 
-        private Span<byte> FastRegisterRead(Register regAddr)
+        public Span<byte> FastRegisterRead(Register regAddr)
         {
             Span<byte> reply = new byte[2];
             _gyro.TransferFullDuplex(new byte[] { (byte)regAddr, 0x00 }, reply);
@@ -191,7 +192,7 @@ namespace BrctcSpaceLibrary.Device
             return reply;
         }
 
-        private void FastRegisterRead(Register regAddr, Span<byte> replyBuffer)
+        public void FastRegisterRead(Register regAddr, Span<byte> replyBuffer)
         {
             var span = FastBuffer.Span.Slice(0,2);
             span[0] = (byte)regAddr;
@@ -200,52 +201,23 @@ namespace BrctcSpaceLibrary.Device
             _gyro.TransferFullDuplex(span, replyBuffer);
         }
 
-
-        public enum Register : byte
+        public void RegisterWrite(byte regAddr, short value)
         {
-            FLASH_CNT = 0x00,  //Flash memory write count
-            DIAG_STAT = 0x02,  //Diagnostic and operational status
-            X_GYRO_LOW = 0x04,  //X-axis gyroscope output, lower word
-            X_GYRO_OUT = 0x06,  //X-axis gyroscope output, upper word
-            Y_GYRO_LOW = 0x08,  //Y-axis gyroscope output, lower word
-            Y_GYRO_OUT = 0x0A,  //Y-axis gyroscope output, upper word
-            Z_GYRO_LOW = 0x0C,  //Z-axis gyroscope output, lower word
-            Z_GYRO_OUT = 0x0E,  //Z-axis gyroscope output, upper word
-            X_ACCL_LOW = 0x10,  //X-axis accelerometer output, lower word
-            X_ACCL_OUT = 0x12,  //X-axis accelerometer output, upper word
-            Y_ACCL_LOW = 0x14,  //Y-axis accelerometer output, lower word
-            Y_ACCL_OUT = 0x16,  //Y-axis accelerometer output, upper word
-            Z_ACCL_LOW = 0x18,  //Z-axis accelerometer output, lower word
-            Z_ACCL_OUT = 0x1A,  //Z-axis accelerometer output, upper word
-            SMPL_CNTR = 0x1C,  //Sample Counter, MSC_CTRL[3:2]=11
-            TEMP_OUT = 0x1E,  //Temperature output (internal, not calibrated)
-            X_DELT_ANG = 0x24,  //X-axis delta angle output
-            Y_DELT_ANG = 0x26,  //Y-axis delta angle output
-            Z_DELT_ANG = 0x28,  //Z-axis delta angle output
-            X_DELT_VEL = 0x2A,  //X-axis delta velocity output
-            Y_DELT_VEL = 0x2C,  //Y-axis delta velocity output
-            Z_DELT_VEL = 0x2E,  //Z-axis delta velocity output
-            MSC_CTRL = 0x32,  //Miscellaneous control
-            SYNC_SCAL = 0x34,  //Sync input scale control
-            DEC_RATE = 0x36,  //Decimation rate control
-            FLTR_CTRL = 0x38,  //Filter control, auto-null record time
-            GLOB_CMD = 0x3E,  //Global commands
-            XGYRO_OFF = 0x40,  //X-axis gyroscope bias offset error
-            YGYRO_OFF = 0x42,  //Y-axis gyroscope bias offset error
-            ZGYRO_OFF = 0x44,  //Z-axis gyroscope bias offset factor
-            XACCL_OFF = 0x46,  //X-axis acceleration bias offset factor
-            YACCL_OFF = 0x48,  //Y-axis acceleration bias offset factor
-            ZACCL_OFF = 0x4A,  //Z-axis acceleration bias offset factor
-            LOT_ID1 = 0x52,  //Lot identification number
-            LOT_ID2 = 0x54,  //Lot identification number
-            PROD_ID = 0x56,  //Product identifier
-            SERIAL_NUM = 0x58,  //Lot-specific serial number
-            CAL_SGNTR = 0x60,  //Calibration memory signature value
-            CAL_CRC = 0x62,  //Calibration memory CRC values
-            CODE_SGNTR = 0x64,  //Code memory signature value
-            CODE_CRC = 0x66  //Code memory CRC values
-        }
+            UInt16 addr = (UInt16)(((regAddr & 0x7F) | 0x80) << 8); // Toggle sign bit, and check that the address is 8 bits
+            UInt16 lowWord = (UInt16)(addr | (value & 0xFF)); // OR Register address (A) with data(D) (AADD)
+            UInt16 highWord = (UInt16)((addr | 0x100) | ((value >> 8) & 0xFF)); // OR Register address with data and increment address
 
+            // Split words into chars
+            byte highBytehighWord = (byte)(highWord >> 8);
+            byte lowBytehighWord = (byte)(highWord & 0xFF);
+            byte highBytelowWord = (byte)(lowWord >> 8);
+            byte lowBytelowWord = (byte)(lowWord & 0xFF);
+
+            _gyro.Write(new byte[] { highBytelowWord, lowBytelowWord });
+            Thread.SpinWait(40); // delay approximately 40 microseconds
+            _gyro.Write(new byte[] { highBytehighWord, lowBytehighWord });
+        }
+      
         public void Dispose()
         {
             Dispose(true);

@@ -11,6 +11,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BrctcSpaceLibrary", "Blazor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vibe2020Tests", "BlazorWebSpaceTool\Vibe2020DataAcquisition\Vibe2020Tests.csproj", "{B2964EB0-A4EC-45BD-8A2A-83E7E87C511A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vibe2020Client", "BlazorWebSpaceTool\Vibe2020Client\Vibe2020Client.csproj", "{078D3837-8DBA-45D9-AD61-7459935A1FED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vibe2020ClientLibrary", "BlazorWebSpaceTool\Vibe2020ClientLibrary\Vibe2020ClientLibrary.csproj", "{3E6DC731-62EB-45D2-860C-A04B38EFD7BB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{B2964EB0-A4EC-45BD-8A2A-83E7E87C511A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B2964EB0-A4EC-45BD-8A2A-83E7E87C511A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B2964EB0-A4EC-45BD-8A2A-83E7E87C511A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{078D3837-8DBA-45D9-AD61-7459935A1FED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{078D3837-8DBA-45D9-AD61-7459935A1FED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{078D3837-8DBA-45D9-AD61-7459935A1FED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{078D3837-8DBA-45D9-AD61-7459935A1FED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E6DC731-62EB-45D2-860C-A04B38EFD7BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E6DC731-62EB-45D2-860C-A04B38EFD7BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E6DC731-62EB-45D2-860C-A04B38EFD7BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E6DC731-62EB-45D2-860C-A04B38EFD7BB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -22,5 +22,21 @@ namespace GrpcSpaceServer.Services.Interfaces
         /// </summary>
         /// <returns>Returns true if valid</returns>
         public bool isGyroValid();
+
+        /// <summary>
+        /// Writes a value to a particular register
+        /// </summary>
+        /// <param name="register"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public void SetGyroRegister(byte register, short value);
+
+        /// <summary>
+        /// Gets the value from a particular register
+        /// </summary>
+        /// <param name="register"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public int GetGyroRegister(byte register);
     }
 }

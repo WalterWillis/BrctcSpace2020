@@ -146,5 +146,44 @@ namespace GrpcSpaceServer.Services
 
             return Task.FromResult(response);
         }
+
+        public override Task<GyroReply> SetGyroRegister(GyroRegisterData request, ServerCallContext context)
+        {
+            var response = new GyroReply();
+            _dataService.SetGyroRegister((byte)request.Register, (short)request.Value);
+            response.Result = _dataService.GetGyroRegister((byte)request.Register);
+            return Task.FromResult(response);
+        }
+
+        /// <summary>
+        /// Cycles through the list of registers, returning registers successfully read with their values
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override Task<GyroRegisterList> GetGyroRegisters(GyroRegisterList request, ServerCallContext context)
+        {
+            var response = new GyroRegisterList();
+
+            foreach(var register in request.RegisterList)
+            {
+                try
+                {
+                    response.RegisterList.Add(new GyroRegisterData()
+                    {
+                        Register = register.Register,
+                        Value = _dataService.GetGyroRegister((byte)register.Register)
+                    });
+                }
+                catch(Exception ex)
+                {
+                    _logger.LogError($"Cannot read register {register.Register}.");
+                    _logger.LogError(ex.Message);
+                    _logger.LogError(ex.StackTrace);
+                }
+            }
+
+            return Task.FromResult(response);
+        }
     }
 }
