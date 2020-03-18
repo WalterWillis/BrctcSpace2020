@@ -118,6 +118,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
         ~GyroscopeOnly()
         {
             _gyroscopeDevice.Dispose();
+            _gpio.UnregisterCallbackForPinValueChangedEvent(DR_PIN, DataAquisitionCallback);
             _gpio.ClosePin(DR_PIN);
             _gpio.Dispose();
         }
