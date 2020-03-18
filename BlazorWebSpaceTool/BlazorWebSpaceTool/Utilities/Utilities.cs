@@ -14,71 +14,29 @@ namespace BlazorWebSpaceTool.Utilities
 {
     public static class Utilities
     {
-        public static Vibe2020DataModel ConvertToDataModel(ResultSet set)
-        {
-            Vibe2020DataModel model = new Vibe2020DataModel();
-
-            if (set?.AccelerometerResults != null)
-            {
-                model.AccelData = new int[] { set.AccelerometerResults.X, set.AccelerometerResults.Y, set.AccelerometerResults.Z };
-            }
-
-            if (set?.GyroscopeResults?.BurstResults != null)
-            {
-                model.GyroData = new double[10]
-                {
-                    set.GyroscopeResults.BurstResults.Diagnostic,
-                    set.GyroscopeResults.BurstResults.GyroX,
-                    set.GyroscopeResults.BurstResults.GyroY,
-                    set.GyroscopeResults.BurstResults.GyroZ,
-                    set.GyroscopeResults.BurstResults.AccelX,
-                    set.GyroscopeResults.BurstResults.AccelY,
-                    set.GyroscopeResults.BurstResults.AccelZ,
-                    set.GyroscopeResults.BurstResults.Temperature,
-                    set.GyroscopeResults.BurstResults.SampleCount,
-                    set.GyroscopeResults.BurstResults.Checksum
-                };
-            }
-
-            model.TransactionTime = set.CurrentTime.ToDateTime().ToLocalTime();
-
-            model.CpuTemp = set.CpuTemperature;
-
-            return model;
-        }
-
-        public static List<Vibe2020DataModel> ConvertToDataModel(List<ResultSet> resultSet)
-        {
-            List<Vibe2020DataModel> dataModels = new List<Vibe2020DataModel>();
-            foreach (var set in resultSet)
-                dataModels.Add(ConvertToDataModel(set));
-
-            return dataModels;
-        }
-
         public static Vibe2020DataModel ConvertToDataModel(DeviceDataModel deviceData)
         {
             Vibe2020DataModel model = new Vibe2020DataModel();
 
             if (deviceData?.AccelData != null && deviceData.AccelData.Count > 0)
             {
-                model.AccelData = new int[] { deviceData.AccelData[0], deviceData.AccelData[1], deviceData.AccelData[2] };
+                model.AccelData_Raw = new int[] { deviceData.AccelData[0], deviceData.AccelData[1], deviceData.AccelData[2] };
+
+                model.AccelData = new double[] {
+                    ScaleAccelerometer(deviceData.AccelData[0]), 
+                    ScaleAccelerometer(deviceData.AccelData[1]),
+                    ScaleAccelerometer(deviceData.AccelData[2])
+                };
             }
 
             if (deviceData?.GyroData != null && deviceData.GyroData.Count > 0)
             {
-                Span<int> data = new int[10]
+                Span<int> data = new int[4]
                 {
                     deviceData.GyroData[0],
                     deviceData.GyroData[1],
                     deviceData.GyroData[2],
-                    deviceData.GyroData[3],
-                    deviceData.GyroData[4],
-                    deviceData.GyroData[5],
-                    deviceData.GyroData[6],
-                    deviceData.GyroData[7],
-                    deviceData.GyroData[8],
-                    deviceData.GyroData[9]
+                    deviceData.GyroData[3]
                 };
 
                 Span<byte> bytes = MemoryMarshal.Cast<int, byte>(data);
@@ -86,6 +44,8 @@ namespace BlazorWebSpaceTool.Utilities
 
                 model.GyroData = GyroConversionHelper.GetGyroscopeDetails(model.GyroData_Raw).ToArray();
             }
+
+            model.ResultStatus = (ResultStatus)deviceData.ResultStatus;
 
             model.TransactionTime = new DateTime(deviceData.TransactionTime).ToLocalTime();
 
@@ -169,6 +129,12 @@ namespace BlazorWebSpaceTool.Utilities
                 }
                 await JS.SaveAs(fileName, stream.ToArray());
             }
+        }
+
+        private static double ScaleAccelerometer(int value)
+        {
+            double resRatio = 5D / 4095;
+            return value * resRatio;
         }
     }
 

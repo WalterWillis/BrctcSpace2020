@@ -4,65 +4,41 @@ option csharp_namespace = "BrctcSpace";
 
 package vibe2020;
 
-import "google/protobuf/timestamp.proto";
-
 service Vibe {
-  rpc GetResultSet (ResultRequest) returns (ResultReply);
-  rpc GetResultStream (ResultRequest) returns (stream ResultReply);
-  rpc PollVibe2020DataService (DeviceDataRequest) returns (DeviceDataArray);
+  rpc GetSingleDeviceData (DeviceDataRequest) returns (DeviceDataModel);
+  rpc StreamDeviceData (DeviceDataRequest) returns (stream DeviceDataModel);
+  rpc GetBulkDeviceData (DeviceDataRequest) returns (DeviceDataArray);
+  rpc GetDeviceStatus (DeviceStatusRequest) returns (DeviceStatus);
+  rpc RunTimedProgram (SingleDeviceRequest) returns (SingleDeviceResponse);
+  rpc GetProgramResults (ProgramPageRequest) returns (DeviceDataArray);
+  rpc SetGyroRegister (GyroRegisterData) returns (GyroReply);
+  rpc GetGyroRegisters (GyroRegisterList) returns (GyroRegisterList); // returns a list with mapped register and returned data
 }
 
-enum ResultType{
-    GyroOnly = 0;
-    AccelerometerOnly = 1;
-    RtcOnly = 2;
-    Full = 3;
+message SingleDeviceRequest{
+bool RunAccelerometer = 1;
+bool useCustomeADC = 2;
+bool RunGyroscope = 3;
+double MinutesToRun = 4;
 }
 
-message ResultRequest {
-  ResultType ResultType = 1;
+message SingleDeviceResponse{
+    int64 DataSets = 1;
+    string ResultFileName = 2;
+    int32 SegmentSize = 3;
 }
 
-message ResultReply {
-  int32 ResultStatus = 1; //proto3 doesn't allow enum flags, so we'll send an integer and use a shared enum class
-  ResultSet ResultSet = 2;
+message ProgramPageRequest{
+    int64 DataSetStart = 1;
+    int32 Rows = 2;
+    int32 SegmentSize = 3;
+    bool RunAccelerometer = 4;
+    bool RunGyroscope = 5;
 }
 
-message ResultSet{
-    AccelerometerResults AccelerometerResults = 1;
-    GyroscopeResults GyroscopeResults = 2;
-    double CpuTemperature = 3;
-    google.protobuf.Timestamp CurrentTime = 4;
-}
-
-message AccelerometerResults{
-    int32 X = 1;
-    int32 Y = 2;
-    int32 Z = 3;
-}
-
-message GyroscopeResults{
-    BurstResults BurstResults = 1;
-}
-
-message BurstResults{
-    double Diagnostic = 1;
-    double Gyro_X = 2;
-    double Gyro_Y = 3;
-    double Gyro_Z = 4;
-    double Accel_X = 5;
-    double Accel_Y = 6;
-    double Accel_Z = 7;
-    double Temperature = 8;
-    double SampleCount = 9;
-    double Checksum = 10;
-}
 
 message DeviceDataRequest{
-    bool useAccelerometer = 1;
-    bool useGyroscope = 2;
-    bool useRtc = 3;
-    bool useCpuTemperature = 4;
+    int32 DataIterations = 1;
 }
 
 message DeviceDataArray{
@@ -73,4 +49,26 @@ message DeviceDataModel{
     repeated int32 GyroData = 2;
     int64 TransactionTime = 3;
     double CpuTemp = 4; 
+    int32 ResultStatus = 5;
+}
+
+message DeviceStatusRequest{
+
+}
+
+message DeviceStatus{
+     bool GyroStatus = 1;
+}
+
+message GyroRegisterList{
+    repeated GyroRegisterData RegisterList = 1;
+}
+
+message GyroRegisterData{
+    uint32 register = 1;
+    int32 value = 2;
+}
+
+message GyroReply{
+    int32 result = 1;
 }

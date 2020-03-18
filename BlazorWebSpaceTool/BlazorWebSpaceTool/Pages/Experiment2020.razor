@@ -4,7 +4,7 @@
 @using BrctcSpaceLibrary.DataModels;
 @using BlazorWebSpaceTool.Components;
 @using System.Threading;
-@using System.Text.Json;
+@using System.IO;
 @inject Vibe.VibeClient vibeClient;
 @inject Microsoft.JSInterop.IJSRuntime JS;
 
@@ -16,47 +16,86 @@
 
 </div>
 
-<div class="results">
-    <div class="resultsleft">
-        <h5>Single data point testing</h5>
+<div class="subgrid">
+    <div class="subgrid-left">
+
+        <div class="btn-group">
+            <button class="@singleClass" @onclick="ActivateSingle">Single</button>
+            <button class="@streamClass" @onclick="ActivateStream">Stream</button>
+            <button class="@bulkClass" @onclick="ActivateBulk">Bulk</button>
+            <button class="@singleDeviceClass" @onclick="ActivateSingleDevice">SingleDevice</button>
+        </div>
+
         <br />
-        <button disabled="@isRunning" @onclick="GetResult" class="btn btn-primary">Get Data</button>
 
-        <button @onclick="SaveSingleToJson" class="btn btn-info">Save To Json</button>
-        <button @onclick="SaveSingleToCsv" class="btn btn-info">Save To CSV</button>
-
-        <br />
-        <p>Rows: @SingleResults.Count</p>
-
-        <GenericListTable Items="SingleResults">
-            <TableHeader>
-                <th>Accelerometer</th>
-                <th>Gyroscope</th>
-                <th>Cpu Temp</th>
-                <th>Transaction Timestamp</th>
-            </TableHeader>
-            <RowTemplate>
-                <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
-                <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
-                <td>@context.CpuTemp</td>
-                <td>@context.TransactionTime</td>
-            </RowTemplate>
-        </GenericListTable>
+        <button @onclick="SaveResultsToJson" disabled="@(Results == null || Results.Count <= 0)" class="btn btn-info">Save To Json</button>
+        <button @onclick="SaveResultsToCsv" disabled="@(Results == null || Results.Count <= 0)" class="btn btn-info">Save To CSV</button>
     </div>
+    <div class="subgrid-center">
+        <h5>@resultTitle</h5>
+        @if (resultQueryType.Equals(ResultQueryType.SingleDevice))
+        {
+            <EditForm Model="inputModel" OnValidSubmit="TestSingleDevice">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-    <div class="resultscenter">
-        <h5>Service call data block testing</h5>
+                <div>
+                    <input type="radio" name="AccelRadio" id="AccelRadio" value="@SingleDeviceType.Accelerometer"
+                           @onchange="SelectionChanged" checked=@(selectedDevice.Equals(SingleDeviceType.Accelerometer)) />
+                    <label for="AccelRadio">Accelerometers</label>
+                </div>
+                <div>
+                    <input type="radio" name="GyroRadio" id="GyroRadio" value="@SingleDeviceType.Gyroscope"
+                           @onchange="SelectionChanged" checked=@(selectedDevice.Equals(SingleDeviceType.Gyroscope)) />
+                    <label for="GyroRadio">Gyroscope</label>
+                </div>
+                <label>
+                    Minutes to run:
+                    <InputNumber @bind-Value="inputModel.Minutes"></InputNumber>
+                </label>
+                <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Run Test</button>
+                <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
+            </EditForm>
+            <br />
+        }
+        <button disabled="@isRunning" hidden="@resultQueryType.Equals(ResultQueryType.SingleDevice)" @onclick="GetResults" class="btn btn-primary">Get Data</button>
+        <button disabled="@(!isRunning)" hidden="@(!resultQueryType.Equals(ResultQueryType.Stream))"
+                @onclick="Cancel" class="btn btn-primary btn-sm">
+            Cancel Stream
+        </button>
         <br />
-        <button disabled="@isRunning" @onclick="GetBulkResults" class="btn btn-primary">Gather all Async Data</button>
+        @if (resultQueryType.Equals(ResultQueryType.SingleDevice) && inputModel.HasRun)
+        {
+            <EditForm Model="inputModel" OnValidSubmit="GetProgramResults">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <label>
+                    Select rows to display:
+                    <InputNumber @bind-Value="inputModel.DataSetsPerPage"></InputNumber>
+                </label>
+                <label>
+                    Page Index:
+                    <NumericInputSelect @bind-Value="inputModel.SelectedPage">
+                        <option value="0">Select page ...</option>
+                        @for (long i = 1; i <= inputModel.AmountOfPages; i++)
+                            {
+                            <option value="@i">Page @i</option>
+                            }
+                        /**/
+                    </NumericInputSelect>
+                </label>
 
-        <button @onclick="SaveBulkToJson" class="btn btn-info">Save To Json</button>
-        <button @onclick="SaveBulkToCsv" class="btn btn-info">Save To CSV</button>
-
+                <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Get Results</button>
+                <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
+            </EditForm>
+            <button disabled="@isRunning" @onclick="CopyFileFromServer" class="btn btn-dark btn-sm" style="margin-left:10px;">Save File</button>
+        }
         <br />
-        <p>Rows: @BulkResults.Count</p>
+        <p>Rows: @Results.Count</p>
 
-        <GenericListTable Items="BulkResults">
+        <GenericListTable Items="Results">
             <TableHeader>
+                <th>Raw Accelerometer</th>
                 <th>Accelerometer</th>
                 <th>Raw Gyroscope</th>
                 <th>Gyroscope</th>
@@ -64,42 +103,39 @@
                 <th>Transaction Timestamp</th>
             </TableHeader>
             <RowTemplate>
+                <td>@(context.AccelData_Raw != null ? string.Join(',', context.AccelData_Raw) : "None")</td>
                 <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
                 <td>@(context.GyroData_Raw != null ? string.Join(',', context.GyroData_Raw) : "None")</td>
-                <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
-                <td>@(context.CpuTemp)</td>
-                <td>@context.TransactionTime</td>
-            </RowTemplate>
-        </GenericListTable>
-    </div>
-
-    <div class="resultsright">
-        <h5>Data stream testing</h5>
-        <br />
-        <button disabled="@isRunning" @onclick="GetStreamResults" class="btn btn-primary btn-sm">Stream Data</button>
-        <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel Stream</button>
-
-        <button @onclick="SaveStreamToJson" class=" btn btn-info">Save To Json</button>
-        <button @onclick="SaveStreamToCsv" class="btn btn-info">Save To CSV</button>
-
-        <p>Rows: @StreamResults.Count</p>
-        <br />
-
-        <GenericListTable Items="StreamResults">
-            <TableHeader>
-                <th>Accelerometer</th>
-                <th>Gyroscope</th>
-                <th>Cpu Temp</th>
-                <th>Transaction Timestamp</th>
-            </TableHeader>
-            <RowTemplate>
-                <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
                 <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
                 <td>@context.CpuTemp</td>
                 <td>@context.TransactionTime</td>
             </RowTemplate>
         </GenericListTable>
+    </div>
 
+    <div class="subgrid-footer container-fluid p-3 my-3 bg-dark text-white">
+        <h4 style="margin-bottom:10px;">Device Details</h4>
+        <div class="card bg-secondary" style="max-width: 12%;margin-right:10px; float:left">
+            <button @onclick="GetStatus" class="btn btn-sm btn-info">Verify Gyroscope Connection Status</button>
+            <br />
+            <div>
+                @GyroStatus
+            </div>
+        </div>
+
+        <div class="card bg-secondary" style="max-width: 12%;margin:auto; float:left">
+            <button @onclick="SetGyroscope" class="btn btn-sm btn-info">Write to MSC_CTRL</button>
+            <br />
+            <div>
+                <EditForm Model="gyroInputModel">
+                    <label>
+                        Register to write
+                        <InputNumber @bind-Value="gyroInputModel.Value"></InputNumber>
+                    </label>
+                    <p>Register Reply: @gyroInputModel.ResultValue</p>
+                </EditForm>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -107,90 +143,276 @@
 
 @code {
 
-    public List<Vibe2020DataModel> SingleResults { get; set; } = new List<Vibe2020DataModel>();
-    public List<Vibe2020DataModel> StreamResults { get; set; } = new List<Vibe2020DataModel>();
-    public List<Vibe2020DataModel> BulkResults { get; set; } = new List<Vibe2020DataModel>();
+    public List<Vibe2020DataModel> Results { get; set; } = new List<Vibe2020DataModel>();
 
     //Used to disable all buttons when streaming data. Not technically necessary, but better safe than sorry.
     public bool isRunning { get; set; } = false;
 
+    public RenderFragment GyroStatus { get; set; }
+
     private CancellationTokenSource CancellationToken { get; set; }
+
+    private const string subButton = "btn btn-primary";
+    private const string subActiveButton = "active btn btn-primary";
+
+    private string singleClass = subActiveButton;
+    private string streamClass = subButton;
+    private string bulkClass = subButton;
+    private string singleDeviceClass = subButton;
+
+    private const string singleTitle = "Get Single Results";
+    private const string streamTitle = "Get Stream Results";
+    private const string bulkTitle = "Get Bulk Results";
+    private const string singleDeviceTitle = "Test either the accelerometers or gyroscope for a specified period of time";
+
+    private string resultTitle = singleTitle;
+    private ResultQueryType resultQueryType = ResultQueryType.Single;
+
+    private SingleDeviceType selectedDevice = SingleDeviceType.Accelerometer;
+
+    private InputModels.SingleDeviceInputModel inputModel { get; set; } = new InputModels.SingleDeviceInputModel();
+
+    private InputModels.GyroRegisterInputModel gyroInputModel { get; set; } = new InputModels.GyroRegisterInputModel() { Register = (byte)BrctcSpaceLibrary.Register.MSC_CTRL };
+
+    public void SelectionChanged(ChangeEventArgs args)
+    {
+        selectedDevice = (SingleDeviceType)Enum.Parse(typeof(SingleDeviceType), args.Value.ToString(), true);
+    }
 
     protected override Task OnInitializedAsync()
     {
+        //Create token before it's called
         CancellationToken = new CancellationTokenSource();
         CancellationToken.Token.Register(Cancel);
         return base.OnInitializedAsync();
     }
 
-    public async void GetStreamResults()
+    public async Task GetResults()
     {
         if (!isRunning)
         {
-            //Prevent multiple attempts
-            isRunning = true;
-            try
+            //setup the request once for brevity.
+            var request = new DeviceDataRequest();
+
+            switch (resultQueryType)
             {
-                using (var call = vibeClient.GetResultStream(
-            new ResultRequest() { ResultType = ResultType.Full },
-            cancellationToken: CancellationToken.Token))
-                {
+                case ResultQueryType.Single:
+                    var result = await vibeClient.GetSingleDeviceDataAsync(request);
+
+                    Results.Add(Utilities.ConvertToDataModel(result));
+                    break;
+                case ResultQueryType.Stream:
+                    //Prevent multiple attempts
+                    isRunning = true;
                     try
                     {
-                        if (CancellationToken.IsCancellationRequested)
-                            CancellationToken.Token.ThrowIfCancellationRequested();
-                        while (await call.ResponseStream.MoveNext(CancellationToken.Token))
+                        using (var call = vibeClient.StreamDeviceData(
+                        request,
+                        cancellationToken: CancellationToken.Token))
                         {
-                            StreamResults.Add(Utilities.ConvertToDataModel(call.ResponseStream.Current.ResultSet));
-                            StateHasChanged();
+                            try
+                            {
+                                if (CancellationToken.IsCancellationRequested)
+                                    CancellationToken.Token.ThrowIfCancellationRequested();
+                                while (await call.ResponseStream.MoveNext(CancellationToken.Token))
+                                {
+                                    Results.Add(Utilities.ConvertToDataModel(call.ResponseStream.Current));
+                                    StateHasChanged();
+                                }
+                            }
+                            catch
+                            {
+
+                            }
                         }
                     }
-                    catch
+                    finally
                     {
-
+                        isRunning = false;
                     }
+                    break;
+                case ResultQueryType.Bulk:
+                    isRunning = true;
+                    request.DataIterations = 1000;
+                    var data = await vibeClient.GetBulkDeviceDataAsync(request);
 
-                }
+                    Results.AddRange(Utilities.ConvertToDataModel(data.Items.ToList()));
+                    isRunning = false;
+                    break;
+                default:
+                    break;
             }
-            finally
-            {
-                isRunning = false;
-                StateHasChanged();
-            }
-        }
-    }
 
-    public async void GetResult()
-    {
-        if (!isRunning)
-        {
-            var result = await vibeClient.GetResultSetAsync(
-           new ResultRequest() { ResultType = ResultType.Full }
-           );
-
-            SingleResults.Add(Utilities.ConvertToDataModel(result.ResultSet));
-
-            //Update the state when result is received
             StateHasChanged();
         }
     }
 
-    public async void GetBulkResults()
+    public async Task TestSingleDevice()
     {
         if (!isRunning)
         {
             isRunning = true;
-            StateHasChanged();
-            var data = await vibeClient.PollVibe2020DataServiceAsync(
-            new DeviceDataRequest()
-            { UseAccelerometer = true, UseCpuTemperature = true, UseGyroscope = true, UseRtc = true }
-            );
 
-            BulkResults = Utilities.ConvertToDataModel(data.Items.ToList());
-            isRunning = false;
+            bool runAccel = selectedDevice.Equals(SingleDeviceType.Accelerometer) ? true : false;
+            bool runGyro = selectedDevice.Equals(SingleDeviceType.Gyroscope) ? true : false;
+            var request = new SingleDeviceRequest()
+            {
+                MinutesToRun = inputModel.Minutes,
+                RunAccelerometer = runAccel,
+                UseCustomeADC = true,
+                RunGyroscope = runGyro
+            };
+
+            var result = await vibeClient.RunTimedProgramAsync(
+                                request,
+                                deadline: DateTime.UtcNow.AddMinutes(inputModel.Minutes + 2), //Add padding to time to wait for I/O and other variables
+                                cancellationToken: CancellationToken.Token);
+
+            inputModel.SelectedPage = 1;
+            inputModel.DataSets = result.DataSets;
+            inputModel.HasRun = true;
+            inputModel.RunAccelerometer = runAccel;
+            inputModel.RunGyroscope = runGyro;
+            inputModel.SegmentSize = result.SegmentSize;
+
             StateHasChanged();
+
+            isRunning = false;
         }
     }
+
+    public async Task GetProgramResults()
+    {
+        if (!isRunning)
+        {
+            isRunning = true;
+
+            var request = new ProgramPageRequest()
+            {
+                RunAccelerometer = inputModel.RunAccelerometer,
+                DataSetStart = inputModel.PageStart,
+                RunGyroscope = inputModel.RunGyroscope,
+                Rows = inputModel.DataSetsPerPage,
+                SegmentSize = inputModel.SegmentSize
+            };
+
+            var data = await vibeClient.GetProgramResultsAsync(
+                           request,
+                           deadline: DateTime.UtcNow.AddMinutes(5)); //Give it some time to read the data
+
+            Results = Utilities.ConvertToDataModel(data.Items.ToList());
+
+            StateHasChanged();
+
+            isRunning = false;
+        }
+    }
+
+    /// <summary>
+    /// Currently, downloads the file to the web-tool's internal directory. Current JS code cannot handle the large files downloading from the browser itself.
+    /// </summary>
+    /// <returns></returns>
+    public async Task CopyFileFromServer()
+    {
+        if (!isRunning)
+        {
+            isRunning = true;
+            FileInfo file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "Temp", $"data_{DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss")}.csv"));
+            file.Directory.Create();
+
+            InputModels.SingleDeviceInputModel modelCopy = new InputModels.SingleDeviceInputModel()
+            {
+                SelectedPage = 1,
+                SegmentSize = inputModel.SegmentSize,
+                DataSets = inputModel.DataSets,
+                DataSetsPerPage = 1000,
+                HasRun = inputModel.HasRun,
+                Minutes = inputModel.Minutes,
+                RunAccelerometer = inputModel.RunAccelerometer,
+                RunGyroscope = inputModel.RunGyroscope
+            };
+
+            //write the file first as the list of items will be too large to get all at once
+            //use the inputmodel's logic for finding rows and pages to make this code compatible with inputmodel code changes
+            using (StreamWriter sw = file.CreateText())
+            {
+                sw.WriteLine(Vibe2020DataModel.GetHeader());
+
+                for(int i = 1; i <= inputModel.AmountOfPages; i++)
+                {
+                    modelCopy.SelectedPage = i;
+                    var request = new ProgramPageRequest()
+                    {
+                        RunAccelerometer = modelCopy.RunAccelerometer,
+                        DataSetStart = modelCopy.PageStart,
+                        RunGyroscope = modelCopy.RunGyroscope,
+                        Rows = modelCopy.DataSetsPerPage,
+                        SegmentSize = modelCopy.SegmentSize
+                    };
+
+                    var data = await vibeClient.GetProgramResultsAsync(
+                                   request,
+                                   deadline: DateTime.UtcNow.AddMinutes(1));
+
+                    List<Vibe2020DataModel> items = Utilities.ConvertToDataModel(data.Items.ToList());
+
+                    foreach (var item in items)
+                    {
+                        await sw.WriteLineAsync(item.ToCsvLine());
+                    }
+
+                    await sw.FlushAsync();
+                }
+            }
+
+            isRunning = false;
+        }
+    }
+
+
+    public void ActivateSingle()
+    {
+        resultQueryType = ResultQueryType.Single;
+        resultTitle = singleTitle;
+        singleClass = subActiveButton;
+        streamClass = subButton;
+        bulkClass = subButton;
+        singleDeviceClass = subButton;
+        StateHasChanged();
+    }
+
+    public void ActivateStream()
+    {
+        resultQueryType = ResultQueryType.Stream;
+        resultTitle = streamTitle;
+        singleClass = subButton;
+        streamClass = subActiveButton;
+        bulkClass = subButton;
+        singleDeviceClass = subButton;
+        StateHasChanged();
+    }
+
+    public void ActivateBulk()
+    {
+        resultQueryType = ResultQueryType.Bulk;
+        resultTitle = bulkTitle;
+        singleClass = subButton;
+        streamClass = subButton;
+        bulkClass = subActiveButton;
+        singleDeviceClass = subButton;
+        StateHasChanged();
+    }
+    public void ActivateSingleDevice()
+    {
+        resultQueryType = ResultQueryType.SingleDevice;
+        resultTitle = singleDeviceTitle;
+        singleClass = subButton;
+        streamClass = subButton;
+        bulkClass = subButton;
+        singleDeviceClass = subActiveButton;
+        StateHasChanged();
+    }
+
 
     public void Cancel()
     {
@@ -201,35 +423,41 @@
         StateHasChanged();
     }
 
-    public void SaveSingleToJson()
+    public void SaveResultsToJson()
     {
-        Utilities.SaveToJson(SingleResults, this.JS, "SingleResults");
+        Utilities.SaveToJson(Results, this.JS, "SingleResults");
     }
 
-    public void SaveBulkToJson()
+    public void SaveResultsToCsv()
     {
-        Utilities.SaveToJson(BulkResults, this.JS, "ServiceResults");
+        Utilities.SaveToCsv(Results, this.JS, "SingleResults");
     }
 
-    public void SaveStreamToJson()
+    public async Task GetStatus()
     {
-        Utilities.SaveToJson(StreamResults, this.JS, "StreamResults");
+        var result = await vibeClient.GetDeviceStatusAsync(new DeviceStatusRequest());
+
+        if (result.GyroStatus)
+            GyroStatus =@<p class="bg-success card-text text-center">Gyroscope Valid</p>;
+        else
+        GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
+        StateHasChanged();
     }
 
-    public void SaveSingleToCsv()
+    public async Task SetGyroscope()
     {
-        Utilities.SaveToCsv(SingleResults, this.JS, "SingleResults");
+        var result = await vibeClient.SetGyroRegisterAsync(new GyroRegisterData()
+        {
+            Register = gyroInputModel.Register,
+            Value = gyroInputModel.Value
+        });
+
+        gyroInputModel.ResultValue = (short)result.Result;
+        StateHasChanged();
     }
 
-    public void SaveBulkToCsv()
-    {
-        Utilities.SaveToCsv(BulkResults, this.JS, "ServiceResults");
-    }
-
-    public void SaveStreamToCsv()
-    {
-          Utilities.SaveToCsv(StreamResults, this.JS, "StreamResults");
-    }
+    private enum ResultQueryType { Single, Stream, Bulk, SingleDevice }
+    private enum SingleDeviceType { Accelerometer, Gyroscope }
 
 
 }

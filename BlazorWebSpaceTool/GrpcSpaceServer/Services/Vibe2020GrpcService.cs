@@ -4,8 +4,13 @@ using Microsoft.Extensions.Logging;
 using BrctcSpace;
 using System;
 using GrpcSpaceServer.Services.Interfaces;
-using System.Threading;
+using System.Linq;
 using BrctcSpaceLibrary;
+using BrctcSpaceLibrary.Vibe2020Programs;
+using System.IO;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Collections.Generic;
+using System.Security.AccessControl;
 
 namespace GrpcSpaceServer.Services
 {
@@ -18,139 +23,167 @@ namespace GrpcSpaceServer.Services
         {
             _logger = logger;
             _dataService = dataService;
-
-            //Start the data thread
-            _dataService.Initialize();
         }
 
-        public override Task<ResultReply> GetResultSet(ResultRequest request, ServerCallContext context)
-        {            
-            //create switch case
-            return Task.FromResult(GetFullResults());
-        }
-
-        public override async Task GetResultStream(ResultRequest request, IServerStreamWriter<ResultReply> responseStream, ServerCallContext context)
+        public override Task<DeviceDataModel> GetSingleDeviceData(DeviceDataRequest request, ServerCallContext context)
         {
-            Int64 counter = 0;
+            _dataService.GetSingleReading();
+
+            return Task.FromResult(_dataService.GetSingleReading());
+        }
+
+        public override async Task StreamDeviceData(DeviceDataRequest request, IServerStreamWriter<DeviceDataModel> responseStream, ServerCallContext context)
+        {
             try
             {
                 while (!context.CancellationToken.IsCancellationRequested)
                 {
-                    ResultReply resultReply = GetFullResults();
-
-                    _logger.LogInformation($"Sending response #{counter++}");
+                    DeviceDataModel resultReply = _dataService.GetSingleReading();
 
                     if (context.CancellationToken.IsCancellationRequested)
                         context.CancellationToken.ThrowIfCancellationRequested();
                     await responseStream.WriteAsync(resultReply);
                 }
             }
-            catch(OperationCanceledException)
+            catch (OperationCanceledException)
             {
                 _logger.LogInformation("Stream cancelled by user request.");
             }
         }
 
-        public override Task<DeviceDataArray> PollVibe2020DataService(DeviceDataRequest request, ServerCallContext context)
+        public override Task<DeviceDataArray> GetBulkDeviceData(DeviceDataRequest request, ServerCallContext context)
         {
             var response = new DeviceDataArray();
-            _dataService.Initialize(request.UseAccelerometer, request.UseGyroscope, request.UseRtc, request.UseCpuTemperature);
-            response.Items.AddRange(_dataService.GetData());
+            response.Items.AddRange(_dataService.GetReadings(request.DataIterations));
             return Task.FromResult(response);
         }
 
-
-        private ResultReply GetFullResults()
+        public override Task<DeviceStatus> GetDeviceStatus(DeviceStatusRequest request, ServerCallContext context)
         {
-            ResultReply results = new ResultReply();
-            results.ResultSet = new ResultSet();
-            
-            ResultStatus status = GetAccelerometerResults(ref results);
-            status |= GetGyroscopeResults(ref results);
-            status |= GetRTCResults(ref results);
-            status |= GetCPUTemperatureResults(ref results);
-
-            // Convert to integer for transmission
-            results.ResultStatus = (int)status;
-
-            return results;
+            return Task.FromResult(new DeviceStatus() { GyroStatus = _dataService.isGyroValid() });
         }
 
-        private ResultStatus GetAccelerometerResults(ref ResultReply results)
+        public override Task<SingleDeviceResponse> RunTimedProgram(SingleDeviceRequest request, ServerCallContext context)
         {
-            Device.Accelerometer accelerometerDevice = new Device.Accelerometer();
-            ResultStatus status;
+            ISingleDevice program = null;
 
-            try
+            //If multple devices are set, only accelerometer will run
+            if (request.RunAccelerometer)
             {
-                results.ResultSet.AccelerometerResults = accelerometerDevice.GetAccelerometerResults();
-                status = ResultStatus.AccelerometerSuccess;
+                _logger.LogInformation($"Running AccelerometerOnly program for {request.MinutesToRun} minutes.");
+                program = new AccelerometerOnly(request.UseCustomeADC);
             }
-            catch
-            {
-                status = ResultStatus.AccelerometerFailure;
+            else if (request.RunGyroscope)
+            {               
+                _logger.LogInformation($"Running GyroscopeOnly program for {request.MinutesToRun} minutes.");
+                program = new GyroscopeOnly();
             }
 
-            return status;
+            program.Run(request.MinutesToRun, context.CancellationToken);
+
+            var response = new SingleDeviceResponse();
+
+            response.DataSets = program.GetDataSetCount();
+            response.SegmentSize = program.GetSegmentLength();
+
+            return Task.FromResult(response);
         }
 
-        private ResultStatus GetGyroscopeResults(ref ResultReply results)
+        public override Task<DeviceDataArray> GetProgramResults(ProgramPageRequest request, ServerCallContext context)
         {
-            Device.Gyroscope gyroscopeDevice = new Device.Gyroscope();
-            results.ResultSet.GyroscopeResults = new GyroscopeResults();
-            ResultStatus status;
+            List<DeviceDataModel> modelList = new List<DeviceDataModel>();
 
-            try
+            var response = new DeviceDataArray();
+            string filename = request.RunAccelerometer ? AccelerometerOnly.FileName : GyroscopeOnly.FileName;
+
+            using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read))
             {
-                results.ResultSet.GyroscopeResults.BurstResults = gyroscopeDevice.GetBurstResults();
-                status = ResultStatus.GyroscopeSuccess;
-            }
-            catch
-            {
-                status = ResultStatus.GyroscopeFailure;
+                _logger.LogInformation($"Request: {request}");
+                long startIndex = request.DataSetStart * request.SegmentSize;
+                long endIndex = startIndex + (request.Rows * request.SegmentSize);
+                int rows = request.Rows;
+
+                _logger.LogInformation($"FileStream size: {fs.Length}. Start Index: {startIndex}. End Index: {endIndex}");
+                if (startIndex > fs.Length)
+                {
+                    throw new IndexOutOfRangeException("Requested starting index is larger than the file's size.");
+                }
+
+                if (endIndex > fs.Length)
+                {
+                    long bytesLeft = fs.Length - startIndex;
+                    rows = (int)(bytesLeft / request.SegmentSize); //not likely a long at this point
+                }
+
+                fs.Seek(startIndex, SeekOrigin.Begin);
+
+                for (long i = 0; i < rows; i++)
+                {
+                    byte[] bytes = new byte[request.SegmentSize];
+
+                    fs.Read(bytes, 0, request.SegmentSize);
+
+                    DeviceDataModel model = new DeviceDataModel();
+
+                    if (request.RunAccelerometer)
+                    {
+                        int[] accelData = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, int>(bytes).ToArray();
+
+                        model.AccelData.Add(accelData);
+                    }
+                    else if (request.RunGyroscope)
+                    {
+                        int[] gyroData = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, int>(bytes).ToArray();
+
+                        model.GyroData.Add(gyroData);
+                    }
+
+                    modelList.Add(model);
+                }
             }
 
-            return status;
+            response.Items.AddRange(modelList);
+
+            return Task.FromResult(response);
         }
 
-        private ResultStatus GetRTCResults(ref ResultReply results)
+        public override Task<GyroReply> SetGyroRegister(GyroRegisterData request, ServerCallContext context)
         {
-            Device.RTC rtcDevice = new Device.RTC();
-            ResultStatus status;
-
-            try
-            {
-                results.ResultSet.CurrentTime = rtcDevice.GetTimeStamp();
-                status = ResultStatus.RTCSuccess;
-            }
-            catch
-            {
-                //Timestamp must be in UTC
-                results.ResultSet.CurrentTime = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(DateTime.UtcNow);
-                status = ResultStatus.RTCFailure;
-            }
-
-            return status;
+            var response = new GyroReply();
+            _dataService.SetGyroRegister((byte)request.Register, (short)request.Value);
+            response.Result = _dataService.GetGyroRegister((byte)request.Register);
+            return Task.FromResult(response);
         }
 
-        private ResultStatus GetCPUTemperatureResults(ref ResultReply results)
+        /// <summary>
+        /// Cycles through the list of registers, returning registers successfully read with their values
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override Task<GyroRegisterList> GetGyroRegisters(GyroRegisterList request, ServerCallContext context)
         {
-            ResultStatus status;
+            var response = new GyroRegisterList();
 
-            try
+            foreach(var register in request.RegisterList)
             {
-                results.ResultSet.CpuTemperature = new Iot.Device.CpuTemperature.CpuTemperature().Temperature.Fahrenheit;
-                if(!double.IsNaN(results.ResultSet.CpuTemperature))
-                    status = ResultStatus.CpuTempReadSuccess;
-                else
-                    status = ResultStatus.CpuTempReadFailure;
-            }
-            catch
-            {
-                status = ResultStatus.CpuTempReadFailure;
+                try
+                {
+                    response.RegisterList.Add(new GyroRegisterData()
+                    {
+                        Register = register.Register,
+                        Value = _dataService.GetGyroRegister((byte)register.Register)
+                    });
+                }
+                catch(Exception ex)
+                {
+                    _logger.LogError($"Cannot read register {register.Register}.");
+                    _logger.LogError(ex.Message);
+                    _logger.LogError(ex.StackTrace);
+                }
             }
 
-            return status;
+            return Task.FromResult(response);
         }
     }
 }
