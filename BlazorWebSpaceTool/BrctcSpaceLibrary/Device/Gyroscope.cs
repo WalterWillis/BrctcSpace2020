@@ -89,7 +89,7 @@ namespace BrctcSpaceLibrary.Device
             _gyro.TransferFullDuplex(BurstReadRegisterBuffer.Span, BurstReadDataBuffer.Span);
 
             var span = BurstReadDataBuffer.Span;
-
+            //endianness is inverted from the ADIS' expectation. This is taken care of via the GyroConversionHelper static class in the UI.
             buffer[0] = span[2];
             buffer[1] = span[3];
 
