@@ -318,6 +318,19 @@
         {
             isRunning = true;
             FileInfo file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "Temp", $"data_{DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss")}.csv"));
+            file.Directory.Create();
+
+            InputModels.SingleDeviceInputModel modelCopy = new InputModels.SingleDeviceInputModel()
+            {
+                SelectedPage = 1,
+                SegmentSize = inputModel.SegmentSize,
+                DataSets = inputModel.DataSets,
+                DataSetsPerPage = 1000,
+                HasRun = inputModel.HasRun,
+                Minutes = inputModel.Minutes,
+                RunAccelerometer = inputModel.RunAccelerometer,
+                RunGyroscope = inputModel.RunGyroscope
+            };
 
             //write the file first as the list of items will be too large to get all at once
             //use the inputmodel's logic for finding rows and pages to make this code compatible with inputmodel code changes
@@ -327,18 +340,19 @@
 
                 for(int i = 1; i <= inputModel.AmountOfPages; i++)
                 {
+                    modelCopy.SelectedPage = i;
                     var request = new ProgramPageRequest()
                     {
-                        RunAccelerometer = inputModel.RunAccelerometer,
-                        DataSetStart = i,
-                        RunGyroscope = inputModel.RunGyroscope,
-                        Rows = inputModel.DataSetsPerPage,
-                        SegmentSize = inputModel.SegmentSize
+                        RunAccelerometer = modelCopy.RunAccelerometer,
+                        DataSetStart = modelCopy.PageStart,
+                        RunGyroscope = modelCopy.RunGyroscope,
+                        Rows = modelCopy.DataSetsPerPage,
+                        SegmentSize = modelCopy.SegmentSize
                     };
 
                     var data = await vibeClient.GetProgramResultsAsync(
                                    request,
-                                   deadline: DateTime.UtcNow.AddMinutes(5));
+                                   deadline: DateTime.UtcNow.AddMinutes(1));
 
                     List<Vibe2020DataModel> items = Utilities.ConvertToDataModel(data.Items.ToList());
 
@@ -348,7 +362,6 @@
                     }
 
                     await sw.FlushAsync();
-
                 }
             }
 

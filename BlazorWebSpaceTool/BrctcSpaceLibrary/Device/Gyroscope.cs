@@ -24,7 +24,7 @@ namespace BrctcSpaceLibrary.Device
         /// </summary>
         public Gyroscope()
         {
-            _settings = new SpiConnectionSettings(0, 1) { Mode = SpiMode.Mode3, ClockFrequency = 1000000 };
+            _settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode3, ClockFrequency = 1000000 };
             _gyro = SpiDevice.Create(_settings);
         }
 
@@ -36,7 +36,7 @@ namespace BrctcSpaceLibrary.Device
         {
             if (settings == null)
             {
-                settings = new SpiConnectionSettings(0, 1) { Mode = SpiMode.Mode3, ClockFrequency = 1000000 };
+                settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode3, ClockFrequency = 1000000 };
             }
 
             _settings = settings;
@@ -45,7 +45,7 @@ namespace BrctcSpaceLibrary.Device
         }
 
         /// <summary>
-        /// returns an array of burst data
+        /// returns an array of burst data (Will be removed)
         /// </summary>
         /// <returns></returns>
         public Span<int> BurstRead()
@@ -90,36 +90,35 @@ namespace BrctcSpaceLibrary.Device
 
             var span = BurstReadDataBuffer.Span;
 
-            //reverse endianness for ADIS16460, start at second set as the first set is only a reply to the reg call
-            buffer[1] = span[2];
-            buffer[0] = span[3];
+            buffer[0] = span[2];
+            buffer[1] = span[3];
 
-            buffer[3] = span[4];
-            buffer[2] = span[5];
+            buffer[2] = span[4];
+            buffer[3] = span[5];
 
-            buffer[5] = span[6];
-            buffer[4] = span[7];
+            buffer[4] = span[6];
+            buffer[5] = span[7];
 
-            buffer[7] = span[8];
-            buffer[6] = span[9];
+            buffer[6] = span[8];
+            buffer[7] = span[9];
 
-            buffer[9] = span[10];
-            buffer[8] = span[11];
+            buffer[8] = span[10];
+            buffer[9] = span[11];
 
-            buffer[11] = span[12];
-            buffer[10] = span[13];
+            buffer[10] = span[12];
+            buffer[11] = span[13];
 
-            buffer[13] = span[14];
-            buffer[12] = span[15];
+            buffer[12] = span[14];
+            buffer[13] = span[15];
 
-            buffer[15] = span[16];
-            buffer[14] = span[17];
+            buffer[14] = span[16];
+            buffer[15] = span[17];
 
-            buffer[17] = span[18];
-            buffer[16] = span[19];
+            buffer[16] = span[18];
+            buffer[17] = span[19];
 
-            buffer[19] = span[20];
-            buffer[18] = span[21];
+            buffer[18] = span[20];
+            buffer[19] = span[21];
 
             span.Clear();
         }
@@ -178,7 +177,7 @@ namespace BrctcSpaceLibrary.Device
             _gyro.Read(reply);
             Thread.SpinWait(40); // delay approximately 40 microseconds
 
-            int result = (reply[1] << 8) | (reply[0] & 0xFF);
+            int result = (reply[0] << 8) | (reply[1] & 0xFF);
 
             Console.WriteLine($"Read Register {regAddr.ToString("x2")} with result {reply[0]} and {reply[1]} reversed and combined into {result}");
             return result;

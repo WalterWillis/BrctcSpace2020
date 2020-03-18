@@ -71,10 +71,6 @@ namespace Vibe2020Client.ViewModels
                 _client = new GrpcClient(clientCert, serverCert, _configuration.GetSection("TargetURL").Value);
                 Status = "Idle";
                 _isConnected = true;
-                //set MSC_CTRL to default
-                var singleDict = new Dictionary<byte, short>();
-                singleDict.Add((byte)Register.MSC_CTRL, 0xC1);
-                _client.SetGyroRegisters(singleDict);
             }
             catch (Exception ex)
             {

@@ -22,7 +22,7 @@ namespace BrctcSpaceLibrary.Device
         /// </summary>
         public Accelerometer()
         {
-            _settings = new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1000000 };
+            _settings = new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1000000 };
 
             using (SpiDevice spi = SpiDevice.Create(_settings))
             {

@@ -15,7 +15,6 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
         private const int DR_PIN = 13; //physical pin scheme;
         private int _segmentLength = 20;
         private string _fileName;
-        private Memory<byte> _gyroSegment;
 
         //Only used by outside methods. Should always be the same as the internal filename
         public static string FileName { get => Path.Combine(Directory.GetCurrentDirectory(), "GyroscopeOnly.binary"); }
@@ -31,15 +30,12 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
             _fileName = Path.Combine(Directory.GetCurrentDirectory(), "GyroscopeOnly.binary");
 
-            _gyroSegment = new Memory<byte>(new byte[_segmentLength]);
-
             _gyroscopeDevice.RegisterWrite((byte)Register.MSC_CTRL, 0xC1);
             _gyroscopeDevice.RegisterWrite((byte)Register.FLTR_CTRL, 0x500);
             _gyroscopeDevice.RegisterWrite((byte)Register.DEC_RATE, 0);
 
             _gpio = new GpioController(PinNumberingScheme.Board);
-            _gpio.OpenPin(DR_PIN, PinMode.Input);
-            _gpio.RegisterCallbackForPinValueChangedEvent(DR_PIN, PinEventTypes.Rising, DataAquisitionCallback);
+            _gpio.OpenPin(DR_PIN, PinMode.Input);    
         }
 
         public void Run(double timeLimit, System.Threading.CancellationToken token)
@@ -49,11 +45,14 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
             stopwatch.Start();
 
+            _gpio.RegisterCallbackForPinValueChangedEvent(DR_PIN, PinEventTypes.Rising, DataAquisitionCallback);
 
             while (stopwatch.Elapsed.TotalMinutes < timeLimit && !token.IsCancellationRequested)
             {
                 //allow interrupt to perform reads
             }
+
+            _gpio.UnregisterCallbackForPinValueChangedEvent(DR_PIN, DataAquisitionCallback);
 
             stopwatch.Stop();
 
@@ -63,20 +62,40 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
         private void DataAquisitionCallback(object sender, PinValueChangedEventArgs pinValueChangedEventArgs)
         {
-            using (FileStream fs = new FileStream(_fileName, FileMode.Create, FileAccess.Write))
-            {
-                using (MemoryStream stream = new MemoryStream())
+            Span<byte> _gyroSegment = new Span<byte>(new byte[_segmentLength]);
+            if (_datasetCounter == 0)
+            { 
+                //create a new file on the first read
+                using (FileStream fs = new FileStream(_fileName, FileMode.Create, FileAccess.Write))
                 {
-                    _gyroscopeDevice.AcquireData(_gyroSegment.Span);
-                    stream.Write(_gyroSegment.Span);
+                    using (MemoryStream stream = new MemoryStream())
+                    {
+                        _gyroscopeDevice.BurstRead(_gyroSegment);
+                        stream.Write(_gyroSegment);
 
-                    _datasetCounter++;
+                        _datasetCounter++;
 
-                    _gyroSegment.Span.Clear();
+                        stream.WriteTo(fs);
+                        fs.Flush();
+                        stream.Position = 0;
+                    }
+                }
+            }
+            else
+            {
+                using (FileStream fs = new FileStream(_fileName, FileMode.Append, FileAccess.Write))
+                {
+                    using (MemoryStream stream = new MemoryStream())
+                    {
+                        _gyroscopeDevice.BurstRead(_gyroSegment);
+                        stream.Write(_gyroSegment);
 
-                    stream.WriteTo(fs);
-                    fs.Flush();
-                    stream.Position = 0;
+                        _datasetCounter++;
+
+                        stream.WriteTo(fs);
+                        fs.Flush();
+                        stream.Position = 0;
+                    }
                 }
             }
         }
@@ -99,7 +118,6 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
         ~GyroscopeOnly()
         {
             _gyroscopeDevice.Dispose();
-            _gpio.UnregisterCallbackForPinValueChangedEvent(DR_PIN, DataAquisitionCallback);
             _gpio.ClosePin(DR_PIN);
             _gpio.Dispose();
         }
