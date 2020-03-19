@@ -40,8 +40,10 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
         private long _accelDatasetCounter = 0;
         private long _gyroDatasetCounter = 0;
 
-        public string AccelFileName { get => _accelFileName; }
-        public string GyroFileName { get => _gyroFileName; }
+        #region Test-Only Properties
+        public static string TestAccelFile { get => Path.Combine(Directory.GetCurrentDirectory(), "FullSystemSharedRTC", "Accelerometer.binary"); }
+        public static string TestGyroFile { get => Path.Combine(Directory.GetCurrentDirectory(), "FullSystemSharedRTC", "Gyroscope.binary"); }
+        #endregion
 
         public int AccelSegmentLength { get => _accelSegmentLength; }
         public int GyroSegmentLength { get => _gyroSegmentLength; }
@@ -49,7 +51,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
         public long AccelDataSetCounter { get => _accelDatasetCounter; }
         public long GyroDataSetCounter { get => _gyroDatasetCounter; }
 
-        public FullSystemSharedRTC(bool useCustomAdcCode = true)
+        public FullSystemSharedRTC(bool useCustomAdcCode = true, bool isTest = true)
         {
             var settings = new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1900000 };
 
@@ -73,7 +75,11 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
             _gpio = new GpioController(PinNumberingScheme.Board);
             _gpio.OpenPin(DR_PIN, PinMode.Input);
 
-            string subDir = $"FullSystemSharedRTC_{_rtcDevice.GetCurrentDate().ToString("yyyy-MM-dd-HH-mm-ss")}";
+            string subDir;
+            if (isTest)
+                subDir = $"FullSystemSharedRTC_{_rtcDevice.GetCurrentDate().ToString("yyyy-MM-dd-HH-mm-ss")}"; //should be used in final program
+            else
+                subDir = "FullSystemSharedRTC"; //easier to keep track of
 
             Directory.CreateDirectory(subDir);
             _accelFileName = Path.Combine(Directory.GetCurrentDirectory(), subDir, "Accelerometer.binary");
@@ -83,7 +89,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
             _gyroSegmentLength = _gyroBytes + _rtcBytes + _cpuBytes;
         }
 
-        public void Run(int timeLimit, CancellationToken token)
+        public void Run(double timeLimit, CancellationToken token)
         {
             Task accelThread = Task.Run(() => { RunAccelerometer(token); });
 

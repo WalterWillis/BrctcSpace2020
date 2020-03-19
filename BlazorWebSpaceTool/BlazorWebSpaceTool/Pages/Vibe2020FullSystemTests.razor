@@ -1,0 +1,457 @@
+﻿@page "/Vibe2020FullSystemTests"
+@using BrctcSpace;
+@using Utilities;
+@using BrctcSpaceLibrary.DataModels;
+@using BlazorWebSpaceTool.Components;
+@using System.Threading;
+@using System.IO;
+@inject Vibe.VibeClient vibeClient;
+@inject Microsoft.JSInterop.IJSRuntime JS;
+
+<div style="margin-bottom: 10px;">
+
+
+
+</div>
+
+<div class="subgrid">
+    @if (inputModel.HasRun && inputModel.IsAccelerometerSelected)
+    {
+        <div class="subgrid-left">
+            <button @onclick="SaveAccelResultsToJson" class="btn btn-info">Save To Json</button>
+            <button @onclick="SaveAccelResultsToCsv" class="btn btn-info">Save To CSV</button>
+        </div>
+    }
+    else if (inputModel.HasRun && !inputModel.IsAccelerometerSelected)
+    {
+        <div class="subgrid-left">
+            <button @onclick="SaveGyroResultsToJson"class="btn btn-info">Save To Json</button>
+            <button @onclick="SaveGyroResultsToCsv" class="btn btn-info">Save To CSV</button>
+        </div>
+    }
+
+<div class="subgrid-center">
+    <h5>Full System Test</h5>
+    <EditForm Model="inputModel" OnValidSubmit="RunTest">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <label>
+            Display Accelerometer Table?
+            <InputCheckbox @bind-Value="inputModel.IsAccelerometerSelected" />
+        </label>
+        <br />
+
+        <label>
+            Minutes to run:
+            <InputNumber @bind-Value="inputModel.Minutes"></InputNumber>
+        </label>
+        <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Run Test</button>
+        <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
+    </EditForm>
+
+    <br />
+    @if (inputModel.HasRun && inputModel.IsAccelerometerSelected)
+    {
+        <EditForm Model="inputModel" OnValidSubmit="GetAccelResults">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <label>
+                Select Accelerometer rows to display:
+                <InputNumber @bind-Value="inputModel.AccelerometerInputModel.DataSetsPerPage"></InputNumber>
+            </label>
+            <label>
+                Page Index:
+                <NumericInputSelect @bind-Value="inputModel.AccelerometerInputModel.SelectedPage">
+                    <option value="0">Select page ...</option>
+                    @for (long i = 1; i <= inputModel.AccelerometerInputModel.AmountOfPages; i++)
+                        {
+                        <option value="@i">Page @i</option>
+                        }
+                    /**/
+                </NumericInputSelect>
+            </label>
+
+            <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Get Results</button>
+            <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
+        </EditForm>
+        <button disabled="@isRunning" @onclick="CopyAccelFileFromServer" class="btn btn-dark btn-sm" style="margin-left:10px;">Save File</button>
+    }
+    else if (inputModel.HasRun && !inputModel.IsAccelerometerSelected)
+    {
+        <EditForm Model="inputModel" OnValidSubmit="GetGyroResults">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <label>
+                Select Accelerometer rows to display:
+                <InputNumber @bind-Value="inputModel.GyroscopeInputModel.DataSetsPerPage"></InputNumber>
+            </label>
+            <label>
+                Page Index:
+                <NumericInputSelect @bind-Value="inputModel.GyroscopeInputModel.SelectedPage">
+                    <option value="0">Select page ...</option>
+                    @for (long i = 1; i <= inputModel.GyroscopeInputModel.AmountOfPages; i++)
+                        {
+                        <option value="@i">Page @i</option>
+                        }
+                    /**/
+                </NumericInputSelect>
+            </label>
+
+            <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Get Results</button>
+            <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
+        </EditForm>
+        <button disabled="@isRunning" @onclick="CopyGyroFileFromServer" class="btn btn-dark btn-sm" style="margin-left:10px;">Save File</button>
+    }
+
+    @if (inputModel.IsAccelerometerSelected)
+    {
+        <br />
+        <h3>Accelerometer Results</h3>
+        <p>Rows: @AccelResults.Count</p>
+
+        <GenericListTable Items="AccelResults">
+            <TableHeader>
+                <th>Raw Accelerometer</th>
+                <th>Accelerometer</th>
+                <th>Raw Gyroscope</th>
+                <th>Gyroscope</th>
+                <th>Cpu Temp</th>
+                <th>Transaction Timestamp</th>
+            </TableHeader>
+            <RowTemplate>
+                <td>@(context.AccelData_Raw != null ? string.Join(',', context.AccelData_Raw) : "None")</td>
+                <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
+                <td>@context.CpuTemp</td>
+                <td>@context.TransactionTime</td>
+            </RowTemplate>
+        </GenericListTable>
+    }
+    else
+    {
+        <br />
+        <h3>Gyroscope Results</h3>
+        <p>Rows: @GyroResults.Count</p>
+
+        <GenericListTable Items="GyroResults">
+            <TableHeader>
+                <th>Raw Gyroscope</th>
+                <th>Gyroscope</th>
+                <th>Cpu Temp</th>
+                <th>Transaction Timestamp</th>
+            </TableHeader>
+            <RowTemplate>
+                <td>@(context.GyroData_Raw != null ? string.Join(',', context.GyroData_Raw) : "None")</td>
+                <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
+                <td>@context.CpuTemp</td>
+                <td>@context.TransactionTime</td>
+            </RowTemplate>
+        </GenericListTable>
+    }
+</div>
+
+    <div class="subgrid-footer container-fluid p-3 my-3 bg-dark text-white">
+        <h4 style="margin-bottom:10px;">Device Details</h4>
+        <div class="card bg-secondary" style="max-width: 12%;margin-right:10px; float:left">
+            <button @onclick="GetStatus" class="btn btn-sm btn-info">Verify Gyroscope Connection Status</button>
+            <br />
+            <div>
+                @GyroStatus
+            </div>
+        </div>
+
+        <div class="card bg-secondary" style="max-width: 12%;margin:auto; float:left">
+            <button @onclick="SetGyroscope" class="btn btn-sm btn-info">Write to MSC_CTRL</button>
+            <br />
+            <div>
+                <EditForm Model="gyroInputModel">
+                    <label>
+                        Register to write
+                        <InputNumber @bind-Value="gyroInputModel.Value"></InputNumber>
+                    </label>
+                    <p>Register Reply: @gyroInputModel.ResultValue</p>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+@code {
+
+    public List<Vibe2020DataModel> AccelResults { get; set; } = new List<Vibe2020DataModel>();
+    public List<Vibe2020DataModel> GyroResults { get; set; } = new List<Vibe2020DataModel>();
+
+    public bool isRunning { get; set; } = false;
+
+    public RenderFragment GyroStatus { get; set; }
+
+    private CancellationTokenSource CancellationToken { get; set; }
+
+
+    private InputModels.FullSystemInputModel inputModel { get; set; } = new InputModels.FullSystemInputModel();
+
+    private InputModels.GyroRegisterInputModel gyroInputModel { get; set; } = new InputModels.GyroRegisterInputModel() { Register = (byte)BrctcSpaceLibrary.Register.MSC_CTRL };
+
+
+    protected override Task OnInitializedAsync()
+    {
+        //Create token before it's called
+        CancellationToken = new CancellationTokenSource();
+        CancellationToken.Token.Register(Cancel);
+        return base.OnInitializedAsync();
+    }
+
+
+    public async Task RunTest()
+    {
+        if (!isRunning)
+        {
+            isRunning = true;
+
+
+            var request = new FullSystemRequest()
+            {
+                MinutesToRun = inputModel.Minutes,
+                UseCustomADC = true
+            };
+
+            var result = await vibeClient.RunFullSystemSharedRTCAsync(
+                                request,
+                                deadline: DateTime.UtcNow.AddMinutes(inputModel.Minutes + 2), //Add padding to time to wait for I/O and other variables
+                                cancellationToken: CancellationToken.Token);
+
+            inputModel.HasRun = true;
+            inputModel.AccelerometerInputModel.SelectedPage = 1;
+            inputModel.GyroscopeInputModel.SelectedPage = 1;
+            inputModel.AccelerometerInputModel.DataSets = result.AccelDataSets;
+            inputModel.GyroscopeInputModel.DataSets = result.GyroDataSets;
+            inputModel.AccelerometerInputModel.SegmentSize = result.AccelSegmentSize;
+            inputModel.GyroscopeInputModel.SegmentSize = result.GyroSegmentSize;
+
+            StateHasChanged();
+
+            isRunning = false;
+        }
+    }
+
+    public async Task GetAccelResults()
+    {
+        if (!isRunning)
+        {
+            isRunning = true;
+
+            var request = new ProgramPageRequest()
+            {
+                RunAccelerometer = inputModel.AccelerometerInputModel.RunAccelerometer,
+                DataSetStart = inputModel.AccelerometerInputModel.PageStart,
+                RunGyroscope = inputModel.AccelerometerInputModel.RunGyroscope,
+                Rows = inputModel.AccelerometerInputModel.DataSetsPerPage,
+                SegmentSize = inputModel.AccelerometerInputModel.SegmentSize
+            };
+
+            var data = await vibeClient.GetProgramResultsAsync(
+                           request,
+                           deadline: DateTime.UtcNow.AddMinutes(5));
+
+            AccelResults = Utilities.ConvertToDataModel(data.Items.ToList());
+
+            StateHasChanged();
+
+            isRunning = false;
+        }
+    }
+
+    public async Task GetGyroResults()
+    {
+        if (!isRunning)
+        {
+            isRunning = true;
+
+            var request = new ProgramPageRequest()
+            {
+                RunAccelerometer = inputModel.GyroscopeInputModel.RunAccelerometer,
+                DataSetStart = inputModel.GyroscopeInputModel.PageStart,
+                RunGyroscope = inputModel.GyroscopeInputModel.RunGyroscope,
+                Rows = inputModel.GyroscopeInputModel.DataSetsPerPage,
+                SegmentSize = inputModel.GyroscopeInputModel.SegmentSize
+            };
+
+            var data = await vibeClient.GetProgramResultsAsync(
+                           request,
+                           deadline: DateTime.UtcNow.AddMinutes(5));
+
+            AccelResults = Utilities.ConvertToDataModel(data.Items.ToList());
+
+            StateHasChanged();
+
+            isRunning = false;
+        }
+    }
+
+    public async Task CopyAccelFileFromServer()
+    {
+        if (!isRunning)
+        {
+            isRunning = true;
+            FileInfo file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "Temp", $"data_{DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss")}.csv"));
+            file.Directory.Create();
+
+            InputModels.SingleDeviceInputModel modelCopy = new InputModels.SingleDeviceInputModel()
+            {
+                SelectedPage = 1,
+                SegmentSize = inputModel.AccelerometerInputModel.SegmentSize,
+                DataSets = inputModel.AccelerometerInputModel.DataSets,
+                DataSetsPerPage = 1000,
+                HasRun = inputModel.HasRun,
+                Minutes = inputModel.Minutes,
+                RunAccelerometer = inputModel.AccelerometerInputModel.RunAccelerometer,
+                RunGyroscope = inputModel.AccelerometerInputModel.RunGyroscope
+            };
+
+            //write the file first as the list of items will be too large to get all at once
+            //use the inputmodel's logic for finding rows and pages to make this code compatible with inputmodel code changes
+            using (StreamWriter sw = file.CreateText())
+            {
+                sw.WriteLine(Vibe2020DataModel.GetHeader());
+
+                for(int i = 1; i <= inputModel.AccelerometerInputModel.AmountOfPages; i++)
+                {
+                    modelCopy.SelectedPage = i;
+                    var request = new ProgramPageRequest()
+                    {
+                        RunAccelerometer = true, // used to get the accel results
+                        DataSetStart = modelCopy.PageStart,
+                        RunGyroscope = false,
+                        Rows = modelCopy.DataSetsPerPage,
+                        SegmentSize = modelCopy.SegmentSize
+                    };
+
+                    var data = await vibeClient.GetFullSystemResultsAsync(
+                                   request,
+                                   deadline: DateTime.UtcNow.AddMinutes(1));
+
+                    List<Vibe2020DataModel> items = Utilities.ConvertToDataModel(data.Items.ToList());
+
+                    foreach (var item in items)
+                    {
+                        await sw.WriteLineAsync(item.ToCsvLine());
+                    }
+
+                    await sw.FlushAsync();
+                }
+            }
+
+            isRunning = false;
+        }
+    }
+
+    public async Task CopyGyroFileFromServer()
+    {
+        if (!isRunning)
+        {
+            isRunning = true;
+            FileInfo file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "Temp", $"data_{DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss")}.csv"));
+            file.Directory.Create();
+
+            InputModels.SingleDeviceInputModel modelCopy = new InputModels.SingleDeviceInputModel()
+            {
+                SelectedPage = 1,
+                SegmentSize = inputModel.GyroscopeInputModel.SegmentSize,
+                DataSets = inputModel.GyroscopeInputModel.DataSets,
+                DataSetsPerPage = 1000,
+                HasRun = inputModel.HasRun,
+                Minutes = inputModel.Minutes,
+                RunAccelerometer = inputModel.GyroscopeInputModel.RunAccelerometer,
+                RunGyroscope = inputModel.GyroscopeInputModel.RunGyroscope
+            };
+
+            //write the file first as the list of items will be too large to get all at once
+            //use the inputmodel's logic for finding rows and pages to make this code compatible with inputmodel code changes
+            using (StreamWriter sw = file.CreateText())
+            {
+                sw.WriteLine(Vibe2020DataModel.GetHeader());
+
+                for (int i = 1; i <= inputModel.GyroscopeInputModel.AmountOfPages; i++)
+                {
+                    modelCopy.SelectedPage = i;
+                    var request = new ProgramPageRequest()
+                    {
+                        RunAccelerometer = false,
+                        DataSetStart = modelCopy.PageStart,
+                        RunGyroscope = true, //used to get the gyro results
+                        Rows = modelCopy.DataSetsPerPage,
+                        SegmentSize = modelCopy.SegmentSize
+                    };
+
+                    var data = await vibeClient.GetFullSystemResultsAsync(
+                                   request,
+                                   deadline: DateTime.UtcNow.AddMinutes(1));
+
+                    List<Vibe2020DataModel> items = Utilities.ConvertToDataModel(data.Items.ToList());
+
+                    foreach (var item in items)
+                    {
+                        await sw.WriteLineAsync(item.ToCsvLine());
+                    }
+
+                    await sw.FlushAsync();
+                }
+            }
+
+            isRunning = false;
+        }
+    }
+
+    public void Cancel()
+    {
+        isRunning = false;
+        CancellationToken.Cancel();
+        CancellationToken = new CancellationTokenSource();
+        CancellationToken.Token.Register(Cancel);
+        StateHasChanged();
+    }
+
+    public void SaveAccelResultsToJson()
+    {
+        Utilities.SaveToJson(AccelResults, this.JS, $"FullSystemAccelResultsPage{inputModel.AccelerometerInputModel.SelectedPage}");
+    }
+
+    public void SaveAccelResultsToCsv()
+    {
+        Utilities.SaveToCsv(AccelResults, this.JS, $"FullSystemAccelResultsPage{inputModel.AccelerometerInputModel.SelectedPage}");
+    }
+
+    public void SaveGyroResultsToJson()
+    {
+        Utilities.SaveToJson(AccelResults, this.JS, $"FullSystemGyroResultsPage{inputModel.GyroscopeInputModel.SelectedPage}");
+    }
+
+    public void SaveGyroResultsToCsv()
+    {
+        Utilities.SaveToCsv(AccelResults, this.JS, $"FullSystemGyroResultsPage{inputModel.GyroscopeInputModel.SelectedPage}");
+    }
+
+    public async Task GetStatus()
+    {
+        var result = await vibeClient.GetDeviceStatusAsync(new DeviceStatusRequest());
+
+        if (result.GyroStatus)
+            GyroStatus =@<p class="bg-success card-text text-center">Gyroscope Valid</p>;
+        else
+        GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
+        StateHasChanged();
+    }
+
+    public async Task SetGyroscope()
+    {
+        var result = await vibeClient.SetGyroRegisterAsync(new GyroRegisterData()
+        {
+            Register = gyroInputModel.Register,
+            Value = gyroInputModel.Value
+        });
+
+        gyroInputModel.ResultValue = (short)result.Result;
+        StateHasChanged();
+    }
+}

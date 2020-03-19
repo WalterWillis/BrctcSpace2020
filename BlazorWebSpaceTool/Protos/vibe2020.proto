@@ -13,6 +13,20 @@ service Vibe {
   rpc GetProgramResults (ProgramPageRequest) returns (DeviceDataArray);
   rpc SetGyroRegister (GyroRegisterData) returns (GyroReply);
   rpc GetGyroRegisters (GyroRegisterList) returns (GyroRegisterList); // returns a list with mapped register and returned data
+  rpc RunFullSystemSharedRTC (FullSystemRequest) returns (FullSystemResponse); 
+  rpc GetFullSystemResults (ProgramPageRequest) returns (DeviceDataArray);
+}
+
+message FullSystemRequest{
+    bool useCustomADC = 1;
+    double MinutesToRun = 2;
+}
+
+message FullSystemResponse{
+    int64 AccelDataSets = 1;
+    int64 GyroDataSets = 2;
+    int32 AccelSegmentSize = 3;
+    int32 GyroSegmentSize = 4;
 }
 
 message SingleDeviceRequest{

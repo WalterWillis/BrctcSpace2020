@@ -4,13 +4,9 @@ using Microsoft.Extensions.Logging;
 using BrctcSpace;
 using System;
 using GrpcSpaceServer.Services.Interfaces;
-using System.Linq;
-using BrctcSpaceLibrary;
 using BrctcSpaceLibrary.Vibe2020Programs;
 using System.IO;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Collections.Generic;
-using System.Security.AccessControl;
 
 namespace GrpcSpaceServer.Services
 {
@@ -182,6 +178,93 @@ namespace GrpcSpaceServer.Services
                     _logger.LogError(ex.StackTrace);
                 }
             }
+
+            return Task.FromResult(response);
+        }
+
+        public override Task<FullSystemResponse> RunFullSystemSharedRTC(FullSystemRequest request, ServerCallContext context)
+        {
+            FullSystemSharedRTC program = new FullSystemSharedRTC(request.UseCustomADC, true);
+
+            _logger.LogInformation($"Running FullSystemSharedRTC program for {request.MinutesToRun} minutes.");
+            program.Run(request.MinutesToRun, context.CancellationToken);
+
+            var response = new FullSystemResponse();
+
+            response.AccelDataSets = program.AccelDataSetCounter;
+            response.GyroDataSets = program.GyroDataSetCounter;
+            response.AccelSegmentSize = program.AccelSegmentLength;
+            response.GyroSegmentSize = program.GyroSegmentLength;
+
+            return Task.FromResult(response);
+        }
+
+        public override Task<DeviceDataArray> GetFullSystemResults(ProgramPageRequest request, ServerCallContext context)
+        {
+            List<DeviceDataModel> modelList = new List<DeviceDataModel>();
+
+            var response = new DeviceDataArray();
+            string filename = request.RunAccelerometer ? FullSystemSharedRTC.TestAccelFile : FullSystemSharedRTC.TestGyroFile;
+
+            using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read))
+            {
+                _logger.LogInformation($"Request: {request}");
+                long startIndex = request.DataSetStart * request.SegmentSize;
+                long endIndex = startIndex + (request.Rows * request.SegmentSize);
+                int rows = request.Rows;
+
+                _logger.LogInformation($"FileStream size: {fs.Length}. Start Index: {startIndex}. End Index: {endIndex}");
+                if (startIndex > fs.Length)
+                {
+                    throw new IndexOutOfRangeException("Requested starting index is larger than the file's size.");
+                }
+
+                if (endIndex > fs.Length)
+                {
+                    long bytesLeft = fs.Length - startIndex;
+                    rows = (int)(bytesLeft / request.SegmentSize); //not likely a long at this point
+                }
+
+                fs.Seek(startIndex, SeekOrigin.Begin);
+
+                for (long i = 0; i < rows; i++)
+                {
+                    byte[] bytes = new byte[request.SegmentSize];
+
+                    fs.Read(bytes, 0, request.SegmentSize);
+
+                    DeviceDataModel model = new DeviceDataModel();
+                    const int accelBytes = 12;
+                    const int gyroBytes = 20;
+                    const int rtcBytes = 8;
+                    const int cpuBytes = 8;
+
+                    if (request.RunAccelerometer)
+                    {
+                        Span<byte> data = new Span<byte>(bytes);
+                        Span<byte> accelSegment = data.Slice(0, accelBytes);
+                        Span<byte> rtcSegment = data.Slice(accelBytes, rtcBytes);
+                        Span<byte> cpuSegment = data.Slice(accelBytes + rtcBytes, cpuBytes);
+                        model.AccelData.Add(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, int>(accelSegment).ToArray());
+                        model.TransactionTime = BitConverter.ToInt64(rtcSegment);
+                        model.CpuTemp = BitConverter.ToDouble(cpuSegment);
+                    }
+                    else if (request.RunGyroscope)
+                    {
+                        Span<byte> data = new Span<byte>(bytes);
+                        Span<byte> gyroSegment = data.Slice(0, gyroBytes);
+                        Span<byte> rtcSegment = data.Slice(gyroBytes, rtcBytes);
+                        Span<byte> cpuSegment = data.Slice(gyroBytes + rtcBytes, cpuBytes);
+                        model.GyroData.Add(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, int>(gyroSegment).ToArray());
+                        model.TransactionTime = BitConverter.ToInt64(rtcSegment);
+                        model.CpuTemp = BitConverter.ToDouble(cpuSegment);
+                    }
+
+                    modelList.Add(model);
+                }
+            }
+
+            response.Items.AddRange(modelList);
 
             return Task.FromResult(response);
         }
