@@ -40,8 +40,10 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
         private long _accelDatasetCounter = 0;
         private long _gyroDatasetCounter = 0;
 
+        private CancellationTokenSource _source = new CancellationTokenSource();
+
         #region Test-Only Properties
-        public static string TestAccelFile { get => Path.Combine(Directory.GetCurrentDirectory(), "FullSystemSharedRTC", "Accelerometer.binary"); }
+        public static string TestAccelFile { get => Path.Combine(Directory.GetCurrentDirectory(), "FullSystemSharedRTC", "Accelerometer.binary0"); }
         public static string TestGyroFile { get => Path.Combine(Directory.GetCurrentDirectory(), "FullSystemSharedRTC", "Gyroscope.binary"); }
         #endregion
 
@@ -76,7 +78,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
             _gpio.OpenPin(DR_PIN, PinMode.Input);
 
             string subDir;
-            if (isTest)
+            if (!isTest)
                 subDir = $"FullSystemSharedRTC_{_rtcDevice.GetCurrentDate().ToString("yyyy-MM-dd-HH-mm-ss")}"; //should be used in final program
             else
                 subDir = "FullSystemSharedRTC"; //easier to keep track of
@@ -91,31 +93,43 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
         public void Run(double timeLimit, CancellationToken token)
         {
-            Task accelThread = Task.Run(() => { RunAccelerometer(token); });
-
             _gyroStream = new FileStream(_gyroFileName, FileMode.Create, FileAccess.Write);
 
             Stopwatch stopwatch = new Stopwatch();
 
             stopwatch.Start();
 
-            accelThread.Start();
+            Task accelThread = Task.Run(() => { RunAccelerometer(); });
 
             _gpio.RegisterCallbackForPinValueChangedEvent(DR_PIN, PinEventTypes.Rising, DataAquisitionCallback);
 
+            bool loopBreakerProgramMaker = false;
+
+            while (!token.IsCancellationRequested && !loopBreakerProgramMaker)
+            {
+                if (stopwatch.Elapsed.TotalMinutes >= timeLimit)
+                {
+                    _source.Cancel();
+                    loopBreakerProgramMaker = true;
+                    stopwatch.Stop();
+                }
+                else
+                    Thread.SpinWait(50);
+            }
+
             accelThread.Wait();
-            
+
             _gpio.UnregisterCallbackForPinValueChangedEvent(DR_PIN, DataAquisitionCallback);
             _gyroStream.Close();
 
-            stopwatch.Stop();
-
             Console.WriteLine($"FullSystemSharedRTC program ran for {stopwatch.Elapsed.TotalSeconds} seconds" +
-                $" creating {_accelDatasetCounter} datasets at {_accelDatasetCounter / stopwatch.Elapsed.TotalSeconds} datasets per second");
+                $" creating {_accelDatasetCounter} accelerometer datasets at {_accelDatasetCounter / stopwatch.Elapsed.TotalSeconds} datasets per second and" +
+                $"{_gyroDatasetCounter} gyroscope datasets at {_gyroDatasetCounter / stopwatch.Elapsed.TotalSeconds} datasets per second");
         }
 
-        public void RunAccelerometer(CancellationToken token)
+        public void RunAccelerometer()
         {
+            CancellationToken token = _source.Token;
             Span<byte> data = new Span<byte>(new byte[_accelSegmentLength]);
 
             Span<byte> accelSegment = data.Slice(0, _accelBytes);
@@ -129,7 +143,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
             const int secondaryDataTrigger = 7999; //subtract one from expected/wanted samples per second since counter starts at 0
             int secondaryDataCounter = 0;
 
-            const int maxLines = 4000000; //only 4,000,000 lines per file 
+            const int maxLines = 1000000; //only 1,000,000 lines per file 
            
             int fileCounter = 0;
 
@@ -151,12 +165,12 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
                         {
                             //if the available lines left is greater than chunksize, we should use chunksize. 
                             //otherwise, we should use the availble lines as our chunksize
-                            int linesToWrite = maxLines - line;
+                            //int linesToWrite = maxLines - line;
 
-                            if (linesToWrite > chunkSize)
-                                linesToWrite = chunkSize;
+                            //if (linesToWrite > chunkSize)
+                            //    linesToWrite = chunkSize;
 
-                            for (int i = 0; i < linesToWrite; i++)
+                            for (int i = 0; i < chunkSize; i++)
                             {
                                 _accelerometerDevice.Read(accelSegment);
                                 if (secondaryDataCounter++ >= secondaryDataTrigger)
@@ -172,7 +186,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
                                 accelSegment.Clear(); // only clear the accelerometer values as they must be ensured to be precise
                             }
-                            line += linesToWrite; //increment by chunksize/lines left as each segment in the chunk is a line
+                            line += chunkSize; //increment by chunksize/lines left as each segment in the chunk is a line
                             stream.WriteTo(fs);
                             fs.Flush();
                             stream.Position = 0;
@@ -232,7 +246,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
         {
             _accelerometerDevice.Dispose();
             _gyroscopeDevice.Dispose();
-            _gpio.UnregisterCallbackForPinValueChangedEvent(DR_PIN, DataAquisitionCallback); // ensure this is removed
+            try { _gpio.UnregisterCallbackForPinValueChangedEvent(DR_PIN, DataAquisitionCallback); } catch { } // ensure this is removed
             _gpio.ClosePin(DR_PIN);
             _gpio.Dispose();
             _gyroStream.Dispose();

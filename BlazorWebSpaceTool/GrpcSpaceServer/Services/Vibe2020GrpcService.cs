@@ -56,7 +56,7 @@ namespace GrpcSpaceServer.Services
 
         public override Task<DeviceStatus> GetDeviceStatus(DeviceStatusRequest request, ServerCallContext context)
         {
-            return Task.FromResult(new DeviceStatus() { GyroStatus = _dataService.isGyroValid() });
+            return Task.FromResult(new DeviceStatus() { GyroStatus = _dataService.IsGyroValid() });
         }
 
         public override Task<SingleDeviceResponse> RunTimedProgram(SingleDeviceRequest request, ServerCallContext context)
@@ -97,7 +97,7 @@ namespace GrpcSpaceServer.Services
                 _logger.LogInformation($"Request: {request}");
                 long startIndex = request.DataSetStart * request.SegmentSize;
                 long endIndex = startIndex + (request.Rows * request.SegmentSize);
-                int rows = request.Rows;
+                long rows = request.Rows;
 
                 _logger.LogInformation($"FileStream size: {fs.Length}. Start Index: {startIndex}. End Index: {endIndex}");
                 if (startIndex > fs.Length)
@@ -108,7 +108,7 @@ namespace GrpcSpaceServer.Services
                 if (endIndex > fs.Length)
                 {
                     long bytesLeft = fs.Length - startIndex;
-                    rows = (int)(bytesLeft / request.SegmentSize); //not likely a long at this point
+                    rows = (bytesLeft / request.SegmentSize);
                 }
 
                 fs.Seek(startIndex, SeekOrigin.Begin);
@@ -184,10 +184,20 @@ namespace GrpcSpaceServer.Services
 
         public override Task<FullSystemResponse> RunFullSystemSharedRTC(FullSystemRequest request, ServerCallContext context)
         {
+           
             FullSystemSharedRTC program = new FullSystemSharedRTC(request.UseCustomADC, true);
 
             _logger.LogInformation($"Running FullSystemSharedRTC program for {request.MinutesToRun} minutes.");
-            program.Run(request.MinutesToRun, context.CancellationToken);
+            try
+            {
+                program.Run(request.MinutesToRun, context.CancellationToken);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError("Error running FullSystemSharedRTC");
+                _logger.LogError(ex.Message);
+                _logger.LogError(ex.StackTrace);
+            }
 
             var response = new FullSystemResponse();
 
@@ -211,7 +221,7 @@ namespace GrpcSpaceServer.Services
                 _logger.LogInformation($"Request: {request}");
                 long startIndex = request.DataSetStart * request.SegmentSize;
                 long endIndex = startIndex + (request.Rows * request.SegmentSize);
-                int rows = request.Rows;
+                long rows = request.Rows;
 
                 _logger.LogInformation($"FileStream size: {fs.Length}. Start Index: {startIndex}. End Index: {endIndex}");
                 if (startIndex > fs.Length)
@@ -222,7 +232,7 @@ namespace GrpcSpaceServer.Services
                 if (endIndex > fs.Length)
                 {
                     long bytesLeft = fs.Length - startIndex;
-                    rows = (int)(bytesLeft / request.SegmentSize); //not likely a long at this point
+                    rows = (bytesLeft / request.SegmentSize);
                 }
 
                 fs.Seek(startIndex, SeekOrigin.Begin);
@@ -241,7 +251,7 @@ namespace GrpcSpaceServer.Services
 
                     if (request.RunAccelerometer)
                     {
-                        Span<byte> data = new Span<byte>(bytes);
+                        Span<byte> data = bytes;
                         Span<byte> accelSegment = data.Slice(0, accelBytes);
                         Span<byte> rtcSegment = data.Slice(accelBytes, rtcBytes);
                         Span<byte> cpuSegment = data.Slice(accelBytes + rtcBytes, cpuBytes);
@@ -251,7 +261,7 @@ namespace GrpcSpaceServer.Services
                     }
                     else if (request.RunGyroscope)
                     {
-                        Span<byte> data = new Span<byte>(bytes);
+                        Span<byte> data = bytes;
                         Span<byte> gyroSegment = data.Slice(0, gyroBytes);
                         Span<byte> rtcSegment = data.Slice(gyroBytes, rtcBytes);
                         Span<byte> cpuSegment = data.Slice(gyroBytes + rtcBytes, cpuBytes);

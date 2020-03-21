@@ -72,7 +72,7 @@ namespace Vibe2020Client.ViewModels
                 Status = "Idle";
                 _isConnected = true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 MessageBox.Show($"Error configuring connection to server. Server is offline. " +
                    $"{Environment.NewLine} Start the service and then click 'Connect'. ");

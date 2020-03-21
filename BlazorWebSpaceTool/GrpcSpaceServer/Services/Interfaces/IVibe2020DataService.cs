@@ -21,7 +21,7 @@ namespace GrpcSpaceServer.Services.Interfaces
         /// Tests the gyroscope to see if it's returning expected data
         /// </summary>
         /// <returns>Returns true if valid</returns>
-        public bool isGyroValid();
+        public bool IsGyroValid();
 
         /// <summary>
         /// Writes a value to a particular register

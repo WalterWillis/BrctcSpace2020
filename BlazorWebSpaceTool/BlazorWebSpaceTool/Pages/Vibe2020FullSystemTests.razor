@@ -82,7 +82,7 @@
             <DataAnnotationsValidator />
             <ValidationSummary />
             <label>
-                Select Accelerometer rows to display:
+                Select Gyroscope rows to display:
                 <InputNumber @bind-Value="inputModel.GyroscopeInputModel.DataSetsPerPage"></InputNumber>
             </label>
             <label>
@@ -218,7 +218,7 @@
 
             var result = await vibeClient.RunFullSystemSharedRTCAsync(
                                 request,
-                                deadline: DateTime.UtcNow.AddMinutes(inputModel.Minutes + 2), //Add padding to time to wait for I/O and other variables
+                                deadline: DateTime.UtcNow.AddMinutes(inputModel.Minutes + 5), //Add padding to time to wait for I/O and other variables
                                 cancellationToken: CancellationToken.Token);
 
             inputModel.HasRun = true;
@@ -228,6 +228,8 @@
             inputModel.GyroscopeInputModel.DataSets = result.GyroDataSets;
             inputModel.AccelerometerInputModel.SegmentSize = result.AccelSegmentSize;
             inputModel.GyroscopeInputModel.SegmentSize = result.GyroSegmentSize;
+            inputModel.AccelerometerInputModel.RunAccelerometer = true;
+            inputModel.GyroscopeInputModel.RunGyroscope = true;
 
             StateHasChanged();
 
@@ -250,7 +252,7 @@
                 SegmentSize = inputModel.AccelerometerInputModel.SegmentSize
             };
 
-            var data = await vibeClient.GetProgramResultsAsync(
+            var data = await vibeClient.GetFullSystemResultsAsync(
                            request,
                            deadline: DateTime.UtcNow.AddMinutes(5));
 
@@ -277,11 +279,11 @@
                 SegmentSize = inputModel.GyroscopeInputModel.SegmentSize
             };
 
-            var data = await vibeClient.GetProgramResultsAsync(
+            var data = await vibeClient.GetFullSystemResultsAsync(
                            request,
                            deadline: DateTime.UtcNow.AddMinutes(5));
 
-            AccelResults = Utilities.ConvertToDataModel(data.Items.ToList());
+            GyroResults = Utilities.ConvertToDataModel(data.Items.ToList());
 
             StateHasChanged();
 
@@ -315,7 +317,7 @@
             {
                 sw.WriteLine(Vibe2020DataModel.GetHeader());
 
-                for(int i = 1; i <= inputModel.AccelerometerInputModel.AmountOfPages; i++)
+                for(int i = 1; i <= modelCopy.AmountOfPages; i++)
                 {
                     modelCopy.SelectedPage = i;
                     var request = new ProgramPageRequest()
@@ -372,7 +374,7 @@
             {
                 sw.WriteLine(Vibe2020DataModel.GetHeader());
 
-                for (int i = 1; i <= inputModel.GyroscopeInputModel.AmountOfPages; i++)
+                for (int i = 1; i <= modelCopy.AmountOfPages; i++)
                 {
                     modelCopy.SelectedPage = i;
                     var request = new ProgramPageRequest()

@@ -106,7 +106,7 @@ namespace GrpcSpaceServer.Services
             return dataModels.ToArray();
         }
 
-        public bool isGyroValid()
+        public bool IsGyroValid()
         {
             bool valid = false;
             short regValue = 0;
