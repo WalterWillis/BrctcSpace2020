@@ -295,56 +295,70 @@
     {
         if (!isRunning)
         {
-            isRunning = true;
-            FileInfo file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "Temp", $"data_{DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss")}.csv"));
-            file.Directory.Create();
-
-            InputModels.SingleDeviceInputModel modelCopy = new InputModels.SingleDeviceInputModel()
+            try
             {
-                SelectedPage = 1,
-                SegmentSize = inputModel.AccelerometerInputModel.SegmentSize,
-                DataSets = inputModel.AccelerometerInputModel.DataSets,
-                DataSetsPerPage = 1000,
-                HasRun = inputModel.HasRun,
-                Minutes = inputModel.Minutes,
-                RunAccelerometer = inputModel.AccelerometerInputModel.RunAccelerometer,
-                RunGyroscope = inputModel.AccelerometerInputModel.RunGyroscope
-            };
+                isRunning = true;
+                FileInfo file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "Temp", $"data_{DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss")}.csv"));
+                file.Directory.Create();
 
-            //write the file first as the list of items will be too large to get all at once
-            //use the inputmodel's logic for finding rows and pages to make this code compatible with inputmodel code changes
-            using (StreamWriter sw = file.CreateText())
-            {
-                sw.WriteLine(Vibe2020DataModel.GetHeader());
-
-                for(int i = 1; i <= modelCopy.AmountOfPages; i++)
+                InputModels.SingleDeviceInputModel modelCopy = new InputModels.SingleDeviceInputModel()
                 {
-                    modelCopy.SelectedPage = i;
-                    var request = new ProgramPageRequest()
+                    SelectedPage = 1,
+                    SegmentSize = inputModel.AccelerometerInputModel.SegmentSize,
+                    DataSets = inputModel.AccelerometerInputModel.DataSets,
+                    DataSetsPerPage = 10000,
+                    HasRun = inputModel.HasRun,
+                    Minutes = inputModel.Minutes,
+                    RunAccelerometer = inputModel.AccelerometerInputModel.RunAccelerometer,
+                    RunGyroscope = inputModel.AccelerometerInputModel.RunGyroscope
+                };
+
+                //write the file first as the list of items will be too large to get all at once
+                //use the inputmodel's logic for finding rows and pages to make this code compatible with inputmodel code changes
+                using (StreamWriter sw = file.CreateText())
+                {
+                    sw.WriteLine(Vibe2020DataModel.GetHeader());
+
+                    for (int i = 1; i <= modelCopy.AmountOfPages; i++)
                     {
-                        RunAccelerometer = true, // used to get the accel results
-                        DataSetStart = modelCopy.PageStart,
-                        RunGyroscope = false,
-                        Rows = modelCopy.DataSetsPerPage,
-                        SegmentSize = modelCopy.SegmentSize
-                    };
+                        modelCopy.SelectedPage = i;
+                        var request = new ProgramPageRequest()
+                        {
+                            RunAccelerometer = true, // used to get the accel results
+                            DataSetStart = modelCopy.PageStart,
+                            RunGyroscope = false,
+                            Rows = modelCopy.DataSetsPerPage,
+                            SegmentSize = modelCopy.SegmentSize
+                        };
 
-                    var data = await vibeClient.GetFullSystemResultsAsync(
-                                   request,
-                                   deadline: DateTime.UtcNow.AddMinutes(1));
+                        try
+                        {
+                            var data = await vibeClient.GetFullSystemResultsAsync(
+                                           request,
+                                           deadline: DateTime.UtcNow.AddMinutes(1));
 
-                    List<Vibe2020DataModel> items = Utilities.ConvertToDataModel(data.Items.ToList());
+                            List<Vibe2020DataModel> items = Utilities.ConvertToDataModel(data.Items.ToList());
 
-                    foreach (var item in items)
-                    {
-                        await sw.WriteLineAsync(item.ToCsvLine());
+                            foreach (var item in items)
+                            {
+                                await sw.WriteLineAsync(item.ToCsvLine());
+                            }
+
+                            await sw.FlushAsync();
+                        }
+                        catch 
+                        { 
+                            //since the accel file is in multiple pieces, we can assume we have read the whole file
+                            break; 
+                        }                        
                     }
-
-                    await sw.FlushAsync();
                 }
             }
-
-            isRunning = false;
+            catch
+            {
+                //maybe make a component for error messages
+            }
+            finally { isRunning = false; }
         }
     }
 
@@ -352,56 +366,62 @@
     {
         if (!isRunning)
         {
-            isRunning = true;
-            FileInfo file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "Temp", $"data_{DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss")}.csv"));
-            file.Directory.Create();
-
-            InputModels.SingleDeviceInputModel modelCopy = new InputModels.SingleDeviceInputModel()
+            try
             {
-                SelectedPage = 1,
-                SegmentSize = inputModel.GyroscopeInputModel.SegmentSize,
-                DataSets = inputModel.GyroscopeInputModel.DataSets,
-                DataSetsPerPage = 1000,
-                HasRun = inputModel.HasRun,
-                Minutes = inputModel.Minutes,
-                RunAccelerometer = inputModel.GyroscopeInputModel.RunAccelerometer,
-                RunGyroscope = inputModel.GyroscopeInputModel.RunGyroscope
-            };
+                isRunning = true;
+                FileInfo file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "Temp", $"data_{DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss")}.csv"));
+                file.Directory.Create();
 
-            //write the file first as the list of items will be too large to get all at once
-            //use the inputmodel's logic for finding rows and pages to make this code compatible with inputmodel code changes
-            using (StreamWriter sw = file.CreateText())
-            {
-                sw.WriteLine(Vibe2020DataModel.GetHeader());
-
-                for (int i = 1; i <= modelCopy.AmountOfPages; i++)
+                InputModels.SingleDeviceInputModel modelCopy = new InputModels.SingleDeviceInputModel()
                 {
-                    modelCopy.SelectedPage = i;
-                    var request = new ProgramPageRequest()
+                    SelectedPage = 1,
+                    SegmentSize = inputModel.GyroscopeInputModel.SegmentSize,
+                    DataSets = inputModel.GyroscopeInputModel.DataSets,
+                    DataSetsPerPage = 10000,
+                    HasRun = inputModel.HasRun,
+                    Minutes = inputModel.Minutes,
+                    RunAccelerometer = inputModel.GyroscopeInputModel.RunAccelerometer,
+                    RunGyroscope = inputModel.GyroscopeInputModel.RunGyroscope
+                };
+
+                //write the file first as the list of items will be too large to get all at once
+                //use the inputmodel's logic for finding rows and pages to make this code compatible with inputmodel code changes
+                using (StreamWriter sw = file.CreateText())
+                {
+                    sw.WriteLine(Vibe2020DataModel.GetHeader());
+
+                    for (int i = 1; i <= modelCopy.AmountOfPages; i++)
                     {
-                        RunAccelerometer = false,
-                        DataSetStart = modelCopy.PageStart,
-                        RunGyroscope = true, //used to get the gyro results
-                        Rows = modelCopy.DataSetsPerPage,
-                        SegmentSize = modelCopy.SegmentSize
-                    };
+                        modelCopy.SelectedPage = i;
+                        var request = new ProgramPageRequest()
+                        {
+                            RunAccelerometer = false,
+                            DataSetStart = modelCopy.PageStart,
+                            RunGyroscope = true, //used to get the gyro results
+                            Rows = modelCopy.DataSetsPerPage,
+                            SegmentSize = modelCopy.SegmentSize
+                        };
 
-                    var data = await vibeClient.GetFullSystemResultsAsync(
-                                   request,
-                                   deadline: DateTime.UtcNow.AddMinutes(1));
+                        var data = await vibeClient.GetFullSystemResultsAsync(
+                                       request,
+                                       deadline: DateTime.UtcNow.AddMinutes(1));
 
-                    List<Vibe2020DataModel> items = Utilities.ConvertToDataModel(data.Items.ToList());
+                        List<Vibe2020DataModel> items = Utilities.ConvertToDataModel(data.Items.ToList());
 
-                    foreach (var item in items)
-                    {
-                        await sw.WriteLineAsync(item.ToCsvLine());
+                        foreach (var item in items)
+                        {
+                            await sw.WriteLineAsync(item.ToCsvLine());
+                        }
+
+                        await sw.FlushAsync();
                     }
-
-                    await sw.FlushAsync();
                 }
             }
-
-            isRunning = false;
+            catch
+            {
+                //maybe make a component for error messages
+            }
+            finally { isRunning = false; }
         }
     }
 
@@ -416,22 +436,50 @@
 
     public void SaveAccelResultsToJson()
     {
-        Utilities.SaveToJson(AccelResults, this.JS, $"FullSystemAccelResultsPage{inputModel.AccelerometerInputModel.SelectedPage}");
+        try
+        {
+            Utilities.SaveToJson(AccelResults, this.JS, $"FullSystemAccelResultsPage{inputModel.AccelerometerInputModel.SelectedPage}");
+        }
+        catch (Exception)
+        {
+
+        }
     }
 
     public void SaveAccelResultsToCsv()
     {
-        Utilities.SaveToCsv(AccelResults, this.JS, $"FullSystemAccelResultsPage{inputModel.AccelerometerInputModel.SelectedPage}");
+        try
+        {
+            Utilities.SaveToCsv(AccelResults, this.JS, $"FullSystemAccelResultsPage{inputModel.AccelerometerInputModel.SelectedPage}");
+        }
+        catch (Exception)
+        {
+
+        }
     }
 
     public void SaveGyroResultsToJson()
     {
-        Utilities.SaveToJson(AccelResults, this.JS, $"FullSystemGyroResultsPage{inputModel.GyroscopeInputModel.SelectedPage}");
+        try
+        {
+            Utilities.SaveToJson(AccelResults, this.JS, $"FullSystemGyroResultsPage{inputModel.GyroscopeInputModel.SelectedPage}");
+        }
+        catch (Exception)
+        {
+
+        }
     }
 
     public void SaveGyroResultsToCsv()
     {
-        Utilities.SaveToCsv(AccelResults, this.JS, $"FullSystemGyroResultsPage{inputModel.GyroscopeInputModel.SelectedPage}");
+        try
+        {
+            Utilities.SaveToCsv(AccelResults, this.JS, $"FullSystemGyroResultsPage{inputModel.GyroscopeInputModel.SelectedPage}");
+        }
+        catch (Exception)
+        {
+
+        }
     }
 
     public async Task GetStatus()

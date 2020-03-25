@@ -2,12 +2,14 @@ I used the VS 2017 tutorial for attaching to remote system: https://devblogs.mic
 
 Installing .net core: https://gist.github.com/richlander/467813274cea8abc624553ee72b28213
 
-Modified script:
+Modified script (all you need):
 
 curl -SL -o dotnet.tar.gz https://download.visualstudio.microsoft.com/download/pr/21a124fd-5bb7-403f-bdd2-489f9d21d695/b58fa90d19a5a5124d21dea94422868c/dotnet-sdk-3.1.200-linux-arm.tar.gz
 sudo mkdir -p /usr/share/dotnet
 sudo tar -zxf dotnet.tar.gz -C /usr/share/dotnet
 sudo ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
+
+Then use sudo dotnet <appname.dll>
 
 https://docs.microsoft.com/en-us/visualstudio/debugger/remote-debugging-dotnet-core-linux-with-ssh?view=vs-2019
 

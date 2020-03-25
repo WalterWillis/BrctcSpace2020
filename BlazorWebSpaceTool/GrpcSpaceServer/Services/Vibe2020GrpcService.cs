@@ -217,15 +217,16 @@ namespace GrpcSpaceServer.Services
             string filename = request.RunAccelerometer ? FullSystemSharedRTC.TestAccelFile : FullSystemSharedRTC.TestGyroFile;
 
             using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read))
-            {
-                _logger.LogInformation($"Request: {request}");
+            {      
                 long startIndex = request.DataSetStart * request.SegmentSize;
                 long endIndex = startIndex + (request.Rows * request.SegmentSize);
                 long rows = request.Rows;
 
-                _logger.LogInformation($"FileStream size: {fs.Length}. Start Index: {startIndex}. End Index: {endIndex}");
+              
                 if (startIndex > fs.Length)
                 {
+                    _logger.LogInformation($"Request: {request}");
+                    _logger.LogInformation($"FileStream size: {fs.Length}. Start Index: {startIndex}. End Index: {endIndex}");
                     throw new IndexOutOfRangeException("Requested starting index is larger than the file's size.");
                 }
 

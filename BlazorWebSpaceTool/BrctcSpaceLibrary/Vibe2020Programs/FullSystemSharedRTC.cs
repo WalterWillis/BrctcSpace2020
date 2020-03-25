@@ -124,7 +124,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
             Console.WriteLine($"FullSystemSharedRTC program ran for {stopwatch.Elapsed.TotalSeconds} seconds" +
                 $" creating {_accelDatasetCounter} accelerometer datasets at {_accelDatasetCounter / stopwatch.Elapsed.TotalSeconds} datasets per second and" +
-                $"{_gyroDatasetCounter} gyroscope datasets at {_gyroDatasetCounter / stopwatch.Elapsed.TotalSeconds} datasets per second");
+                $" {_gyroDatasetCounter} gyroscope datasets at {_gyroDatasetCounter / stopwatch.Elapsed.TotalSeconds} datasets per second");
         }
 
         public void RunAccelerometer()
@@ -136,39 +136,39 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
             Span<byte> rtcSegment = data.Slice(_accelBytes, _rtcBytes);
             Span<byte> cpuSegment = data.Slice(_accelBytes + _rtcBytes, _cpuBytes);
 
-            //initialize
-            GetRTCTime(rtcSegment);
-            GetCPUTemp(cpuSegment);
-
             const int secondaryDataTrigger = 7999; //subtract one from expected/wanted samples per second since counter starts at 0
             int secondaryDataCounter = 0;
 
-            const int maxLines = 1000000; //only 1,000,000 lines per file 
-           
             int fileCounter = 0;
 
-            string fileName;
-
-            //Initialize to approximately 1 MB (or as close it as possible given the segment size)
+            //Initialize to approximately 256 KB (or as close it as possible given the segment size)
             int chunkSize = (4096 / _accelSegmentLength) * 256;
+
+            int maxLines = chunkSize * 25; //arbitrary amount of iterations per buffer cycle
+
+            int iterations = maxLines / chunkSize;
 
             while (!token.IsCancellationRequested)
             {
-                int line = 0;
-                fileName = _accelFileName + fileCounter.ToString();
+                string fileName = _accelFileName + fileCounter.ToString();
 
                 using (FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write))
                 {
                     using (MemoryStream stream = new MemoryStream())
                     {
-                        while (line < maxLines && !token.IsCancellationRequested) //not redundant, just ensures that cancellation exits the loop
-                        {
-                            //if the available lines left is greater than chunksize, we should use chunksize. 
-                            //otherwise, we should use the availble lines as our chunksize
-                            //int linesToWrite = maxLines - line;
+                        //initialize
+                        GetRTCTime(rtcSegment);
+                        GetCPUTemp(cpuSegment);
 
-                            //if (linesToWrite > chunkSize)
-                            //    linesToWrite = chunkSize;
+                        //catch remainders using double
+                      
+
+                        double memoryBuffer = chunkSize;
+
+                        for (int iteration = 0; iteration < iterations; iteration++)
+                        {
+                            if (token.IsCancellationRequested)
+                                break;
 
                             for (int i = 0; i < chunkSize; i++)
                             {
@@ -186,7 +186,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
                                 accelSegment.Clear(); // only clear the accelerometer values as they must be ensured to be precise
                             }
-                            line += chunkSize; //increment by chunksize/lines left as each segment in the chunk is a line
+
                             stream.WriteTo(fs);
                             fs.Flush();
                             stream.Position = 0;

@@ -87,10 +87,7 @@ namespace BlazorWebSpaceTool.InputModels
 
             if (pages > 0)
             {
-                if (pages > 2000)
-                    pageOptions = 2000; // If we need any more than this, then either our row count is too small or the file is too large to view on the web and require more robust analysis
-                else
-                    pageOptions = (int)pages;
+                pageOptions = (int)pages;
             }
 
             return pageOptions;
