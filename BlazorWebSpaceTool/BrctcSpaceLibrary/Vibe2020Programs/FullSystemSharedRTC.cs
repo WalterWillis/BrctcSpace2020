@@ -25,6 +25,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
         FileStream _gyroStream;
 
         private const int DR_PIN = 13; //physical pin scheme;
+        private const int RST_PIN = 15;
 
         private int _accelSegmentLength;
         private int _gyroSegmentLength;
@@ -76,6 +77,8 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
             _uart = new UART();
             _gpio = new GpioController(PinNumberingScheme.Board);
             _gpio.OpenPin(DR_PIN, PinMode.Input);
+            _gpio.OpenPin(RST_PIN, PinMode.Output);
+            _gpio.Write(RST_PIN, PinValue.High);  //RST pin should always be High unless we want to reset the gyro
 
             string subDir;
             if (!isTest)
@@ -101,7 +104,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
             Task accelThread = Task.Run(() => { RunAccelerometer(); });
 
-            _gpio.RegisterCallbackForPinValueChangedEvent(DR_PIN, PinEventTypes.Rising, DataAquisitionCallback);
+            _gpio.RegisterCallbackForPinValueChangedEvent(DR_PIN, PinEventTypes.Rising, DataAquisitionCallback);     
 
             bool loopBreakerProgramMaker = false;
 
@@ -248,6 +251,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
             _gyroscopeDevice.Dispose();
             try { _gpio.UnregisterCallbackForPinValueChangedEvent(DR_PIN, DataAquisitionCallback); } catch { } // ensure this is removed
             _gpio.ClosePin(DR_PIN);
+            _gpio.ClosePin(RST_PIN);
             _gpio.Dispose();
             _gyroStream.Dispose();
         }

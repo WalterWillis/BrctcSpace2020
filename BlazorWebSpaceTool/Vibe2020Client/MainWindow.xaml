@@ -5,19 +5,22 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Vibe2020Client"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid Background="DarkSlateGray" SnapsToDevicePixels="True">
+        Title="SexyGyroscopeReporter" Height="450" Width="800">
+    <Grid Background="#FFAEC561" SnapsToDevicePixels="True">
         <Grid.RowDefinitions>
-            <RowDefinition Height=".5*"/> <!--header-->
+            <RowDefinition Height=".5*"/>
+            <!--header-->
             <RowDefinition Height="1*"/>
             <RowDefinition Height="1*"/>
             <RowDefinition Height="1*"/>
             <RowDefinition Height="1*"/>
             <RowDefinition Height="1*"/>
-            <RowDefinition Height=".5*"/> <!--footer-->
+            <RowDefinition Height=".5*"/>
+            <!--footer-->
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width=".5*"/> <!-- Side Menu -->
+            <ColumnDefinition Width=".5*"/>
+            <!-- Side Menu -->
             <ColumnDefinition Width="1*"/>
             <ColumnDefinition Width="1*"/>
             <ColumnDefinition Width="1*"/>
@@ -26,7 +29,7 @@
         </Grid.ColumnDefinitions>
 
         <TextBlock Grid.Column="5" Text="{Binding Status, StringFormat=Status: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
-        <Grid  Grid.Row="1" Grid.Column="1" >
+        <Grid  Grid.Row="1" Grid.Column="1" Margin="5,5,5,5" >
             <Grid.RowDefinitions>
                 <RowDefinition Height=".5*"/>
                 <RowDefinition Height="1*"/>
@@ -34,9 +37,200 @@
             <Button x:Name="settingsButton">
                 <TextBlock>
                     Get Settings
-                </TextBlock></Button>
+                </TextBlock>
+            </Button>
             <TextBlock Grid.Row="2" x:Name="settingsLabel" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
         </Grid>
-       
+        <Grid  Grid.Row="1" Grid.Column="2" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton1">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel1" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="1" Grid.Column="3" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton2">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel2" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="1" Grid.Column="4" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton3">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel3" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="2" Grid.Column="1" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton4">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel4" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="3" Grid.Column="1" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton5">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel5" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="4" Grid.Column="1" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton6">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel6"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="5" Grid.Column="1" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton7">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel7" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="2" Grid.Column="2" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton8">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel8" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="3" Grid.Column="2" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton9">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel9" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="4" Grid.Column="2" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton10">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel10" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="5" Grid.Column="2" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton11">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel11" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="2" Grid.Column="3" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton12">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel12" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="3" Grid.Column="3" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton13">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel13" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="4" Grid.Column="3" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton14">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel14" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="5" Grid.Column="3" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton15">
+                <TextBlock/>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel15" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="2" Grid.Column="4" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton16">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel16" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="3" Grid.Column="4" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton17">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel17" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="4" Grid.Column="4" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton18">
+                <TextBlock><Run Text="Get Settings"/></TextBlock>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel18" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+        <Grid  Grid.Row="5" Grid.Column="4" Margin="5,5,5,5" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height=".5*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="settingsButton19">
+                <TextBlock/>
+            </Button>
+            <TextBlock Grid.Row="2" x:Name="settingsLabel19" Text="{Binding Settings, StringFormat=Settings: \{0\}}"  TextAlignment="Center" Background="DarkGray"/>
+        </Grid>
+
     </Grid>
 </Window>

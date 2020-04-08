@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vibe2020Tests", "BlazorWebS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vibe2020Client", "BlazorWebSpaceTool\Vibe2020Client\Vibe2020Client.csproj", "{078D3837-8DBA-45D9-AD61-7459935A1FED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vibe2020ClientLibrary", "BlazorWebSpaceTool\Vibe2020ClientLibrary\Vibe2020ClientLibrary.csproj", "{3E6DC731-62EB-45D2-860C-A04B38EFD7BB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vibe2020ClientLibrary", "BlazorWebSpaceTool\Vibe2020ClientLibrary\Vibe2020ClientLibrary.csproj", "{3E6DC731-62EB-45D2-860C-A04B38EFD7BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

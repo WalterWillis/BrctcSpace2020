@@ -1,0 +1,3 @@
+Random code used to test that writing to an output pin permanently sets that pin. 
+In this example, the RST_PIN simulates our ADIS16460 pin being set to HIGH to prevent accidental resets of the device. It passed.
+The Documentation supports this conclusion as according to https://github.com/dotnet/iot/blob/master/src/System.Device.Gpio/System/Device/Gpio/Drivers/RaspberryPi3Driver.Linux.cs, the pin's register is simply set to the HIGH value.
