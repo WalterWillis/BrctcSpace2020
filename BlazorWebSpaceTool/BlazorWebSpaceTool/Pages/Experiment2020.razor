@@ -112,34 +112,7 @@
             </RowTemplate>
         </GenericListTable>
     </div>
-
-    <div class="subgrid-footer container-fluid p-3 my-3 bg-dark text-white">
-        <h4 style="margin-bottom:10px;">Device Details</h4>
-        <div class="card bg-secondary" style="max-width: 12%;margin-right:10px; float:left">
-            <button @onclick="GetStatus" class="btn btn-sm btn-info">Verify Gyroscope Connection Status</button>
-            <br />
-            <div>
-                @GyroStatus
-            </div>
-        </div>
-
-        <div class="card bg-secondary" style="max-width: 12%;margin:auto; float:left">
-            <button @onclick="SetGyroscope" class="btn btn-sm btn-info">Write to MSC_CTRL</button>
-            <br />
-            <div>
-                <EditForm Model="gyroInputModel">
-                    <label>
-                        Register to write
-                        <InputNumber @bind-Value="gyroInputModel.Value"></InputNumber>
-                    </label>
-                    <p>Register Reply: @gyroInputModel.ResultValue</p>
-                </EditForm>
-            </div>
-        </div>
-    </div>
-
 </div>
-
 
 @code {
 
@@ -147,8 +120,6 @@
 
     //Used to disable all buttons when streaming data. Not technically necessary, but better safe than sorry.
     public bool isRunning { get; set; } = false;
-
-    public RenderFragment GyroStatus { get; set; }
 
     private CancellationTokenSource CancellationToken { get; set; }
 
@@ -171,8 +142,6 @@
     private SingleDeviceType selectedDevice = SingleDeviceType.Accelerometer;
 
     private InputModels.SingleDeviceInputModel inputModel { get; set; } = new InputModels.SingleDeviceInputModel();
-
-    private InputModels.GyroRegisterInputModel gyroInputModel { get; set; } = new InputModels.GyroRegisterInputModel() { Register = (byte)BrctcSpaceLibrary.Register.MSC_CTRL };
 
     public void SelectionChanged(ChangeEventArgs args)
     {
@@ -431,29 +400,6 @@
     public void SaveResultsToCsv()
     {
         Utilities.SaveToCsv(Results, this.JS, "SingleResults");
-    }
-
-    public async Task GetStatus()
-    {
-        var result = await vibeClient.GetDeviceStatusAsync(new DeviceStatusRequest());
-
-        if (result.GyroStatus)
-            GyroStatus =@<p class="bg-success card-text text-center">Gyroscope Valid</p>;
-        else
-        GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
-        StateHasChanged();
-    }
-
-    public async Task SetGyroscope()
-    {
-        var result = await vibeClient.SetGyroRegisterAsync(new GyroRegisterData()
-        {
-            Register = gyroInputModel.Register,
-            Value = gyroInputModel.Value
-        });
-
-        gyroInputModel.ResultValue = (short)result.Result;
-        StateHasChanged();
     }
 
     private enum ResultQueryType { Single, Stream, Bulk, SingleDevice }

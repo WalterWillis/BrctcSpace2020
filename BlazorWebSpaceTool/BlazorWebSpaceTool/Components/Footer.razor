@@ -1,0 +1,101 @@
+﻿@using BrctcSpace;
+@using BlazorWebSpaceTool.InputModels;
+@inject Vibe.VibeClient vibeClient;
+
+    <div class="card container-fluid p-3 my-3 bg-dark text-white">
+        <h4 class="card-title">Device Details</h4>
+        <div class="card-deck">
+
+            <br />
+            <div class="card bg-dark" style="max-width: 12%;">
+                <br />
+                <div class="card-body">
+                    <button @onclick="GetStatus" class="btn btn-sm btn-info">Verify Gyroscope Connection Status</button>
+                    <br />
+                    <div>
+                        @GyroStatus
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark" style="max-width: 12%;">
+                <div class="card-body">
+                    <button @onclick="SetGyroscope" class="btn btn-sm btn-info">Write to MSC_CTRL</button>
+                    <br />
+                    <div>
+                        <EditForm Model="gyroInputModel">
+                            <label>
+                                Register to write
+                                <InputNumber @bind-Value="gyroInputModel.Value"></InputNumber>
+                            </label>
+                            <p>Register Reply: @gyroInputModel.ResultValue</p>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark" style="max-width: 12%;">
+                <div class="card-body">
+                    <div>
+                        <EditForm Model="SerialPortInputModel" OnValidSubmit="SerialPortInputModel.SendText">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                            <label>
+                                Select a UART Device
+                                <InputSelect @bind-Value="SerialPortInputModel.SelectedPort">
+                                    <option value=""></option>
+                                    @foreach (var port in SerialPortInputModel.AvailablePorts)
+                                    {
+                                        <option value="@port">@port</option>
+                                    }
+                                </InputSelect>
+                            </label>
+                            <label>
+                                Text to send:
+                                <InputText @bind-Value="SerialPortInputModel.Text"></InputText>
+                            </label>
+
+                            <button type="submit" class="btn btn-primary btn-sm" style="margin-left:10px;">Send Text</button>
+                        </EditForm>
+                        <br />
+                        <div><p class="bg-danger card-text text-center">@SerialPortInputModel.ErrorMessage</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@code{
+
+    private RenderFragment GyroStatus { get; set; }
+    private GyroRegisterInputModel gyroInputModel { get; set; } = new InputModels.GyroRegisterInputModel() { Register = (byte)BrctcSpaceLibrary.Register.MSC_CTRL };
+
+    private SerialPortInputModel SerialPortInputModel = new SerialPortInputModel();
+
+    private async Task GetStatus()
+    {
+        var result = await vibeClient.GetDeviceStatusAsync(new DeviceStatusRequest());
+
+        if (result.GyroStatus)
+        {
+            GyroStatus =@<p class="bg-success card-text text-center">Gyroscope Valid</p>;
+        }
+        else
+        {
+            GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
+        }
+        StateHasChanged();
+    }
+
+    private async Task SetGyroscope()
+        {
+            var result = await vibeClient.SetGyroRegisterAsync(new GyroRegisterData()
+        {
+            Register = gyroInputModel.Register,
+            Value = gyroInputModel.Value
+        });
+
+        gyroInputModel.ResultValue = (short)result.Result;
+        StateHasChanged();
+    }
+}

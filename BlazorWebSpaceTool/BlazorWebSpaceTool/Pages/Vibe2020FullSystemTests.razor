@@ -30,150 +30,124 @@
         </div>
     }
 
-<div class="subgrid-center">
-    <h5>Full System Test</h5>
-    <EditForm Model="inputModel" OnValidSubmit="RunTest">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-        <label>
-            Display Accelerometer Table?
-            <InputCheckbox @bind-Value="inputModel.IsAccelerometerSelected" />
-        </label>
-        <br />
-
-        <label>
-            Minutes to run:
-            <InputNumber @bind-Value="inputModel.Minutes"></InputNumber>
-        </label>
-        <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Run Test</button>
-        <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
-    </EditForm>
-
-    <br />
-    @if (inputModel.HasRun && inputModel.IsAccelerometerSelected)
-    {
-        <EditForm Model="inputModel" OnValidSubmit="GetAccelResults">
+    <div class="subgrid-center">
+        <h5>Full System Test</h5>
+        <EditForm Model="inputModel" OnValidSubmit="RunTest">
             <DataAnnotationsValidator />
             <ValidationSummary />
             <label>
-                Select Accelerometer rows to display:
-                <InputNumber @bind-Value="inputModel.AccelerometerInputModel.DataSetsPerPage"></InputNumber>
+                Display Accelerometer Table?
+                <InputCheckbox @bind-Value="inputModel.IsAccelerometerSelected" />
             </label>
-            <label>
-                Page Index:
-                <NumericInputSelect @bind-Value="inputModel.AccelerometerInputModel.SelectedPage">
-                    <option value="0">Select page ...</option>
-                    @for (long i = 1; i <= inputModel.AccelerometerInputModel.AmountOfPages; i++)
-                        {
-                        <option value="@i">Page @i</option>
-                        }
-                    /**/
-                </NumericInputSelect>
-            </label>
+            <br />
 
-            <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Get Results</button>
+            <label>
+                Minutes to run:
+                <InputNumber @bind-Value="inputModel.Minutes"></InputNumber>
+            </label>
+            <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Run Test</button>
             <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
         </EditForm>
-        <button disabled="@isRunning" @onclick="CopyAccelFileFromServer" class="btn btn-dark btn-sm" style="margin-left:10px;">Save File</button>
-    }
-    else if (inputModel.HasRun && !inputModel.IsAccelerometerSelected)
-    {
-        <EditForm Model="inputModel" OnValidSubmit="GetGyroResults">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
-            <label>
-                Select Gyroscope rows to display:
-                <InputNumber @bind-Value="inputModel.GyroscopeInputModel.DataSetsPerPage"></InputNumber>
-            </label>
-            <label>
-                Page Index:
-                <NumericInputSelect @bind-Value="inputModel.GyroscopeInputModel.SelectedPage">
-                    <option value="0">Select page ...</option>
-                    @for (long i = 1; i <= inputModel.GyroscopeInputModel.AmountOfPages; i++)
-                        {
-                        <option value="@i">Page @i</option>
-                        }
-                    /**/
-                </NumericInputSelect>
-            </label>
 
-            <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Get Results</button>
-            <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
-        </EditForm>
-        <button disabled="@isRunning" @onclick="CopyGyroFileFromServer" class="btn btn-dark btn-sm" style="margin-left:10px;">Save File</button>
-    }
-
-    @if (inputModel.IsAccelerometerSelected)
-    {
         <br />
-        <h3>Accelerometer Results</h3>
-        <p>Rows: @AccelResults.Count</p>
+        @if (inputModel.HasRun && inputModel.IsAccelerometerSelected)
+        {
+            <EditForm Model="inputModel" OnValidSubmit="GetAccelResults">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <label>
+                    Select Accelerometer rows to display:
+                    <InputNumber @bind-Value="inputModel.AccelerometerInputModel.DataSetsPerPage"></InputNumber>
+                </label>
+                <label>
+                    Page Index:
+                    <NumericInputSelect @bind-Value="inputModel.AccelerometerInputModel.SelectedPage">
+                        <option value="0">Select page ...</option>
+                        @for (long i = 1; i <= inputModel.AccelerometerInputModel.AmountOfPages; i++)
+                            {
+                            <option value="@i">Page @i</option>
+                            }
+                        /**/
+                    </NumericInputSelect>
+                </label>
 
-        <GenericListTable Items="AccelResults">
-            <TableHeader>
-                <th>Raw Accelerometer</th>
-                <th>Accelerometer</th>
-                <th>Raw Gyroscope</th>
-                <th>Gyroscope</th>
-                <th>Cpu Temp</th>
-                <th>Transaction Timestamp</th>
-            </TableHeader>
-            <RowTemplate>
-                <td>@(context.AccelData_Raw != null ? string.Join(',', context.AccelData_Raw) : "None")</td>
-                <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
-                <td>@context.CpuTemp</td>
-                <td>@context.TransactionTime</td>
-            </RowTemplate>
-        </GenericListTable>
-    }
-    else
-    {
-        <br />
-        <h3>Gyroscope Results</h3>
-        <p>Rows: @GyroResults.Count</p>
+                <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Get Results</button>
+                <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
+            </EditForm>
+            <button disabled="@isRunning" @onclick="CopyAccelFileFromServer" class="btn btn-dark btn-sm" style="margin-left:10px;">Save File</button>
+        }
+        else if (inputModel.HasRun && !inputModel.IsAccelerometerSelected)
+        {
+            <EditForm Model="inputModel" OnValidSubmit="GetGyroResults">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <label>
+                    Select Gyroscope rows to display:
+                    <InputNumber @bind-Value="inputModel.GyroscopeInputModel.DataSetsPerPage"></InputNumber>
+                </label>
+                <label>
+                    Page Index:
+                    <NumericInputSelect @bind-Value="inputModel.GyroscopeInputModel.SelectedPage">
+                        <option value="0">Select page ...</option>
+                        @for (long i = 1; i <= inputModel.GyroscopeInputModel.AmountOfPages; i++)
+                            {
+                            <option value="@i">Page @i</option>
+                            }
+                        /**/
+                    </NumericInputSelect>
+                </label>
 
-        <GenericListTable Items="GyroResults">
-            <TableHeader>
-                <th>Raw Gyroscope</th>
-                <th>Gyroscope</th>
-                <th>Cpu Temp</th>
-                <th>Transaction Timestamp</th>
-            </TableHeader>
-            <RowTemplate>
-                <td>@(context.GyroData_Raw != null ? string.Join(',', context.GyroData_Raw) : "None")</td>
-                <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
-                <td>@context.CpuTemp</td>
-                <td>@context.TransactionTime</td>
-            </RowTemplate>
-        </GenericListTable>
-    }
-</div>
+                <button type="submit" disabled="@isRunning" class="btn btn-primary btn-sm" style="margin-left:10px;">Get Results</button>
+                <button disabled="@(!isRunning)" @onclick="Cancel" class="btn btn-primary btn-sm">Cancel</button>
+            </EditForm>
+            <button disabled="@isRunning" @onclick="CopyGyroFileFromServer" class="btn btn-dark btn-sm" style="margin-left:10px;">Save File</button>
+        }
 
-    <div class="subgrid-footer container-fluid p-3 my-3 bg-dark text-white">
-        <h4 style="margin-bottom:10px;">Device Details</h4>
-        <div class="card bg-secondary" style="max-width: 12%;margin-right:10px; float:left">
-            <button @onclick="GetStatus" class="btn btn-sm btn-info">Verify Gyroscope Connection Status</button>
+        @if (inputModel.IsAccelerometerSelected)
+        {
             <br />
-            <div>
-                @GyroStatus
-            </div>
-        </div>
+            <h3>Accelerometer Results</h3>
+            <p>Rows: @AccelResults.Count</p>
 
-        <div class="card bg-secondary" style="max-width: 12%;margin:auto; float:left">
-            <button @onclick="SetGyroscope" class="btn btn-sm btn-info">Write to MSC_CTRL</button>
+            <GenericListTable Items="AccelResults">
+                <TableHeader>
+                    <th>Raw Accelerometer</th>
+                    <th>Accelerometer</th>
+                    <th>Raw Gyroscope</th>
+                    <th>Gyroscope</th>
+                    <th>Cpu Temp</th>
+                    <th>Transaction Timestamp</th>
+                </TableHeader>
+                <RowTemplate>
+                    <td>@(context.AccelData_Raw != null ? string.Join(',', context.AccelData_Raw) : "None")</td>
+                    <td>@(context.AccelData != null ? string.Join(',', context.AccelData) : "None")</td>
+                    <td>@context.CpuTemp</td>
+                    <td>@context.TransactionTime</td>
+                </RowTemplate>
+            </GenericListTable>
+        }
+        else
+        {
             <br />
-            <div>
-                <EditForm Model="gyroInputModel">
-                    <label>
-                        Register to write
-                        <InputNumber @bind-Value="gyroInputModel.Value"></InputNumber>
-                    </label>
-                    <p>Register Reply: @gyroInputModel.ResultValue</p>
-                </EditForm>
-            </div>
-        </div>
+            <h3>Gyroscope Results</h3>
+            <p>Rows: @GyroResults.Count</p>
+
+            <GenericListTable Items="GyroResults">
+                <TableHeader>
+                    <th>Raw Gyroscope</th>
+                    <th>Gyroscope</th>
+                    <th>Cpu Temp</th>
+                    <th>Transaction Timestamp</th>
+                </TableHeader>
+                <RowTemplate>
+                    <td>@(context.GyroData_Raw != null ? string.Join(',', context.GyroData_Raw) : "None")</td>
+                    <td>@(context.GyroData != null ? string.Join(',', context.GyroData) : "None")</td>
+                    <td>@context.CpuTemp</td>
+                    <td>@context.TransactionTime</td>
+                </RowTemplate>
+            </GenericListTable>
+        }
     </div>
-
 </div>
 
 
@@ -184,14 +158,11 @@
 
     public bool isRunning { get; set; } = false;
 
-    public RenderFragment GyroStatus { get; set; }
-
     private CancellationTokenSource CancellationToken { get; set; }
 
 
     private InputModels.FullSystemInputModel inputModel { get; set; } = new InputModels.FullSystemInputModel();
 
-    private InputModels.GyroRegisterInputModel gyroInputModel { get; set; } = new InputModels.GyroRegisterInputModel() { Register = (byte)BrctcSpaceLibrary.Register.MSC_CTRL };
 
 
     protected override Task OnInitializedAsync()
@@ -480,28 +451,5 @@
         {
 
         }
-    }
-
-    public async Task GetStatus()
-    {
-        var result = await vibeClient.GetDeviceStatusAsync(new DeviceStatusRequest());
-
-        if (result.GyroStatus)
-            GyroStatus =@<p class="bg-success card-text text-center">Gyroscope Valid</p>;
-        else
-        GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
-        StateHasChanged();
-    }
-
-    public async Task SetGyroscope()
-    {
-        var result = await vibeClient.SetGyroRegisterAsync(new GyroRegisterData()
-        {
-            Register = gyroInputModel.Register,
-            Value = gyroInputModel.Value
-        });
-
-        gyroInputModel.ResultValue = (short)result.Result;
-        StateHasChanged();
     }
 }
