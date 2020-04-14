@@ -7,6 +7,7 @@ using GrpcSpaceServer.Services.Interfaces;
 using BrctcSpaceLibrary.Vibe2020Programs;
 using System.IO;
 using System.Collections.Generic;
+using BrctcSpaceLibrary.Device;
 
 namespace GrpcSpaceServer.Services
 {
@@ -278,6 +279,26 @@ namespace GrpcSpaceServer.Services
             response.Items.AddRange(modelList);
 
             return Task.FromResult(response);
+        }
+
+        public override Task<UartMessage> SendUartMessage(UartMessage request, ServerCallContext context)
+        {
+            UartMessage returnMessage = new UartMessage() { Message = "Success" };
+            try
+            {
+                using (var comms = new UART())
+                {
+                    comms.SerialSend(request.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                returnMessage.Message = "Failed";
+                _logger.LogError("UART communication failure.");
+                _logger.LogDebug(ex.Message);
+                _logger.LogDebug(ex.StackTrace);
+            }
+            return base.SendUartMessage(returnMessage, context);
         }
     }
 }

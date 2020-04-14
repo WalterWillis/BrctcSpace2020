@@ -58,7 +58,14 @@
                             <button type="submit" class="btn btn-primary btn-sm" style="margin-left:10px;">Send Text</button>
                         </EditForm>
                         <br />
-                        <div><p class="bg-danger card-text text-center">@SerialPortInputModel.ErrorMessage</p></div>
+                        @if (!string.IsNullOrEmpty(SerialPortInputModel.ErrorMessage))
+                        {
+                            <div><p class="bg-danger card-text text-center">@SerialPortInputModel.ErrorMessage</p></div>
+                        }
+                        @if (SerialPortInputModel.TestSuccess)
+                        {
+                            <div><p class="bg-success card-text text-center">Telemetry Recieved Successfully</p></div>
+                        }
                     </div>
                 </div>
             </div>
@@ -74,22 +81,22 @@
 
     private async Task GetStatus()
     {
-        var result = await vibeClient.GetDeviceStatusAsync(new DeviceStatusRequest());
+    var result = await vibeClient.GetDeviceStatusAsync(new DeviceStatusRequest());
 
-        if (result.GyroStatus)
-        {
-            GyroStatus =@<p class="bg-success card-text text-center">Gyroscope Valid</p>;
-        }
-        else
-        {
-            GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
+    if (result.GyroStatus)
+    {
+        GyroStatus =@<p class="bg-success card-text text-center">Gyroscope Valid</p>;
+    }
+    else
+    {
+        GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
         }
         StateHasChanged();
     }
 
     private async Task SetGyroscope()
-        {
-            var result = await vibeClient.SetGyroRegisterAsync(new GyroRegisterData()
+    {
+        var result = await vibeClient.SetGyroRegisterAsync(new GyroRegisterData()
         {
             Register = gyroInputModel.Register,
             Value = gyroInputModel.Value
@@ -97,5 +104,27 @@
 
         gyroInputModel.ResultValue = (short)result.Result;
         StateHasChanged();
+    }
+
+    private async Task TelemetryTest()
+    {
+        UartMessage message = new UartMessage() { Message = SerialPortInputModel.Text };
+
+        UartMessage response = await vibeClient.SendUartMessageAsync(message);
+
+        if (response.Message.Equals("Success", StringComparison.OrdinalIgnoreCase))
+        {
+            string telemetryText = SerialPortInputModel.ReadText();
+
+            if (telemetryText == SerialPortInputModel.Text)
+            {
+                SerialPortInputModel.TestSuccess = true;
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Sent {message.Message} and got {telemetryText}. Service returned {response.Message}");
+            }
+        }
+
     }
 }

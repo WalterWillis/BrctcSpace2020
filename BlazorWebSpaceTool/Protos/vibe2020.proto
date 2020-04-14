@@ -15,6 +15,7 @@ service Vibe {
   rpc GetGyroRegisters (GyroRegisterList) returns (GyroRegisterList); // returns a list with mapped register and returned data
   rpc RunFullSystemSharedRTC (FullSystemRequest) returns (FullSystemResponse); 
   rpc GetFullSystemResults (ProgramPageRequest) returns (DeviceDataArray);
+  rpc SendUartMessage (UartMessage) returns (UartMessage); //return another message or just leave blank
 }
 
 message FullSystemRequest{
@@ -85,4 +86,8 @@ message GyroRegisterData{
 
 message GyroReply{
     int32 result = 1;
+}
+
+message UartMessage{
+    string Message = 1;
 }

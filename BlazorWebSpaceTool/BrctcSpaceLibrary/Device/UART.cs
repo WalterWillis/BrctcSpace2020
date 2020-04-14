@@ -14,6 +14,13 @@ namespace BrctcSpaceLibrary.Device
             _serialDevice.WriteTimeout = 1000;
             _serialDevice.ReadTimeout = 1000;
         }
+
+        public UART(string port)
+        {
+            _serialDevice = new SerialPort(port, 57600, Parity.None, 8, StopBits.One);
+            _serialDevice.WriteTimeout = 1000;
+            _serialDevice.ReadTimeout = 1000;
+        }
         public void SerialSend(string message)
         {
             _serialDevice.Open();
@@ -21,6 +28,17 @@ namespace BrctcSpaceLibrary.Device
             _serialDevice.WriteLine(message);
 
             _serialDevice.Close();
+        }
+
+        public string SerialRead()
+        {
+            _serialDevice.Open();
+
+            string message = _serialDevice.ReadLine();
+
+            _serialDevice.Close();
+
+            return message;
         }
 
         public void SendBytes(Span<byte> buffer)
@@ -51,6 +69,8 @@ namespace BrctcSpaceLibrary.Device
 
             if (disposing)
             {
+                if (_serialDevice.IsOpen)
+                    _serialDevice.Close();
                 _serialDevice.Dispose();
             }
 
