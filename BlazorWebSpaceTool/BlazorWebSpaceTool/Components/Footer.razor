@@ -37,7 +37,7 @@
             <div class="card bg-dark" style="max-width: 12%;">
                 <div class="card-body">
                     <div>
-                        <EditForm Model="SerialPortInputModel" OnValidSubmit="SerialPortInputModel.SendText">
+                        <EditForm Model="SerialPortInputModel" OnValidSubmit="TelemetryTest">
                             <DataAnnotationsValidator />
                             <ValidationSummary />
                             <label>
@@ -81,14 +81,14 @@
 
     private async Task GetStatus()
     {
-    var result = await vibeClient.GetDeviceStatusAsync(new DeviceStatusRequest());
+        var result = await vibeClient.GetDeviceStatusAsync(new DeviceStatusRequest());
 
-    if (result.GyroStatus)
-    {
-        GyroStatus =@<p class="bg-success card-text text-center">Gyroscope Valid</p>;
-    }
-    else
-    {
+        if (result.GyroStatus)
+        {
+            GyroStatus =@<p class="bg-success card-text text-center">Gyroscope Valid</p>;
+        }
+        else
+        {
         GyroStatus = @<p class="bg-danger card-text text-center">Gyroscope Invalid</p>;
         }
         StateHasChanged();
@@ -108,23 +108,23 @@
 
     private async Task TelemetryTest()
     {
-        UartMessage message = new UartMessage() { Message = SerialPortInputModel.Text };
-
-        UartMessage response = await vibeClient.SendUartMessageAsync(message);
-
-        if (response.Message.Equals("Success", StringComparison.OrdinalIgnoreCase))
+        try
         {
-            string telemetryText = SerialPortInputModel.ReadText();
+            UartMessage message = new UartMessage() { Message = SerialPortInputModel.Text };
 
-            if (telemetryText == SerialPortInputModel.Text)
+            var task = vibeClient.SendUartMessageAsync(message);
+
+            //Initiates an event that will listen for UART events
+            //Will automatically set the correct properties and trigger success/fail messages
+            SerialPortInputModel.PrepareForRecieveEvent();
+
+            UartMessage response = await task.ResponseAsync;
+            if (response.Message == "Failed")
             {
-                SerialPortInputModel.TestSuccess = true;
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"Sent {message.Message} and got {telemetryText}. Service returned {response.Message}");
+                System.Diagnostics.Debug.WriteLine("UART test failed.");
             }
         }
-
+        catch(Exception ex) { SerialPortInputModel.ErrorMessage = $"Connection to server failed: {ex.Message}"; }
+        StateHasChanged();
     }
 }

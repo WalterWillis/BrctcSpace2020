@@ -9,6 +9,8 @@ namespace BlazorWebSpaceTool.InputModels
 {
     public class SerialPortInputModel
     {
+        private UART _telemetry;
+
         public string[] AvailablePorts { get => SerialPort.GetPortNames() ?? new string[] { "None" }; }
 
         [Required(ErrorMessage = "Select a port", AllowEmptyStrings = false)]
@@ -32,7 +34,7 @@ namespace BlazorWebSpaceTool.InputModels
                         telemetry.SerialSend(Text);
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     ErrorMessage = $"Send error: {ex.Message}";
                 }
@@ -50,7 +52,7 @@ namespace BlazorWebSpaceTool.InputModels
             {
                 ErrorMessage = "";
                 try
-                {                 
+                {
                     using (UART telemetry = new UART(SelectedPort))
                     {
                         message = telemetry.SerialRead();
@@ -59,7 +61,7 @@ namespace BlazorWebSpaceTool.InputModels
                 catch (Exception ex)
                 {
                     ErrorMessage = $"Read error: {ex.Message}";
-                }              
+                }
             }
             else
             {
@@ -67,6 +69,43 @@ namespace BlazorWebSpaceTool.InputModels
             }
 
             return message;
+        }
+
+        public void PrepareForRecieveEvent()
+        {
+            ErrorMessage = ""; //Reset Errors on next call
+
+            if (!string.IsNullOrEmpty(SelectedPort) && !string.IsNullOrEmpty(Text))
+            {
+                try
+                {
+                    _telemetry = new UART(SelectedPort);
+
+                    _telemetry.Subscribe((sender, e) =>
+                        {
+                            try
+                            {
+                                string result = _telemetry.SerialRead();
+
+                                if (result == Text)
+                                    TestSuccess = true;
+                                else
+                                {
+                                    ErrorMessage = $"Recieved {result} and expected {Text}";
+                                    TestSuccess = false;
+                                }
+                            }
+                            catch (Exception ex) { ErrorMessage = $"Critical Failure during UART call: {ex.Message}"; }
+                            finally { _telemetry.Unsubscribe(); _telemetry.Dispose(); } //Remove all handles and such
+                    }
+                    );
+                }
+                catch (Exception ex) { ErrorMessage = $"Critical Failure during UART call: {ex.Message}"; }
+            }
+            else
+            {
+                ErrorMessage = "Either the selected port is incorrect or no text has been prepared to send.";
+            }
         }
 
         /// <summary>

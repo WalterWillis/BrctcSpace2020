@@ -295,10 +295,11 @@ namespace GrpcSpaceServer.Services
             {
                 returnMessage.Message = "Failed";
                 _logger.LogError("UART communication failure.");
-                _logger.LogDebug(ex.Message);
-                _logger.LogDebug(ex.StackTrace);
+                _logger.LogInformation($"Available Ports: {string.Join(',', UART.GetPorts())}");
+                _logger.LogInformation(ex.Message);
+                _logger.LogInformation(ex.StackTrace);
             }
-            return base.SendUartMessage(returnMessage, context);
+            return Task.FromResult(returnMessage);
         }
     }
 }

@@ -3,6 +3,7 @@ using BrctcSpaceLibrary.WriteTests;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Ports;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,8 +23,8 @@ namespace Vibe2020DataAcquisition
             double timeTaken;
             //timeTaken = PerformBinaryTest(fileName, timeLimit);
             //ReadFile(fileName, convertedfile, timeTaken);
-            timeTaken = PerformBinaryChunkTest(fileName, timeLimit);
-            ReadFile(fileName, convertedfile, timeTaken);
+            //timeTaken = PerformBinaryChunkTest(fileName, timeLimit);
+            //ReadFile(fileName, convertedfile, timeTaken);
             //timeTaken = PerformScaledBinaryChunkTest(fileName, timeLimit);
             //ReadFile(fileName, convertedfile, timeLimit, accelBytes:24);
             //timeTaken = PerformSingleThreadBinaryChunkTest(fileName, timeLimit);
@@ -32,7 +33,55 @@ namespace Vibe2020DataAcquisition
             //ReadFile(fileName, convertedfile, timeTaken);
 
             //PerformInMemoryTest(timeLimit);
+
+            Console.WriteLine($"Available Ports: {string.Join(',', BrctcSpaceLibrary.Device.UART.GetPorts())}");
+
+            using (BrctcSpaceLibrary.Device.UART telemetry = new BrctcSpaceLibrary.Device.UART("COM6"))
+            {
+                if (args != null && args.Length > 0 && args[0].ToLowerInvariant() == "send")
+                {
+                    Console.WriteLine("Entering UART loop. Press enter to end loop and continue.");
+
+                    while (Console.ReadKey().Key != ConsoleKey.Enter)
+                    {
+                        try
+                        {
+                            telemetry.SerialSend("Hello!");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error sending message: " + ex.Message);
+                        }
+                    }
+                }
+                else if(args != null && args.Length > 0 && args[0].ToLowerInvariant() == "receive")
+                {
+                    Console.WriteLine("Entering UART loop. Press enter to end loop and continue.");
+
+                    while (Console.ReadKey().Key != ConsoleKey.Enter)
+                    {
+                        try
+                        {
+                            Console.WriteLine("Recieved message: " + telemetry.SerialRead());
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error sending message: " + ex.Message);
+                        }
+                    }
+                }
+                else
+                {
+                    telemetry.SelfTest(100);
+                }
+
+                //SerialDataReceivedEventHandler handler = new SerialDataReceivedEventHandler(function);
+                //telemetry.Subscribe(handler);
+            }
         }
+
+        //private static void function(object sender, SerialDataReceivedEventArgs e) { Console.WriteLine("event triggered"); }
+
 
         private static double PerformBinaryTest(string fileName, int timeLimit)
         {
