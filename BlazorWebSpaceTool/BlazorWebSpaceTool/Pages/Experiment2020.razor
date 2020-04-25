@@ -232,7 +232,7 @@
                 RunGyroscope = runGyro
             };
 
-            var result = vibeClient.RunTimedProgram(
+            var result = await vibeClient.RunTimedProgramAsync(
                                 request,
                                 deadline: DateTime.UtcNow.AddMinutes(inputModel.Minutes + 2), //Add padding to time to wait for I/O and other variables
                                 cancellationToken: CancellationToken.Token);

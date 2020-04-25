@@ -116,7 +116,7 @@
 
             //Initiates an event that will listen for UART events
             //Will automatically set the correct properties and trigger success/fail messages
-            SerialPortInputModel.PrepareForRecieveEvent();
+            SerialPortInputModel.PrepareForTestRecieveEvent();
 
             UartMessage response = await task.ResponseAsync;
             if (response.Message == "Failed")

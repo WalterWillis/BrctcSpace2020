@@ -286,6 +286,7 @@ namespace GrpcSpaceServer.Services
             UartMessage returnMessage = new UartMessage() { Message = "Success" };
             try
             {
+                _logger.LogInformation($"Recieved UART request. Sending {request.Message}.");
                 using (var comms = new UART())
                 {
                     comms.SerialSend(request.Message);

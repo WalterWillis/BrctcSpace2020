@@ -19,11 +19,11 @@ namespace BrctcSpaceLibrary.Device
             _serialDevice.Open();
         }
 
-        public UART(string port)
+        public UART(string port, int writeTimeout = 1000, int readTimeout = 1000)
         {
             _serialDevice = new SerialPort(port, 57600);
-            _serialDevice.WriteTimeout = 1000;
-            _serialDevice.ReadTimeout = 1000;
+            _serialDevice.WriteTimeout = writeTimeout;
+            _serialDevice.ReadTimeout = readTimeout;
             _serialDevice.Open();
         }
 

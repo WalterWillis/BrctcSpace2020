@@ -35,14 +35,15 @@ namespace Vibe2020DataAcquisition
             //PerformInMemoryTest(timeLimit);
 
             Console.WriteLine($"Available Ports: {string.Join(',', BrctcSpaceLibrary.Device.UART.GetPorts())}");
+            bool isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
-            using (BrctcSpaceLibrary.Device.UART telemetry = new BrctcSpaceLibrary.Device.UART("COM6"))
+            using (BrctcSpaceLibrary.Device.UART telemetry = isLinux ? new BrctcSpaceLibrary.Device.UART() : new BrctcSpaceLibrary.Device.UART("COM6"))
             {
                 if (args != null && args.Length > 0 && args[0].ToLowerInvariant() == "send")
                 {
                     Console.WriteLine("Entering UART loop. Press enter to end loop and continue.");
 
-                    while (Console.ReadKey().Key != ConsoleKey.Enter)
+                    while (true)
                     {
                         try
                         {
@@ -56,22 +57,41 @@ namespace Vibe2020DataAcquisition
                 }
                 else if(args != null && args.Length > 0 && args[0].ToLowerInvariant() == "receive")
                 {
-                    Console.WriteLine("Entering UART loop. Press enter to end loop and continue.");
+                    Console.WriteLine("Entering UART read loop. Press enter to end loop and continue.");
 
-                    while (Console.ReadKey().Key != ConsoleKey.Enter)
+                    bool hasRead = false;
+                    telemetry.Subscribe((s, e) => 
                     {
                         try
                         {
-                            Console.WriteLine("Recieved message: " + telemetry.SerialRead());
+                            //hasRead = true; let's keep reading instead
+
+                            var text = telemetry.SerialRead();
+                            if (!string.IsNullOrEmpty(text))
+                                Console.WriteLine("Recieved message: " + text);
+                            else
+                                Console.WriteLine("Event triggered, but no text could be read!");
                         }
                         catch (Exception ex)
                         {
                             Console.WriteLine("Error sending message: " + ex.Message);
                         }
+                        finally
+                        {
+                            
+                        }
+                    });
+
+                    while (!hasRead)
+                    {
+                        
                     }
+
+                    telemetry.Unsubscribe();
                 }
                 else
                 {
+                    //assumes rx and tx lines are shorted together
                     telemetry.SelfTest(100);
                 }
 

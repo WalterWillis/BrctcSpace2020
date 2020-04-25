@@ -2,6 +2,10 @@
 # http://www.raspberrypi.org/documentation/configuration/config-txt.md
 # Some settings may impact device functionality. See link above for details
 
+#NOTE: To change via commandline use sudo nano /boot/config.txt
+
+
+
 # uncomment if you get no picture on HDMI for a default "safe" mode
 #hdmi_safe=1
 
@@ -53,7 +57,7 @@
 # Additional overlays and parameters are documented /boot/overlays/README
 
 # Enable audio (loads snd_bcm2835)
-#dtparam=audio=on
+#dtparam=audio=off
 
 # NOOBS Auto-generated Settings:
 hdmi_force_hotplug=1
@@ -62,3 +66,10 @@ dtparam=i2c_arm=on
 #RTC -> PI config no longer needed since reading from the RTC directly is faster
 #dtoverlay=i2c-rtc,ds3231
 dtoverlay=spi1-1cs
+
+#to fully remove bluetooth, run these in command line
+#sudo apt-get purge bluez -y
+#sudo apt-get autoremove -y
+
+dtoverlay=disable-bt
+enable_uart=1

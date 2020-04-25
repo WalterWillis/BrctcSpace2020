@@ -3,6 +3,7 @@ using BrctcSpaceLibrary.Device;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.IO.Ports;
 
 namespace BlazorWebSpaceTool.InputModels
@@ -71,7 +72,7 @@ namespace BlazorWebSpaceTool.InputModels
             return message;
         }
 
-        public void PrepareForRecieveEvent()
+        public void PrepareForTestRecieveEvent()
         {
             ErrorMessage = ""; //Reset Errors on next call
 
@@ -105,6 +106,46 @@ namespace BlazorWebSpaceTool.InputModels
             else
             {
                 ErrorMessage = "Either the selected port is incorrect or no text has been prepared to send.";
+            }
+        }
+
+        /// <summary>
+        /// Used for continuous telemetry where data is written to disk one line at a time based on event triggers
+        /// </summary>
+        public void PrepareForContinuousRecieveEvent()
+        {
+            ErrorMessage = ""; //Reset Errors on next call
+
+            if (!string.IsNullOrEmpty(SelectedPort))
+            {
+                try
+                {
+                    _telemetry = new UART(SelectedPort);
+
+                    _telemetry.Subscribe((sender, e) =>
+                    {
+                        try
+                        {
+                            string result = _telemetry.SerialRead();
+                            //Prevent too large of files being created by saving to files based on time down to the minute, rather than seconds
+                            string fileName = Path.Combine(Directory.GetCurrentDirectory(), "Temp", $"Telemetry_{DateTime.Now.ToString("yyyy-dd-MM--HH-mm")}.csv"); 
+                            FileInfo file = new FileInfo(fileName);
+
+                            using (StreamWriter sw = file.AppendText())
+                            {
+                                sw.WriteLine(result);
+                            }
+                        }
+                        catch (Exception ex) { ErrorMessage = $"Critical Failure during UART call: {ex.Message}"; }
+                        finally { _telemetry.Unsubscribe(); _telemetry.Dispose(); } //Remove all handles and such
+                    }
+                    );
+                }
+                catch (Exception ex) { ErrorMessage = $"Critical Failure during UART call: {ex.Message}"; _telemetry.Unsubscribe(); _telemetry.Dispose(); }
+            }
+            else
+            {
+                ErrorMessage = "No port selected";
             }
         }
 
