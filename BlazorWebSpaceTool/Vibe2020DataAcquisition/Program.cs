@@ -419,13 +419,20 @@ namespace Vibe2020DataAcquisition
                     {
                         SerialPort port = (SerialPort)s;
 
-                        fileQueue.Enqueue(port.ReadExisting());
+                        string line = port.ReadLine();
+
+                        if (line == EOP)
+                        {                            
+                            isReading = false;
+                        }
+                        else
+                            fileQueue.Enqueue(line);
                     });
 
 
 
                     int lineNumber = 1;
-                    while (isReading)
+                    while (isReading || fileQueue.Count < 0) 
                     {
                         if (!fileQueue.IsEmpty && fileQueue.TryDequeue(out string line))
                         {
@@ -453,12 +460,10 @@ namespace Vibe2020DataAcquisition
                             lineNumber = 1;
                         }
                     }
-
+                    telemetry.Unsubscribe();
                     Console.WriteLine("Program Finished Successfully!");
 
                     //telemetry.DataReceived -= handler;
-
-                    telemetry.Unsubscribe();
                 }
             }
             catch(Exception ex)
