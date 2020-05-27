@@ -16,6 +16,7 @@ namespace BrctcSpaceLibrary.Device
             _serialDevice = new SerialPort("/dev/ttyAMA0", 57600);
             _serialDevice.WriteTimeout = 1000;
             _serialDevice.ReadTimeout = 1000;
+            _serialDevice.Handshake = Handshake.None;
             _serialDevice.Open();
         }
 
@@ -24,6 +25,7 @@ namespace BrctcSpaceLibrary.Device
             _serialDevice = new SerialPort(port, 57600);
             _serialDevice.WriteTimeout = writeTimeout;
             _serialDevice.ReadTimeout = readTimeout;
+            _serialDevice.Handshake = Handshake.None;
             _serialDevice.Open();
         }
 
@@ -113,8 +115,17 @@ namespace BrctcSpaceLibrary.Device
 
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            try
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("Failed to Dispose UART!");
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
+            }
         }
 
         /// <summary>

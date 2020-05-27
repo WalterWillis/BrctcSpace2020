@@ -1,6 +1,8 @@
-﻿using BrctcSpaceLibrary.Device;
+﻿using BrctcSpaceLibrary.DataModels;
+using BrctcSpaceLibrary.Device;
 using Iot.Device.CpuTemperature;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Device.Gpio;
 using System.Device.Spi;
@@ -19,7 +21,6 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
         private Gyroscope _gyroscopeDevice;
         private RTC _rtcDevice;
         private CpuTemperature _cpuDevice;
-        private UART _uart;
         private GpioController _gpio;
 
         FileStream _gyroStream;
@@ -42,6 +43,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
         private long _gyroDatasetCounter = 0;
 
         private CancellationTokenSource _source = new CancellationTokenSource();
+        private ConcurrentQueue<string> fileQueue = new ConcurrentQueue<string>();
 
         #region Test-Only Properties
         public static string TestAccelFile { get => Path.Combine(Directory.GetCurrentDirectory(), "FullSystemSharedRTC", "Accelerometer.binary0"); }
@@ -74,7 +76,6 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
             _cpuDevice = new CpuTemperature();
             _rtcDevice = new RTC();
-            _uart = new UART();
             _gpio = new GpioController(PinNumberingScheme.Board);
             _gpio.OpenPin(DR_PIN, PinMode.Input);
             _gpio.OpenPin(RST_PIN, PinMode.Output);
@@ -104,14 +105,24 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
             Task accelThread = Task.Run(() => { RunAccelerometer(); });
 
+            Task telemetryThread = Task.Run(() => Telemetry());
+
             _gpio.RegisterCallbackForPinValueChangedEvent(DR_PIN, PinEventTypes.Rising, DataAquisitionCallback);     
 
             bool loopBreakerProgramMaker = false;
 
-            while (!token.IsCancellationRequested && !loopBreakerProgramMaker)
+            while (!loopBreakerProgramMaker)
             {
                 if (stopwatch.Elapsed.TotalMinutes >= timeLimit)
                 {
+                    Console.WriteLine("Time limit reached! Ending program...");
+                    _source.Cancel();                   
+                    loopBreakerProgramMaker = true;
+                    stopwatch.Stop();
+                }
+                else if (token.IsCancellationRequested)
+                {
+                    Console.WriteLine("Program cancelled! Ending program...");
                     _source.Cancel();
                     loopBreakerProgramMaker = true;
                     stopwatch.Stop();
@@ -121,6 +132,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
             }
 
             accelThread.Wait();
+            telemetryThread.Wait();
 
             _gpio.UnregisterCallbackForPinValueChangedEvent(DR_PIN, DataAquisitionCallback);
             _gyroStream.Close();
@@ -130,7 +142,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
                 $" {_gyroDatasetCounter} gyroscope datasets at {_gyroDatasetCounter / stopwatch.Elapsed.TotalSeconds} datasets per second");
         }
 
-        public void RunAccelerometer()
+        private void RunAccelerometer()
         {
             CancellationToken token = _source.Token;
             Span<byte> data = new Span<byte>(new byte[_accelSegmentLength]);
@@ -162,12 +174,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
                         //initialize
                         GetRTCTime(rtcSegment);
                         GetCPUTemp(cpuSegment);
-
-                        //catch remainders using double
                       
-
-                        double memoryBuffer = chunkSize;
-
                         for (int iteration = 0; iteration < iterations; iteration++)
                         {
                             if (token.IsCancellationRequested)
@@ -197,7 +204,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
                     }
                 }
                 fileCounter++;
-                //maybe trigger an event for UART here, so that the file can be picked up and transported
+                fileQueue.Enqueue(fileName);
             }
         }
 
@@ -217,6 +224,77 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
 
             _gyroStream.Write(data);
             _gyroStream.Flush();
+        }
+
+        private void Telemetry()
+        {
+            CancellationToken token = _source.Token;
+            long indexTracker = 0; //tracks the current index of each line over multiple files
+            int fileSent = 1;
+            UART telemetry = null;
+            while (!token.IsCancellationRequested)
+            {              
+                try
+                {
+                    telemetry = new UART();
+
+                    if (!fileQueue.IsEmpty)
+                    {
+                        Console.WriteLine($"Sending file # {fileSent}");
+                        fileQueue.TryDequeue(out string fileName);
+                        //logic to handle failed dequeue needs to be here
+                        Vibe2020TelemetryModel model = new Vibe2020TelemetryModel(); // let's just reuse the same model for efficiency 
+                        using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+                        {
+                            byte[] bytes = new byte[AccelSegmentLength];
+                            while (fs.Read(bytes) != 0) //while data is in the stream, continue 
+                            {
+                                if (token.IsCancellationRequested)
+                                {
+                                    Console.WriteLine("Time's Up! Cancelling telemetry.");
+                                    break;
+                                }
+                                Span<byte> data = bytes;
+                                Span<byte> accelSegment = data.Slice(0, _accelBytes);
+                                Span<byte> rtcSegment = data.Slice(_accelBytes, _rtcBytes);
+                                Span<byte> cpuSegment = data.Slice(_accelBytes + _rtcBytes, _cpuBytes);
+
+                                model.Index = indexTracker++;
+                                model.AccelData_Raw = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, int>(accelSegment).ToArray();
+                                model.TransactionTime = BitConverter.ToInt64(rtcSegment);
+                                model.CpuTemp = BitConverter.ToDouble(cpuSegment);
+
+                                try
+                                {
+                                    telemetry.SerialSend(model.ToString());
+                                }
+                                catch
+                                {
+                                    Console.WriteLine("Failed to send!");
+                                    telemetry.Dispose();
+                                    telemetry = new UART(); // let's refresh the interface
+                                }
+
+                                data.Clear(); // since we are reusing this array, clear the values for integrity                                  
+                                }
+                            }
+                        Console.WriteLine($"Finished sending file #{fileSent++} at {indexTracker} total lines transmitted!");
+                    }
+                    else
+                    {
+                        Thread.Sleep(1000);
+                    }
+                }
+                catch(Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);                   
+                }
+                finally
+                {
+                    telemetry.Dispose();
+                }
+            }
         }
 
         private void GetRTCTime(Span<byte> buffer)
