@@ -1,0 +1,3 @@
+If using FFTW.NET, install the nuget package. The package contains the dlls. Replace these dlls with the new ones from the website http://www.fftw.org/. 
+
+Also need to replace the dlls if moving from windows to linux.
