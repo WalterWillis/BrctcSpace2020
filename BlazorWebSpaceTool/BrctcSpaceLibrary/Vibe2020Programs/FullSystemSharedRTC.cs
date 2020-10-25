@@ -15,6 +15,10 @@ using static BrctcSpaceLibrary.Device.Accelerometer;
 
 namespace BrctcSpaceLibrary.Vibe2020Programs
 {
+    //future idea. split out file into partial files for each major component. organize under a directory of the class name 
+    //followed by the main partial file. then add another directory called "Partials" with the remaining files. 
+    //file names can be something like FullSystemSharedRTC_Telemetry.
+    //either that or just create some utility functions, so long as they don't take away performance.
     public class FullSystemSharedRTC
     {
         private IMcp3208 _accelerometerDevice;
