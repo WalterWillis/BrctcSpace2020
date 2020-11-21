@@ -37,7 +37,7 @@ namespace BrctcSpaceLibrary.Device
         /// <param name="channel_x">Defaults to channel 0</param>
         /// <param name="channel_y">Defaults to channel 1</param>
         /// <param name="channel_z">Defaults to channel 2</param>
-        /// <param name="voltRef">Defaults to 3.3 volts</param>
+        /// <param name="voltRef">Defaults to 5 volts</param>
         public Accelerometer(SpiConnectionSettings settings, double voltRef = 5)
         {
             if (settings == null)

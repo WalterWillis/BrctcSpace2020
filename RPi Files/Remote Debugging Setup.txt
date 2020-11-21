@@ -4,7 +4,7 @@ Installing .net core: https://gist.github.com/richlander/467813274cea8abc624553e
 
 Modified script (all you need):
 
-curl -SL -o dotnet.tar.gz https://download.visualstudio.microsoft.com/download/pr/21a124fd-5bb7-403f-bdd2-489f9d21d695/b58fa90d19a5a5124d21dea94422868c/dotnet-sdk-3.1.200-linux-arm.tar.gz
+curl -SL -o dotnet.tar.gz https://download.visualstudio.microsoft.com/download/pr/2ebe1f4b-4423-4694-8f5b-57f22a315d66/4bceeffda88fc6f19fad7dfb2cd30487/dotnet-sdk-3.1.404-linux-arm.tar.gz
 sudo mkdir -p /usr/share/dotnet
 sudo tar -zxf dotnet.tar.gz -C /usr/share/dotnet
 sudo ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
@@ -31,3 +31,9 @@ CTRL + C out of the connection
 run c:\mytools\plink.exe -i c:\users\greggm\ssh-key.ppk pi@rpi -batch -T echo "Successful Connection!"
 verify Successful Connection! is returned
 
+
+.net 5 arm:
+curl -SL -o dotnet.tar.gz https://download.visualstudio.microsoft.com/download/pr/e8912d3b-483b-4d6f-bd3a-3066b3194313/20f2261fe4e16e55df4bbe03c65a7648/dotnet-sdk-5.0.100-linux-arm.tar.gz
+sudo mkdir -p /usr/share/dotnet
+sudo tar -zxf dotnet.tar.gz -C /usr/share/dotnet
+sudo ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet

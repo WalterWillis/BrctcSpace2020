@@ -220,7 +220,7 @@ namespace GrpcSpaceServer.Services
 
             try
             {
-                results = _cpuDevice.Temperature.Fahrenheit;
+                results = _cpuDevice.Temperature.DegreesFahrenheit;
             }
             catch (Exception ex)
             {

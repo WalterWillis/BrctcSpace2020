@@ -108,7 +108,7 @@ namespace BrctcSpaceLibrary.WriteTests
 
         private void GetCpuTemp(Span<byte> buffer)
         {
-            var temp = BitConverter.GetBytes(_cpuDevice.Temperature.Fahrenheit);
+            var temp = BitConverter.GetBytes(_cpuDevice.Temperature.DegreesFahrenheit);
 
             buffer[0] = temp[0];
             buffer[1] = temp[1];

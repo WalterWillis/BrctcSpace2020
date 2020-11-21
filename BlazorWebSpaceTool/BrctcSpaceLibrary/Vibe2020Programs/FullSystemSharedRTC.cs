@@ -309,7 +309,7 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
             Monitor.Enter(_cpuDevice);
             if (_cpuDevice.IsAvailable)
             {
-                var temp = BitConverter.GetBytes(_cpuDevice.Temperature.Fahrenheit);
+                var temp = BitConverter.GetBytes(_cpuDevice.Temperature.DegreesFahrenheit);
 
                 buffer[0] = temp[0];
                 buffer[1] = temp[1];
