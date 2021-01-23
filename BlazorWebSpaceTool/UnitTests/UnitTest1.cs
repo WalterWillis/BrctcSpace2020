@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +28,74 @@ namespace UnitTests
             So segment, original data(min, max, mean, sd, (median?), frequency domain data(min, max, mean, sd, (median?), timestamp start of array, timestamp last ofarray
 
             */
-          
+
+            int size = 8192;
+            int complexSize = (size / 2) + 1; //for some reason is half the size of the input data... plus 1
+            //alligned arrays are far more efficient... although the .net implementation may not be as performant that it could be
+            const int alignmentByteSize = 16; //I believe this is the amount of bytes that make up a double, which is then used to make a fully contiguous array.
+
+            using (var timeDomain = new AlignedArrayDouble(alignmentByteSize, size))
+            using (var frequencyDomain = new AlignedArrayComplex(alignmentByteSize, complexSize))
+            using (var fft = FftwPlanRC.Create(timeDomain, frequencyDomain, DftDirection.Forwards))
+            {
+                // Set the input after the plan was created as the input may be overwritten
+                // during planning
+                FillData(timeDomain, size);
+
+                // timeDomain -> frequencyDomain
+                fft.Execute();
+                Complex[] list = new Complex[frequencyDomain.Length];
+                double[] values = new double[timeDomain.Length];
+
+                for (int i = 0; i < frequencyDomain.Length; i++)
+                {
+                    values[i] = frequencyDomain[i].Real;
+                }
+                double mean = values.Average();
+                double stdev = StdDev(values, mean);
+                var max = values.Max();
+                var min = values.Min();
+
+                Console.WriteLine("Time Domain");
+                Console.WriteLine($"Mean: {mean} | STDev: {stdev} | Max: {max} | Min: {min}");
+
+                values = new double[frequencyDomain.Length];
+                for (int i = 0; i < frequencyDomain.Length; i++)
+                {
+                    list[i] = frequencyDomain[i];
+                    values[i] = frequencyDomain[i].Real;
+                }
+                mean = values.Average();
+                stdev = StdDev(values, mean);
+                max = values.Max();
+                min = values.Min();
+
+                Console.WriteLine("Frequency Domain");
+                Console.WriteLine($"Mean: {mean} | STDev: {stdev} | Max: {max} | Min: {min}");
+            }
+
+        }
+
+        /// <summary>
+        /// Custom Standard Deviation Algorithm
+        /// </summary>
+        /// <param name="values"></param>
+        /// <param name="mean"></param>
+        /// <returns></returns>
+        public static double StdDev(double[] values, double mean)
+        {
+            double[] diff = new double[values.Length];
+
+            for (int i = 0; i < values.Length; i++) 
+            {
+                double temp = (values[i] - mean);
+                diff[i] = temp * temp;
+            }
+
+            double newMean = diff.Average();
+            double stdev = Math.Sqrt(newMean);
+
+            return stdev;
         }
 
         /// <summary>
