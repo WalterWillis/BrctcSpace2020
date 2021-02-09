@@ -18,7 +18,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BrctcSpaceLibrary\BrctcSpaceLibrary.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="accelerometer.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="accel_WithSeconds.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

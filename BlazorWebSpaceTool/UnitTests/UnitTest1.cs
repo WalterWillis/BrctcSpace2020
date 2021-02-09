@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -70,6 +71,30 @@ namespace UnitTests
             }
         }
 
+        [TestMethod]
+        public void GetReliableDataTest()
+        {
+            Complex[] input = GetDataAtSecond(4);
+            Complex[] output = new Complex[input.Length];
+
+            //for (int i = 0; i < input.Length; i++)
+            //    input[i] = Math.Sin(i * 2 * Math.PI * 128 / input.Length);
+
+            using (var pinIn = new PinnedArray<Complex>(input))
+            using (var pinOut = new PinnedArray<Complex>(output))
+            {
+                DFT.FFT(pinIn, pinOut, nThreads: 12);
+               
+            }
+
+            Console.WriteLine("Frequency,\tReal,\tImaginary,\tMagnitude,\tPhase");
+            for (int i = 0; i < input.Length; i++)
+            {
+                Complex result = output[i] / input[i];
+                Console.WriteLine($"{output[i].Real},\t{result.Real},\t{result.Imaginary},\t{result.Magnitude},\t{result.Phase}");
+            }
+        }
+
         /// <summary>
         /// Gets a set of data for FFT
         /// </summary>
@@ -102,6 +127,50 @@ namespace UnitTests
             }
 
             return lineNumber;
+        }
+
+        private Complex[] GetDataAtSecond(int second)
+        {
+            List<Complex> data = new List<Complex>();
+
+            using (FileStream stream = File.OpenRead("accel_WithSeconds.csv"))
+            {
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    List<string> headers = reader.ReadLine().Split(',').ToList();
+                    bool allLinesFound = false;
+                    string line;
+
+
+                    while ((line = reader.ReadLine()) != null && !allLinesFound) //ensure we don't exceed the lines on accident by checking for null
+                    {
+                        List<string> values = line.Split(',').ToList();
+                        int currentSecond = Convert.ToInt32(values[headers.IndexOf("TRANSACTION_TIME_TICKS")]);
+                        int accelYIndex = Convert.ToInt32(headers.IndexOf("ACCEL_Y"));
+
+                        if (currentSecond == second)
+                        {
+                            data.Add(new Complex(Convert.ToDouble(values[accelYIndex]), 0)); //imaginary part should always be 0... i think
+                        }
+                        else if(currentSecond > second)
+                        {
+                            //break loop if we exceed wanted amount of seconds
+                            allLinesFound = true;
+                        }
+                    }
+                }
+            }
+            return data.ToArray();
+        }
+
+        public static double Index2Freq(int i, double samples, int nFFT)
+        {
+            return (double)i * (samples / nFFT / 2.0);
+        }
+
+        public static int Freq2Index(double freq, double samples, int nFFT)
+        {
+            return (int)(freq / (samples / nFFT / 2.0));
         }
     }
 }
