@@ -95,6 +95,51 @@ namespace UnitTests
             }
         }
 
+        [TestMethod]
+        public void GetFrequencyAssociations()
+        {
+            Complex[] input = GetDataAtSecond(4);
+            Complex[] output = new Complex[input.Length];
+
+            //for (int i = 0; i < input.Length; i++)
+            //    input[i] = Math.Sin(i * 2 * Math.PI * 128 / input.Length);
+
+            using (var pinIn = new PinnedArray<Complex>(input))
+            using (var pinOut = new PinnedArray<Complex>(output))
+            {
+                DFT.FFT(pinIn, pinOut, nThreads: 12);
+
+            }
+
+            Dictionary<int, Complex> results = new Dictionary<int, Complex>();
+            Console.WriteLine("Frequency,\tReal,\tImaginary,\tMagnitude,\tPhase");
+            for (int i = 0; i < input.Length; i++)
+            {
+                results.Add(i, output[i] / input[i]);
+            }
+
+            int amount = 20;
+
+            var max = (from result in results
+                       where true
+                       orderby result.Value.Magnitude descending
+                       select result).Take(amount);
+
+            var min = (from result in results
+                       where true
+                       orderby result.Value.Magnitude ascending
+                       select result).Take(amount);
+
+            for(int i = 0; i < amount; i++)
+            {
+                Console.WriteLine($"Frequency (MAX): {max.ElementAt(i).Key}");
+                Console.WriteLine($"Magnitude (MAX): {max.ElementAt(i).Value.Magnitude}");
+                Console.WriteLine($"Frequency (MIN): {min.ElementAt(i).Key}");
+                Console.WriteLine($"Magnitude (MIN): {min.ElementAt(i).Value.Magnitude}");
+                Console.WriteLine();
+            }
+        }
+
         /// <summary>
         /// Gets a set of data for FFT
         /// </summary>
