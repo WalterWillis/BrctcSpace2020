@@ -8,7 +8,7 @@ using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace UnitTests
+namespace BrctcCalculations
 {
     [TestClass]
     public class UnitTest1
@@ -125,17 +125,10 @@ namespace UnitTests
                        orderby result.Value.Magnitude descending
                        select result).Take(amount);
 
-            var min = (from result in results
-                       where true
-                       orderby result.Value.Magnitude ascending
-                       select result).Take(amount);
-
             for(int i = 0; i < amount; i++)
             {
                 Console.WriteLine($"Frequency (MAX): {max.ElementAt(i).Key}");
                 Console.WriteLine($"Magnitude (MAX): {max.ElementAt(i).Value.Magnitude}");
-                Console.WriteLine($"Frequency (MIN): {min.ElementAt(i).Key}");
-                Console.WriteLine($"Magnitude (MIN): {min.ElementAt(i).Value.Magnitude}");
                 Console.WriteLine();
             }
         }

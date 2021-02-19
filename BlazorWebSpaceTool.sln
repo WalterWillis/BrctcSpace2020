@@ -15,9 +15,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vibe2020Client", "BlazorWeb
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vibe2020ClientLibrary", "BlazorWebSpaceTool\Vibe2020ClientLibrary\Vibe2020ClientLibrary.csproj", "{3E6DC731-62EB-45D2-860C-A04B38EFD7BB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "BlazorWebSpaceTool\UnitTests\UnitTests.csproj", "{50B4CAEC-DF11-4257-88EA-C14687B667DD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataAnalyzer", "DataAnalyzer\DataAnalyzer.csproj", "{AA8803B6-3B33-4AB7-9BB9-C49C59387F39}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAnalyzer", "DataAnalyzer\DataAnalyzer.csproj", "{AA8803B6-3B33-4AB7-9BB9-C49C59387F39}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BrctcCalculations", "BlazorWebSpaceTool\BrctcCalculations\BrctcCalculations.csproj", "{9540CBBB-CF53-4856-A55F-88B426602AA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,14 +49,14 @@ Global
 		{3E6DC731-62EB-45D2-860C-A04B38EFD7BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3E6DC731-62EB-45D2-860C-A04B38EFD7BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E6DC731-62EB-45D2-860C-A04B38EFD7BB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{50B4CAEC-DF11-4257-88EA-C14687B667DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{50B4CAEC-DF11-4257-88EA-C14687B667DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{50B4CAEC-DF11-4257-88EA-C14687B667DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{50B4CAEC-DF11-4257-88EA-C14687B667DD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AA8803B6-3B33-4AB7-9BB9-C49C59387F39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AA8803B6-3B33-4AB7-9BB9-C49C59387F39}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AA8803B6-3B33-4AB7-9BB9-C49C59387F39}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA8803B6-3B33-4AB7-9BB9-C49C59387F39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9540CBBB-CF53-4856-A55F-88B426602AA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9540CBBB-CF53-4856-A55F-88B426602AA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9540CBBB-CF53-4856-A55F-88B426602AA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9540CBBB-CF53-4856-A55F-88B426602AA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
