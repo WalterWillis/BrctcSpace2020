@@ -32,9 +32,9 @@ namespace Vibe2020Tests
         {
             Random random = new Random();
             int[] values = new int[3];
-            values[0] = random.Next(0, 4095);
-            values[1] = random.Next(0, 4095);
-            values[2] = random.Next(0, 4095);
+            values[0] = random.Next(1900, 2400);
+            values[1] = random.Next(1900, 2400);
+            values[2] = random.Next(1900, 2400);
 
             return System.Runtime.InteropServices.MemoryMarshal.Cast<int, byte>(values);
         }

@@ -5,7 +5,7 @@ using Iot.Device.Rtc;
 
 namespace BrctcSpaceLibrary.Device
 {
-    public class RTC : IDisposable
+    public class RTC : IDisposable, IRTC
     {
         private bool _isdisposing = false;
         private I2cConnectionSettings _settings;

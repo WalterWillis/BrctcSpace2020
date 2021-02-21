@@ -3,7 +3,7 @@ using System.IO.Ports;
 
 namespace BrctcSpaceLibrary.Device
 {
-    public class UART: IDisposable
+    public class UART : IDisposable, IUART
     {
         private bool _isdisposing = false;
         private SerialPort _serialDevice;
@@ -31,7 +31,7 @@ namespace BrctcSpaceLibrary.Device
 
         public void SerialSend(string message)
         {
-            if(!_serialDevice.IsOpen)
+            if (!_serialDevice.IsOpen)
                 _serialDevice.Open();
 
             _serialDevice.WriteLine(message);
@@ -89,13 +89,13 @@ namespace BrctcSpaceLibrary.Device
             for (int i = 0; i < iterations; i++)
             {
                 //wait until data is recieved
-                while(!testCanSend) { }
+                while (!testCanSend) { }
 
                 if (testCanSend)
                 {
                     testCanSend = false;
                     _serialDevice.WriteLine($"Test{i}!");
-                }                
+                }
             }
 
             _serialDevice.DataReceived -= Received;
@@ -120,7 +120,7 @@ namespace BrctcSpaceLibrary.Device
                 Dispose(true);
                 GC.SuppressFinalize(this);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine("Failed to Dispose UART!");
                 Console.WriteLine(ex.Message);
@@ -145,6 +145,15 @@ namespace BrctcSpaceLibrary.Device
             }
 
             _isdisposing = true;
+        }
+
+        /// <summary>
+        /// Used to recreate a UART device if an exception occurs during program run
+        /// </summary>
+        /// <returns></returns>
+        public IUART GetUART()
+        {
+            return new UART();
         }
     }
 }
