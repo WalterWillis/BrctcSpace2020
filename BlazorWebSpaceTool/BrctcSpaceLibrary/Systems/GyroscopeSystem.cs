@@ -13,7 +13,7 @@ namespace BrctcSpaceLibrary.Systems
         private IRTC _rtcDevice;
         private CpuTemperature _cpuDevice;
 
-        FileStream _gyroStream;
+        public FileStream GyroStream { get; set; }
 
         private int _gyroSegmentLength;
 
@@ -34,11 +34,10 @@ namespace BrctcSpaceLibrary.Systems
 
         public long GyroDataSetCounter { get => _gyroDatasetCounter; }
 
-        public GyroscopeSystem(IGyroscope gyroscope, string fileName, FileStream stream, CpuTemperature cpuTemperature, IRTC rtc)
+        public GyroscopeSystem(IGyroscope gyroscope, string fileName, CpuTemperature cpuTemperature, IRTC rtc)
         {
             _gyroscopeDevice = gyroscope;
             _gyroFileName = fileName;
-            _gyroStream = stream;
    
             _cpuDevice = cpuTemperature;
             _rtcDevice = rtc;
@@ -62,8 +61,8 @@ namespace BrctcSpaceLibrary.Systems
 
             try
             {
-                _gyroStream.Write(data);
-                _gyroStream.Flush();
+                GyroStream.Write(data);
+                GyroStream.Flush();
             }
             catch(Exception ex)
             {

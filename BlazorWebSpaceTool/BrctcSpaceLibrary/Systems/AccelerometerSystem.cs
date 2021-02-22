@@ -32,6 +32,11 @@ namespace BrctcSpaceLibrary.Systems
         public string FileName { get => _accelFileName; }
         public long AccelDatasetCounter { get; set; } = 0;
 
+        /// <summary>
+        /// Multiplies the set amount against the chunk size of the data
+        /// </summary>
+        public int MaxChunksPerFile { get; set; } = 25; //25 by default for approximately 1,000,000 lines per file
+
         private ConcurrentQueue<string> _fileQueue = new ConcurrentQueue<string>();
 
         public ConcurrentQueue<string> FileQueue { get => _fileQueue; }
@@ -66,7 +71,7 @@ namespace BrctcSpaceLibrary.Systems
             //Initialize to approximately 256 KB (or as close it as possible given the segment size)
             int chunkSize = (4096 / _accelSegmentLength) * 256;
 
-            int maxLines = chunkSize * 25; //arbitrary amount of iterations per buffer cycle
+            int maxLines = chunkSize * MaxChunksPerFile; //arbitrary amount of iterations per buffer cycle
 
             int iterations = maxLines / chunkSize;
 

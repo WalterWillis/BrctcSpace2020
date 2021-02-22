@@ -45,8 +45,19 @@ namespace BrctcSpaceLibrary.Device
 
         public DateTime GetCurrentDate()
         {
-            return _rtc.DateTime;
+            DateTime dateTime;
+            try
+            {
+                dateTime = _rtc.DateTime;
+            }
+            catch(Exception ex)
+            {
+                dateTime = DateTime.Now;
+            }
+
+            return dateTime;
         }
+
         public void GetCurrentDate(Span<byte> buffer)
         {
             byte[] bytes;

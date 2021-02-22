@@ -21,14 +21,15 @@ namespace BrctcSpaceLibrary.Systems
         private IRTC _rtcDevice;
         private IUART _uartDevice;
         private CpuTemperature _cpuDevice;
-        private GpioController _gpio;
+        private IGPIO _gpio;
 
         private FileStream _gyroStream;
 
-        private const int DR_PIN = 13; //physical pin scheme;
-        private const int RST_PIN = 15;
+        public string AccelFileName { get => AccelerometerSystem.FileName; }
 
-        public FullSystem(IMcp3208 mcp, IGyroscope gyro, IRTC rtc, IUART uartDevice)
+        
+
+        public FullSystem(IMcp3208 mcp, IGyroscope gyro, IRTC rtc, IUART uartDevice, IGPIO gpio)
         {
             _rtcDevice = rtc;
             _cpuDevice = new CpuTemperature();
@@ -42,18 +43,25 @@ namespace BrctcSpaceLibrary.Systems
             string gyroFileName = Path.Combine(Directory.GetCurrentDirectory(), subDir, "Gyroscope.binary");
 
             AccelerometerSystem = new AccelerometerSystem(mcp, accelFileName, _cpuDevice, _rtcDevice);
-            GyroscopeSystem = new GyroscopeSystem(gyro, gyroFileName, _gyroStream, _cpuDevice, _rtcDevice);
+            GyroscopeSystem = new GyroscopeSystem(gyro, gyroFileName, _cpuDevice, _rtcDevice);
 
-            _gpio = new GpioController(PinNumberingScheme.Board);
-            _gpio.OpenPin(DR_PIN, PinMode.Input);
-            _gpio.OpenPin(RST_PIN, PinMode.Output);
-            _gpio.Write(RST_PIN, PinValue.High);  //RST pin should always be High unless we want to reset the gyro
-
+            _gpio = gpio;
         }
 
-        public void Run(double timeLimit, CancellationToken token)
+        /// <summary>
+        /// Sets the amount of chunks to be written per file
+        /// </summary>
+        /// <param name="size"></param>
+        public void SetChunkAmount(int size)
+        {
+            AccelerometerSystem.MaxChunksPerFile = size;
+        }
+
+        public void Run(CancellationToken token)
         {
             _gyroStream = new FileStream(GyroscopeSystem.FileName, FileMode.Create, FileAccess.Write);
+
+            GyroscopeSystem.GyroStream = _gyroStream;
 
             Stopwatch stopwatch = new Stopwatch();
 
@@ -63,21 +71,15 @@ namespace BrctcSpaceLibrary.Systems
 
             Task telemetryThread = Task.Run(() => Telemetry(token));
 
-            _gpio.RegisterCallbackForPinValueChangedEvent(DR_PIN, PinEventTypes.Rising, GyroscopeSystem.DataAquisitionCallback);
+            _gpio.RegisterCallbackForPinValueChangedEvent(PinEventTypes.Rising, GyroscopeSystem.DataAquisitionCallback);
 
             bool loopBreakerProgramMaker = false;
 
             while (!loopBreakerProgramMaker)
             {
-                if (stopwatch.Elapsed.TotalMinutes >= timeLimit)
+                if (token.IsCancellationRequested)
                 {
                     Console.WriteLine("Time limit reached! Ending program...");
-                    loopBreakerProgramMaker = true;
-                    stopwatch.Stop();
-                }
-                else if (token.IsCancellationRequested)
-                {
-                    Console.WriteLine("Program cancelled! Ending program...");
                     loopBreakerProgramMaker = true;
                     stopwatch.Stop();
                 }
@@ -88,7 +90,7 @@ namespace BrctcSpaceLibrary.Systems
             accelThread.Wait();
             telemetryThread.Wait();
 
-            _gpio.UnregisterCallbackForPinValueChangedEvent(DR_PIN, GyroscopeSystem.DataAquisitionCallback);
+            _gpio.UnregisterCallbackForPinValueChangedEvent(GyroscopeSystem.DataAquisitionCallback);
             _gyroStream.Dispose();
 
             Console.WriteLine($"FullSystemSharedRTC program ran for {stopwatch.Elapsed.TotalSeconds} seconds" +
@@ -104,7 +106,8 @@ namespace BrctcSpaceLibrary.Systems
             int fileSent = 1;
             long currentSecond = 1;
             TemperatureModel temperature = new TemperatureModel();
-            DateTime prevTime = new DateTime(0); //set invalid date to start so comparisons can begin
+            int prevSecond = 0;
+            bool isInitialDateTime = true;
             AccelerometerDataAnalysis processor = new AccelerometerDataAnalysis();
 
             int accelBytes = AccelerometerSystem.AccelBytes;
@@ -140,10 +143,15 @@ namespace BrctcSpaceLibrary.Systems
                                 Span<byte> cpuSegment = data.Slice(accelBytes + rtcBytes, cpuBytes);
 
                                 DateTime currentTime = new DateTime(BitConverter.ToInt64(rtcSegment));
-                                TimeSpan diff = currentTime - prevTime;
+                               
+                                if (isInitialDateTime)
+                                {
+                                    prevSecond = currentTime.Second;
+                                    isInitialDateTime = false;
+                                }
 
                                 //as long as the seconds match, get the data
-                                if (diff.TotalSeconds == 0)
+                                if (prevSecond == currentTime.Second)
                                 {
                                     //add data for each second
                                     temperature.GetNextAverage(BitConverter.ToDouble(cpuSegment));
@@ -155,16 +163,16 @@ namespace BrctcSpaceLibrary.Systems
                                     processor.PerformFFTAnalysis();
 
                                     //iterate second and append all data. Processor data should already have commas
-                                    string message = $"{currentSecond++},{temperature.AverageCPUTemp},{processor.X_Magnitudes}{processor.Y_Magnitudes}{processor.Z_Magnitudes}";
+                                    string message = $"{currentSecond++},{temperature.AverageCPUTemp}{processor.X_Magnitudes}{processor.Y_Magnitudes}{processor.Z_Magnitudes}";
 
                                     try
                                     {
                                         _uartDevice.SerialSend(message);
                                         indexTracker++;
                                     }
-                                    catch
+                                    catch (Exception ex)
                                     {
-                                        Console.WriteLine("Failed to send!");
+                                        Console.WriteLine($"Failed to send!\n{ex.Message}\n{ex.StackTrace}");
                                         _uartDevice.Dispose();
                                         _uartDevice = _uartDevice.GetUART(); // let's refresh the interface
                                     }
@@ -176,7 +184,7 @@ namespace BrctcSpaceLibrary.Systems
                                     processor.ProcessData(accelSegment);
                                 }
 
-                                prevTime = currentTime;
+                                prevSecond = currentTime.Second;
 
                                 data.Clear(); // since we are reusing this array, clear the values for integrity                                  
                             }

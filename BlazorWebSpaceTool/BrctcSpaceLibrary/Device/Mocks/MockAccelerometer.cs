@@ -1,9 +1,10 @@
 ﻿using BrctcSpaceLibrary.Helpers;
 using System;
+using System.Threading;
 
 namespace BrctcSpaceLibrary.Device.Mocks
 {
-    class MockAccelerometer : IMcp3208
+    public class MockAccelerometer : IMcp3208
     {
         private IntUnion _union = new IntUnion();
         public void Dispose()
@@ -33,6 +34,8 @@ namespace BrctcSpaceLibrary.Device.Mocks
             buffer[9] = _union.byte1;
             buffer[10] = _union.byte2;
             buffer[11] = _union.byte3;
+
+            Thread.SpinWait(2000);
         }
     }
 }
