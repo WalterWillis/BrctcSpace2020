@@ -4,6 +4,12 @@ using BrctcSpaceLibrary.Device.Mocks;
 using System;
 using System.Threading;
 using System.IO;
+using Microsoft.Extensions.DependencyInjection;
+using BrctcSpaceLibrary;
+using static BrctcSpaceLibrary.Device.Accelerometer;
+using System.Device.Spi;
+using System.Device.Gpio;
+using System.Runtime.InteropServices;
 
 namespace BrctcSpaceBackgroundService
 {
@@ -11,21 +17,43 @@ namespace BrctcSpaceBackgroundService
     {
         static void Main(string[] args)
         {
-            IRTC rtc = new MockRTC();
-            IMcp3208 mcp = new MockAccelerometer();
-            IGyroscope gyro = new MockGyroscope();
-            IUART uart = new MockUart();
-            IGPIO gpio = new MockGpio();
+            if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+            {
+                Devices.RTC = new MockRTC();
+                Devices.Accelerometer = new MockAccelerometer();
+                Devices.Gyroscope = new MockGyroscope();
+                Devices.UART = new MockUart();
+                Devices.GPIO = new MockGpio();
+            }
+            else
+            {
+                var settings = new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1900000 };
 
-           
+                using (SpiDevice spi = SpiDevice.Create(settings))
+                {
+                    Devices.Accelerometer = new Mcp3208Custom(spi, (int)Channel.X, (int)Channel.Y, (int)Channel.Z);
+                }
 
-            FullSystem system = new FullSystem(mcp, gyro, rtc, uart, gpio);
+                Devices.Gyroscope = new Gyroscope(new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode3, ClockFrequency = 900000 });
+                Devices.GPIO = new GPIO();
+                Devices.RTC = new RTC();
+                Devices.UART = new MockUart(); //mock for now
+            }
+
+            FullSystem system = new FullSystem();
             FileInfo file = new FileInfo(system.AccelFileName);
-            MockUart.FileName = Path.Combine(file.Directory.FullName, "Telemetry.csv");
+
+            MockUart.FileName = Path.Combine(file.Directory.FullName, "Telemetry.csv"); ;
+
             system.SetChunkAmount(1);
 
             CancellationTokenSource source = new CancellationTokenSource(TimeSpan.FromMinutes(5));
             system.Run(source.Token);
+
+            Devices.Accelerometer.Dispose();
+            Devices.Gyroscope.Dispose();
+            Devices.RTC.Dispose();
+            Devices.UART.Dispose();
         }
     }
 }

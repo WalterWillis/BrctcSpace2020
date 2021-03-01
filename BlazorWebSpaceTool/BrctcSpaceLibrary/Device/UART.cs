@@ -63,8 +63,11 @@ namespace BrctcSpaceLibrary.Device
         /// <param name="interruptToAttach"></param>
         public void Subscribe(SerialDataReceivedEventHandler interruptToAttach)
         {
-            _serialDevice.DataReceived += interruptToAttach;
-            _toUnsubscribe = interruptToAttach;
+            if (_toUnsubscribe == null) //if we already subscribed the event, ignore
+            {
+                _serialDevice.DataReceived += interruptToAttach;
+                _toUnsubscribe = interruptToAttach;
+            }
         }
 
         /// <summary>

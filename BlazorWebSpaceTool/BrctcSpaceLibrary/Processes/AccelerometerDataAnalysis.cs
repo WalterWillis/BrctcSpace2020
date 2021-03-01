@@ -44,6 +44,26 @@ namespace BrctcSpaceLibrary.Processes
             Z_Magnitudes = FFTCalculations.GetMagnitudeString(Z_Values.ToArray(), _magnitudeCount);
         }
 
+        /// <summary>
+        /// Returns a string with the variable peak headers for each axis in the order of X, Y, Z
+        /// </summary>
+        /// <returns></returns>
+        public string GenerateCsvHeaders()
+        {
+            string header_X = string.Empty;
+            string header_Y = string.Empty;
+            string header_Z = string.Empty;
+
+            for (int i = 1; i <= _magnitudeCount; i++)
+            {
+                header_X += $",X_Peak{i}";
+                header_Y += $",Y_Peak{i}";
+                header_Z += $",Z_Peak{i}";
+            }
+
+            return header_X + header_Y + header_Z;
+        }
+
         internal void Reset()
         {
             X_Values.Clear();

@@ -17,35 +17,20 @@ namespace BrctcSpaceLibrary.Systems
     {
         private AccelerometerSystem AccelerometerSystem;
         private GyroscopeSystem GyroscopeSystem;
-
-        private IRTC _rtcDevice;
-        private IUART _uartDevice;
-        private CpuTemperature _cpuDevice;
-        private IGPIO _gpio;
-
         private FileStream _gyroStream;
 
-        public string AccelFileName { get => AccelerometerSystem.FileName; }
+        public string AccelFileName { get => AccelerometerSystem.FileName; }    
 
-        
-
-        public FullSystem(IMcp3208 mcp, IGyroscope gyro, IRTC rtc, IUART uartDevice, IGPIO gpio)
+        public FullSystem()
         {
-            _rtcDevice = rtc;
-            _cpuDevice = new CpuTemperature();
-            _uartDevice = uartDevice;
-
-            string subDir = $"FullSystemSharedRTC_{_rtcDevice.GetCurrentDate().ToString("yyyy-MM-dd-HH-mm-ss")}"; //should be used in final program
-
+            string subDir = $"FullSystemSharedRTC_{Devices.RTC.GetCurrentDate().ToString("yyyy-MM-dd-HH-mm-ss")}"; //should be used in final program
 
             Directory.CreateDirectory(subDir);
             string accelFileName = Path.Combine(Directory.GetCurrentDirectory(), subDir, "Accelerometer.binary");
             string gyroFileName = Path.Combine(Directory.GetCurrentDirectory(), subDir, "Gyroscope.binary");
 
-            AccelerometerSystem = new AccelerometerSystem(mcp, accelFileName, _cpuDevice, _rtcDevice);
-            GyroscopeSystem = new GyroscopeSystem(gyro, gyroFileName, _cpuDevice, _rtcDevice);
-
-            _gpio = gpio;
+            AccelerometerSystem = new AccelerometerSystem(accelFileName);
+            GyroscopeSystem = new GyroscopeSystem(gyroFileName);
         }
 
         /// <summary>
@@ -71,7 +56,7 @@ namespace BrctcSpaceLibrary.Systems
 
             Task telemetryThread = Task.Run(() => Telemetry(token));
 
-            _gpio.RegisterCallbackForPinValueChangedEvent(PinEventTypes.Rising, GyroscopeSystem.DataAquisitionCallback);
+            Devices.GPIO.RegisterCallbackForPinValueChangedEvent(PinEventTypes.Rising, GyroscopeSystem.DataAquisitionCallback);
 
             bool loopBreakerProgramMaker = false;
 
@@ -90,7 +75,7 @@ namespace BrctcSpaceLibrary.Systems
             accelThread.Wait();
             telemetryThread.Wait();
 
-            _gpio.UnregisterCallbackForPinValueChangedEvent(GyroscopeSystem.DataAquisitionCallback);
+            Devices.GPIO.UnregisterCallbackForPinValueChangedEvent(GyroscopeSystem.DataAquisitionCallback);
             _gyroStream.Dispose();
 
             Console.WriteLine($"FullSystemSharedRTC program ran for {stopwatch.Elapsed.TotalSeconds} seconds" +
@@ -115,12 +100,22 @@ namespace BrctcSpaceLibrary.Systems
             int cpuBytes = AccelerometerSystem.CpuBytes;
             int accelSegmentLength = accelBytes + rtcBytes + cpuBytes;
 
+            try
+            {
+                string header = $"Second,Temp (F){processor.GenerateCsvHeaders()}";
+                Devices.UART.SerialSend(header);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("Failed to write telemetry header");
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
+            }
+
             while (!token.IsCancellationRequested)
             {
                 try
                 {
-                    _uartDevice = _uartDevice.GetUART();
-
                     if (!AccelerometerSystem.FileQueue.IsEmpty)
                     {
                         Console.WriteLine($"Sending file # {fileSent}");
@@ -167,14 +162,14 @@ namespace BrctcSpaceLibrary.Systems
 
                                     try
                                     {
-                                        _uartDevice.SerialSend(message);
+                                        Devices.UART.SerialSend(message);
                                         indexTracker++;
                                     }
                                     catch (Exception ex)
                                     {
                                         Console.WriteLine($"Failed to send!\n{ex.Message}\n{ex.StackTrace}");
-                                        _uartDevice.Dispose();
-                                        _uartDevice = _uartDevice.GetUART(); // let's refresh the interface
+                                        Devices.UART.Dispose();
+                                        Devices.UART = Devices.UART.GetUART(); // let's refresh the interface
                                     }
 
                                     //reset processor and temperature averge and begin new data set here
@@ -203,7 +198,8 @@ namespace BrctcSpaceLibrary.Systems
                 }
                 finally
                 {
-                    _uartDevice.Dispose();
+                    Devices.UART.Dispose();
+                    Devices.UART = Devices.UART.GetUART(); // let's refresh the interface
                 }
             }
         }

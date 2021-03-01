@@ -15,7 +15,7 @@ namespace BrctcSpaceLibrary.Device
     /// <summary>
     /// More efficient version of Mcp3208 for super fast data driven tasks
     /// </summary>
-    class Mcp3208Custom : IMcp3208, IDisposable
+   public class Mcp3208Custom : IMcp3208, IDisposable
     {
         private SpiDevice _spiDevice;
         private const int bufferSize = 3;

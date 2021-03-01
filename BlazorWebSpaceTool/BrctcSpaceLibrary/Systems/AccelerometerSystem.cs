@@ -14,10 +14,6 @@ namespace BrctcSpaceLibrary.Systems
     {
         private readonly int _secondaryDataTrigger; //subtract one from expected/wanted samples per second since counter starts at 0
 
-        private IMcp3208 _accelerometerDevice;
-        private IRTC _rtcDevice;
-        private CpuTemperature _cpuDevice;
-
         private int _accelSegmentLength;
 
         private const int _accelBytes = 12;
@@ -40,23 +36,15 @@ namespace BrctcSpaceLibrary.Systems
         private ConcurrentQueue<string> _fileQueue = new ConcurrentQueue<string>();
 
         public ConcurrentQueue<string> FileQueue { get => _fileQueue; }
-        public AccelerometerSystem(IMcp3208 accel_Type, string fileName, 
-            CpuTemperature cpuTemperature, IRTC rtc, int expectedSPS = 7999)
+        public AccelerometerSystem(string fileName, int expectedSPS = 7999)
         {
-            _accelerometerDevice = accel_Type;
             _accelFileName = fileName;
             _secondaryDataTrigger = expectedSPS;
-
-            _cpuDevice = cpuTemperature;
-            _rtcDevice = rtc;
-
             _accelSegmentLength = _accelBytes + _rtcBytes + _cpuBytes;
         }
 
         public  void RunAccelerometer(CancellationToken token)
         {
-            Thread.CurrentThread.Priority = ThreadPriority.AboveNormal;
-
             Span<byte> data = new Span<byte>(new byte[_accelSegmentLength]);
 
             Span<byte> accelSegment = data.Slice(0, _accelBytes);
@@ -94,7 +82,7 @@ namespace BrctcSpaceLibrary.Systems
 
                             for (int i = 0; i < chunkSize; i++)
                             {
-                                _accelerometerDevice.Read(accelSegment);
+                                Devices.Accelerometer.Read(accelSegment);
                                 if (secondaryDataCounter++ >= _secondaryDataTrigger)
                                 {
                                     GetRTCTime(rtcSegment);
@@ -122,17 +110,17 @@ namespace BrctcSpaceLibrary.Systems
 
         private void GetRTCTime(Span<byte> buffer)
         {
-            Monitor.Enter(_rtcDevice);
-            _rtcDevice.GetCurrentDate(buffer);
-            Monitor.Exit(_rtcDevice);
+            Monitor.Enter(Devices.RTC);
+            Devices.RTC.GetCurrentDate(buffer);
+            Monitor.Exit(Devices.RTC);
         }
 
         private void GetCPUTemp(Span<byte> buffer)
         {
-            Monitor.Enter(_cpuDevice);
-            if (_cpuDevice.IsAvailable)
+            Monitor.Enter(Devices.CPUTemp);
+            if (Devices.CPUTemp.IsAvailable)
             {
-                var temp = BitConverter.GetBytes(_cpuDevice.Temperature.DegreesFahrenheit);
+                var temp = BitConverter.GetBytes(Devices.CPUTemp.Temperature.DegreesFahrenheit);
 
                 buffer[0] = temp[0];
                 buffer[1] = temp[1];
@@ -143,7 +131,7 @@ namespace BrctcSpaceLibrary.Systems
                 buffer[6] = temp[6];
                 buffer[7] = temp[7];
             }
-            Monitor.Exit(_cpuDevice);
+            Monitor.Exit(Devices.CPUTemp);
         }
 
         public static IMcp3208 GetNormalMCPClass()

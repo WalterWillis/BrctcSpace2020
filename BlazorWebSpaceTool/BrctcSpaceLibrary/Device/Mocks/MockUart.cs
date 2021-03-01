@@ -8,7 +8,10 @@ namespace BrctcSpaceLibrary.Device.Mocks
     public class MockUart : IUART
     {
 
-        public static string FileName { get; set; }
+        /// <summary>
+        /// File to write mock telemetry data to
+        /// </summary>
+        public static string FileName { get; set; } // needs to be static since UART is often disposed of
         public void Dispose()
         {
             //do nothing

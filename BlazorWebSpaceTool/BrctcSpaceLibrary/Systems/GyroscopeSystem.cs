@@ -9,10 +9,6 @@ namespace BrctcSpaceLibrary.Systems
 {
     public class GyroscopeSystem
     {
-        private IGyroscope _gyroscopeDevice;
-        private IRTC _rtcDevice;
-        private CpuTemperature _cpuDevice;
-
         public FileStream GyroStream { get; set; }
 
         private int _gyroSegmentLength;
@@ -34,14 +30,9 @@ namespace BrctcSpaceLibrary.Systems
 
         public long GyroDataSetCounter { get => _gyroDatasetCounter; }
 
-        public GyroscopeSystem(IGyroscope gyroscope, string fileName, CpuTemperature cpuTemperature, IRTC rtc)
+        public GyroscopeSystem(string fileName)
         {
-            _gyroscopeDevice = gyroscope;
             _gyroFileName = fileName;
-   
-            _cpuDevice = cpuTemperature;
-            _rtcDevice = rtc;
-
             _gyroSegmentLength = _gyroBytes + _rtcBytes + _cpuBytes;
         }
 
@@ -53,7 +44,7 @@ namespace BrctcSpaceLibrary.Systems
             Span<byte> rtcSegment = data.Slice(_gyroBytes, _rtcBytes);
             Span<byte> cpuSegment = data.Slice(_gyroBytes + _rtcBytes, _cpuBytes);
 
-            _gyroscopeDevice.BurstRead(gyroSegment);
+            Devices.Gyroscope.BurstRead(gyroSegment);
             GetRTCTime(rtcSegment);
             GetCPUTemp(cpuSegment);
 
@@ -72,17 +63,17 @@ namespace BrctcSpaceLibrary.Systems
 
         private void GetRTCTime(Span<byte> buffer)
         {
-            Monitor.Enter(_rtcDevice);
-            _rtcDevice.GetCurrentDate(buffer);
-            Monitor.Exit(_rtcDevice);
+            Monitor.Enter(Devices.RTC);
+            Devices.RTC.GetCurrentDate(buffer);
+            Monitor.Exit(Devices.RTC);
         }
 
         private void GetCPUTemp(Span<byte> buffer)
         {
-            Monitor.Enter(_cpuDevice);
-            if (_cpuDevice.IsAvailable)
+            Monitor.Enter(Devices.CPUTemp);
+            if (Devices.CPUTemp.IsAvailable)
             {
-                var temp = BitConverter.GetBytes(_cpuDevice.Temperature.DegreesFahrenheit);
+                var temp = BitConverter.GetBytes(Devices.CPUTemp.Temperature.DegreesFahrenheit);
 
                 buffer[0] = temp[0];
                 buffer[1] = temp[1];
@@ -93,7 +84,7 @@ namespace BrctcSpaceLibrary.Systems
                 buffer[6] = temp[6];
                 buffer[7] = temp[7];
             }
-            Monitor.Exit(_cpuDevice);
+            Monitor.Exit(Devices.CPUTemp);
         }
     }
 }

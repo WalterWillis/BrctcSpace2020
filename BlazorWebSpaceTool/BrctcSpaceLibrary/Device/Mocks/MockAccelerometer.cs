@@ -35,7 +35,7 @@ namespace BrctcSpaceLibrary.Device.Mocks
             buffer[10] = _union.byte2;
             buffer[11] = _union.byte3;
 
-            Thread.SpinWait(2000);
+            Thread.SpinWait(1000);
         }
     }
 }
