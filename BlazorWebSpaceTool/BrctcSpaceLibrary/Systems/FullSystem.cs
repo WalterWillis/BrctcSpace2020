@@ -102,7 +102,7 @@ namespace BrctcSpaceLibrary.Systems
 
             try
             {
-                string header = $"Second,Temp (F){processor.GenerateCsvHeaders()}";
+                string header = $"Second,Temp (F),SPS{processor.GenerateCsvHeaders()}";
                 Devices.UART.SerialSend(header);
             }
             catch(Exception ex)
@@ -158,7 +158,7 @@ namespace BrctcSpaceLibrary.Systems
                                     processor.PerformFFTAnalysis();
 
                                     //iterate second and append all data. Processor data should already have commas
-                                    string message = $"{currentSecond++},{temperature.AverageCPUTemp}{processor.X_Magnitudes}{processor.Y_Magnitudes}{processor.Z_Magnitudes}";
+                                    string message = $"{currentSecond++},{temperature.AverageCPUTemp},{processor.SampleSize}{processor.X_Magnitudes}{processor.Y_Magnitudes}{processor.Z_Magnitudes}";
 
                                     try
                                     {

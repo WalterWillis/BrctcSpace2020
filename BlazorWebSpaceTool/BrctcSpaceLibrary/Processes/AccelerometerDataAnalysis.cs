@@ -15,6 +15,11 @@ namespace BrctcSpaceLibrary.Processes
         private List<double> Y_Values { get; set; } = new List<double>();
         private List<double> Z_Values { get; set; } = new List<double>();
 
+        /// <summary>
+        /// Get the amount of samples of this analysis
+        /// </summary>
+        public int SampleSize { get => X_Values.Count; }
+
         public string X_Magnitudes { get; set; }
         public string Y_Magnitudes { get; set; }
         public string Z_Magnitudes { get; set; }
