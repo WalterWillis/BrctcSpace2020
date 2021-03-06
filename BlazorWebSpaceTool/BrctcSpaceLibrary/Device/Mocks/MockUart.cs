@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace BrctcSpaceLibrary.Device.Mocks
 {
@@ -43,6 +44,11 @@ namespace BrctcSpaceLibrary.Device.Mocks
             }
                 Console.WriteLine($"Telemetry SerialSend Executed!");
             //change to file writing mock test
+        }
+
+        public Task SerialSendAsync(string message)
+        {
+            return Task.Run(() => { SerialSend(message); });
         }
     }
 }

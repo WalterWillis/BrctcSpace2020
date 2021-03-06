@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace BrctcSpaceLibrary.Device
 {
@@ -8,6 +9,7 @@ namespace BrctcSpaceLibrary.Device
         public void SendBytes(Span<byte> buffer);
         public string SerialRead();
         public void SerialSend(string message);
+        public Task SerialSendAsync(string message);
         public IUART GetUART();
     }
 }

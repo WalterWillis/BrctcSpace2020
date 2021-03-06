@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO.Ports;
+using System.Threading.Tasks;
 
 namespace BrctcSpaceLibrary.Device
 {
@@ -157,6 +158,11 @@ namespace BrctcSpaceLibrary.Device
         public IUART GetUART()
         {
             return new UART();
+        }
+
+        public Task SerialSendAsync(string message)
+        {
+            return Task.Run(() => { SerialSend(message); });
         }
     }
 }

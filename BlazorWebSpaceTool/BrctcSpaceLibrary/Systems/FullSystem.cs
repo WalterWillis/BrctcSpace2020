@@ -12,14 +12,14 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace BrctcSpaceLibrary.Systems
-{    
+{
     public class FullSystem
     {
         private AccelerometerSystem AccelerometerSystem;
         private GyroscopeSystem GyroscopeSystem;
         private FileStream _gyroStream;
 
-        public string AccelFileName { get => AccelerometerSystem.FileName; }    
+        public string AccelFileName { get => AccelerometerSystem.FileName; }
 
         public FullSystem()
         {
@@ -100,17 +100,8 @@ namespace BrctcSpaceLibrary.Systems
             int cpuBytes = AccelerometerSystem.CpuBytes;
             int accelSegmentLength = accelBytes + rtcBytes + cpuBytes;
 
-            try
-            {
-                string header = $"Second,Temp (F),SPS{processor.GenerateCsvHeaders()}";
-                Devices.UART.SerialSend(header);
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine("Failed to write telemetry header");
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.StackTrace);
-            }
+            string header = $"Second,Temp (F),SPS{processor.GenerateCsvHeaders()}";
+            Task telemetryTask = Devices.UART.SerialSendAsync(header);
 
             while (!token.IsCancellationRequested)
             {
@@ -132,13 +123,13 @@ namespace BrctcSpaceLibrary.Systems
                                     Console.WriteLine("Time's Up! Cancelling telemetry.");
                                     break;
                                 }
-                                Span<byte> data = bytes;                                
-                                Span<byte> accelSegment = data.Slice(0, accelBytes);                               
-                                Span<byte> rtcSegment = data.Slice(accelBytes, rtcBytes);                               
+                                Span<byte> data = bytes;
+                                Span<byte> accelSegment = data.Slice(0, accelBytes);
+                                Span<byte> rtcSegment = data.Slice(accelBytes, rtcBytes);
                                 Span<byte> cpuSegment = data.Slice(accelBytes + rtcBytes, cpuBytes);
 
                                 DateTime currentTime = new DateTime(BitConverter.ToInt64(rtcSegment));
-                               
+
                                 if (isInitialDateTime)
                                 {
                                     prevSecond = currentTime.Second;
@@ -162,7 +153,11 @@ namespace BrctcSpaceLibrary.Systems
 
                                     try
                                     {
-                                        Devices.UART.SerialSend(message);
+                                        if (!telemetryTask.IsCompleted)
+                                        {
+                                            telemetryTask.Wait();
+                                        }
+                                        telemetryTask = Devices.UART.SerialSendAsync(message);
                                         indexTracker++;
                                     }
                                     catch (Exception ex)
