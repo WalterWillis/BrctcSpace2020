@@ -54,7 +54,7 @@ namespace BrctcSpaceLibrary.Systems
 
             Task accelThread = Task.Run(() => { AccelerometerSystem.RunAccelerometer(token); });
 
-            Task telemetryThread = Task.Run(() => Telemetry(token));
+            Task telemetryThread = Task.Run(() => Telemetry(token, AccelerometerSystem.SPS));
 
             Devices.GPIO.RegisterCallbackForPinValueChangedEvent(PinEventTypes.Rising, GyroscopeSystem.DataAquisitionCallback);
 
@@ -85,11 +85,12 @@ namespace BrctcSpaceLibrary.Systems
                 $"{GyroscopeSystem.GyroDataSetCounter / stopwatch.Elapsed.TotalSeconds} datasets per second");
         }
 
-        private void Telemetry(CancellationToken token)
+        private void Telemetry(CancellationToken token, int sps)
         {
             long indexTracker = 0; //tracks the current index of each line over multiple files
             int fileSent = 1;
             long currentSecond = 1;
+            int sampleIndex = 0; // initialize to 0 but will increment to 1 right away. Compare using <=, rathter than <
             TemperatureModel temperature = new TemperatureModel();
             int prevSecond = 0;
             bool isInitialDateTime = true;
@@ -130,6 +131,8 @@ namespace BrctcSpaceLibrary.Systems
 
                                 DateTime currentTime = new DateTime(BitConverter.ToInt64(rtcSegment));
 
+                                sampleIndex++;
+
                                 if (isInitialDateTime)
                                 {
                                     prevSecond = currentTime.Second;
@@ -137,7 +140,7 @@ namespace BrctcSpaceLibrary.Systems
                                 }
 
                                 //as long as the seconds match, get the data
-                                if (prevSecond == currentTime.Second)
+                                if (prevSecond == currentTime.Second && sampleIndex <= sps)
                                 {
                                     //add data for each second
                                     temperature.GetNextAverage(BitConverter.ToDouble(cpuSegment));
@@ -172,6 +175,7 @@ namespace BrctcSpaceLibrary.Systems
                                     temperature.Reset();
                                     temperature.GetNextAverage(BitConverter.ToDouble(cpuSegment));
                                     processor.ProcessData(accelSegment);
+                                    sampleIndex = 1; //start at one since we already have added our next first datapoint
                                 }
 
                                 prevSecond = currentTime.Second;

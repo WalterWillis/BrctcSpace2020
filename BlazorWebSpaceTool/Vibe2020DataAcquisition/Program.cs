@@ -23,17 +23,7 @@ namespace Vibe2020DataAcquisition
             //PerformanceTests();
             //TelemetryTest(args);
 
-
-            if (args[0].ToLowerInvariant() == "telemetry") 
-            {
-                ReceiveTelemetryEvents();
-            }
-            else
-            {
-                Int32.TryParse(args[0], out int timeLimit);
-
-                PerformFullSystemTest(timeLimit);
-            }
+            ReceiveTelemetryEvents();
         }
 
         #region Performance Tests
@@ -418,6 +408,7 @@ namespace Vibe2020DataAcquisition
                     telemetry.Subscribe((s, e) =>
                     {
                         SerialPort port = (SerialPort)s;
+                        Console.WriteLine("Recieved!");
 
                         string line = port.ReadLine();
 
@@ -429,10 +420,14 @@ namespace Vibe2020DataAcquisition
                             fileQueue.Enqueue(line);
                     });
 
-
+                    CancellationTokenSource source = new CancellationTokenSource();
+                    source.CancelAfter(1000 * 10 * 60); //run for 10 minutes
+                    Console.WriteLine("Starting to read from telemetry for 10 minutes");
+                    
 
                     int lineNumber = 1;
-                    while (isReading || fileQueue.Count < 0) 
+
+                    while (!source.IsCancellationRequested) 
                     {
                         if (!fileQueue.IsEmpty && fileQueue.TryDequeue(out string line))
                         {
@@ -451,13 +446,14 @@ namespace Vibe2020DataAcquisition
                                     }
                                 }
                             }
-                        }
 
-                        if (lineNumber >= 1000000)
-                        {
-                            Console.WriteLine($"Saved {fileNum++} files so far!");
-                            fileName = Path.Combine(subDir, $"file{fileNum}.txt");
-                            lineNumber = 1;
+
+                            if (lineNumber >= 1000000)
+                            {
+                                Console.WriteLine($"Saved {fileNum++} files so far!");
+                                fileName = Path.Combine(subDir, $"file{fileNum}.txt");
+                                lineNumber = 1;
+                            }
                         }
                     }
                     telemetry.Unsubscribe();

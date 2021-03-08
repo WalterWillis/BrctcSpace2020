@@ -37,7 +37,7 @@ namespace BrctcSpaceBackgroundService
                 Devices.Gyroscope = new Gyroscope(new SpiConnectionSettings(0, 0) { Mode = SpiMode.Mode3, ClockFrequency = 900000 });
                 Devices.GPIO = new GPIO();
                 Devices.RTC = new RTC();
-                Devices.UART = new MockUart(); //mock for now
+                Devices.UART = new UART(); //mock for now
             }
 
             FullSystem system = new FullSystem();

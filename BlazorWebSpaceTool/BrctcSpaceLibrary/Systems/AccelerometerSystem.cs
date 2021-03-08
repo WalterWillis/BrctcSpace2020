@@ -14,6 +14,8 @@ namespace BrctcSpaceLibrary.Systems
     {
         private readonly int _secondaryDataTrigger; //subtract one from expected/wanted samples per second since counter starts at 0
 
+        public int SPS { get => _secondaryDataTrigger; }
+
         private int _accelSegmentLength;
 
         private const int _accelBytes = 12;
