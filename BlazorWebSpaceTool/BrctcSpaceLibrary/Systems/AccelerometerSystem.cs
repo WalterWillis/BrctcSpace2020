@@ -36,7 +36,7 @@ namespace BrctcSpaceLibrary.Systems
         private ConcurrentQueue<string> _fileQueue = new ConcurrentQueue<string>();
 
         public ConcurrentQueue<string> FileQueue { get => _fileQueue; }
-        public AccelerometerSystem(string fileName, int expectedSPS = 7999)
+        public AccelerometerSystem(string fileName, int expectedSPS = 4800)
         {
             _accelFileName = fileName;
             _secondaryDataTrigger = expectedSPS;
@@ -52,12 +52,12 @@ namespace BrctcSpaceLibrary.Systems
             Span<byte> cpuSegment = data.Slice(_accelBytes + _rtcBytes, _cpuBytes);
 
             
-            int secondaryDataCounter = 0;
+            int secondaryDataCounter = 1;
 
             int fileCounter = 0;
 
             //Initialize to approximately 256 KB (or as close it as possible given the segment size)
-            int chunkSize = (4096 / _accelSegmentLength) * 256;
+            int chunkSize = _secondaryDataTrigger * 8; //(4096 / _accelSegmentLength) * 256;
 
             int maxLines = chunkSize * MaxChunksPerFile; //arbitrary amount of iterations per buffer cycle
 
@@ -87,7 +87,7 @@ namespace BrctcSpaceLibrary.Systems
                                 {
                                     GetRTCTime(rtcSegment);
                                     GetCPUTemp(cpuSegment);
-                                    secondaryDataCounter = 0;
+                                    secondaryDataCounter = 1;
                                 }
 
                                 stream.Write(data);
