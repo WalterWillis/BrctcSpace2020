@@ -101,7 +101,7 @@ namespace BrctcSpaceLibrary.Systems
             int cpuBytes = AccelerometerSystem.CpuBytes;
             int accelSegmentLength = accelBytes + rtcBytes + cpuBytes;
 
-            string header = $"Second,Temp (F),SPS{processor.GenerateCsvHeaders()}";
+            string header = $"Second,Temp (F),SPS{processor.GenerateCsvHeaders()}\n";
             Task telemetryTask = Devices.UART.SerialSendAsync(header);
 
             while (!token.IsCancellationRequested)
@@ -152,7 +152,7 @@ namespace BrctcSpaceLibrary.Systems
                                     processor.PerformFFTAnalysis();
 
                                     //iterate second and append all data. Processor data should already have commas
-                                    string message = $"{currentSecond++},{temperature.AverageCPUTemp},{processor.SampleSize}{processor.X_Magnitudes}{processor.Y_Magnitudes}{processor.Z_Magnitudes}";
+                                    string message = $"{currentSecond++},{temperature.AverageCPUTemp},{processor.SampleSize}{processor.X_Magnitudes}{processor.Y_Magnitudes}{processor.Z_Magnitudes}\n";
 
                                     try
                                     {

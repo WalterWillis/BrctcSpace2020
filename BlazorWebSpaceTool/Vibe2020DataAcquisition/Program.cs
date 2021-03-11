@@ -399,7 +399,7 @@ namespace Vibe2020DataAcquisition
             try
             {
 
-                using (UART telemetry = new UART("/dev/ttyAMA0", 57600))
+                using (UART telemetry = new UART())
                 {
                     //telemetry.Open();
                     //ReliableSerialPort.DataReceivedEventHandler handler = new ReliableSerialPort.DataReceivedEventHandler(Event);
