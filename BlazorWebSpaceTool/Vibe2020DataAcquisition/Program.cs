@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,7 +23,6 @@ namespace Vibe2020DataAcquisition
         {
             //PerformanceTests();
             //TelemetryTest(args);
-
             ReceiveTelemetryEvents();
         }
 
@@ -392,6 +392,8 @@ namespace Vibe2020DataAcquisition
             string subDir = Path.Combine(Directory.GetCurrentDirectory(),$"FullSystemSharedRTC_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}");
             Directory.CreateDirectory(subDir);
 
+            string port = SerialPort.GetPortNames().First();
+
             string fileName = Path.Combine(subDir, $"file{fileNum}.txt");
             
             bool isReading = true;
@@ -399,7 +401,7 @@ namespace Vibe2020DataAcquisition
             try
             {
 
-                using (UART telemetry = new UART())
+                using (UART telemetry = new UART(port))
                 {
                     //telemetry.Open();
                     //ReliableSerialPort.DataReceivedEventHandler handler = new ReliableSerialPort.DataReceivedEventHandler(Event);
@@ -408,7 +410,7 @@ namespace Vibe2020DataAcquisition
                     telemetry.Subscribe((s, e) =>
                     {
                         SerialPort port = (SerialPort)s;
-                        Console.WriteLine("Recieved!");
+                        
 
                         string line = port.ReadLine();
 

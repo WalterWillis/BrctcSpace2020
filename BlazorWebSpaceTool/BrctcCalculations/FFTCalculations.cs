@@ -94,7 +94,7 @@ namespace BrctcCalculations
 
             foreach(var result in results)
             {
-                magnitudeMessage += $",{result.Item1},{result.Item2.Magnitude}";
+                magnitudeMessage += $",{result.Item1},{result.Item2.Magnitude.ToString("F8")}";
             }
 
             return magnitudeMessage;

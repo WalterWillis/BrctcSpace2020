@@ -61,9 +61,9 @@ namespace BrctcSpaceLibrary.Processes
 
             for (int i = 1; i <= _magnitudeCount; i++)
             {
-                header_X += $",X_Peak{i}";
-                header_Y += $",Y_Peak{i}";
-                header_Z += $",Z_Peak{i}";
+                header_X += $",X_Freq{i},X_Peak{i}";
+                header_Y += $",Y_Freq{i},Y_Peak{i}";
+                header_Z += $",Z_Freq{i},Z_Peak{i}";
             }
 
             return header_X + header_Y + header_Z;

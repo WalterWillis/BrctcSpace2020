@@ -93,6 +93,7 @@ namespace BrctcSpaceLibrary.Systems
             int sampleIndex = 0; // initialize to 0 but will increment to 1 right away. Compare using <=, rathter than <
             TemperatureModel temperature = new TemperatureModel();
             int prevSecond = 0;
+            DateTime initialTime = DateTime.Now;
             bool isInitialDateTime = true;
             AccelerometerDataAnalysis processor = new AccelerometerDataAnalysis();
 
@@ -101,7 +102,7 @@ namespace BrctcSpaceLibrary.Systems
             int cpuBytes = AccelerometerSystem.CpuBytes;
             int accelSegmentLength = accelBytes + rtcBytes + cpuBytes;
 
-            string header = $"Second,Temp (F),SPS{processor.GenerateCsvHeaders()}\n";
+            string header = $"ID,Timestamp,Second,Temp (F),SPS{processor.GenerateCsvHeaders()}";
             Task telemetryTask = Devices.UART.SerialSendAsync(header);
 
             while (!token.IsCancellationRequested)
@@ -136,6 +137,7 @@ namespace BrctcSpaceLibrary.Systems
                                 if (isInitialDateTime)
                                 {
                                     prevSecond = currentTime.Second;
+                                    initialTime = currentTime;
                                     isInitialDateTime = false;
                                 }
 
@@ -152,7 +154,8 @@ namespace BrctcSpaceLibrary.Systems
                                     processor.PerformFFTAnalysis();
 
                                     //iterate second and append all data. Processor data should already have commas
-                                    string message = $"{currentSecond++},{temperature.AverageCPUTemp},{processor.SampleSize}{processor.X_Magnitudes}{processor.Y_Magnitudes}{processor.Z_Magnitudes}\n";
+                                    string message = $"{indexTracker++},{currentTime.ToString("HH:mm:ss")},{(currentTime - initialTime).TotalSeconds.ToString("F3")}," +
+                                        $"{(int)temperature.AverageCPUTemp},{processor.SampleSize}{processor.X_Magnitudes}{processor.Y_Magnitudes}{processor.Z_Magnitudes}";
 
                                     try
                                     {
@@ -161,7 +164,6 @@ namespace BrctcSpaceLibrary.Systems
                                             telemetryTask.Wait();
                                         }
                                         telemetryTask = Devices.UART.SerialSendAsync(message);
-                                        indexTracker++;
                                     }
                                     catch (Exception ex)
                                     {
