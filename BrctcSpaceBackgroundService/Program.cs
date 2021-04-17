@@ -47,7 +47,8 @@ namespace BrctcSpaceBackgroundService
 
             system.SetChunkAmount(1);
 
-            CancellationTokenSource source = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+            //CancellationTokenSource source = new CancellationTokenSource(TimeSpan.FromMinutes(5)); // for quick tests
+            CancellationTokenSource source = new CancellationTokenSource();
             system.Run(source.Token);
 
             Devices.Accelerometer.Dispose();

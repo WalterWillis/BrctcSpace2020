@@ -38,7 +38,7 @@ namespace BrctcSpaceLibrary.Systems
         private ConcurrentQueue<string> _fileQueue = new ConcurrentQueue<string>();
 
         public ConcurrentQueue<string> FileQueue { get => _fileQueue; }
-        public AccelerometerSystem(string fileName, int expectedSPS = 4800)
+        public AccelerometerSystem(string fileName, int expectedSPS = 7999)
         {
             _accelFileName = fileName;
             _secondaryDataTrigger = expectedSPS;

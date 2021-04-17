@@ -410,9 +410,9 @@ namespace Vibe2020DataAcquisition
                     telemetry.Subscribe((s, e) =>
                     {
                         SerialPort port = (SerialPort)s;
-                        
-
+                       
                         string line = port.ReadLine();
+                        Console.WriteLine(line);
 
                         if (line == EOP)
                         {                            

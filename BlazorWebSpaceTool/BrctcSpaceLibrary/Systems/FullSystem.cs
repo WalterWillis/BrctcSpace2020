@@ -23,9 +23,22 @@ namespace BrctcSpaceLibrary.Systems
 
         public FullSystem()
         {
-            string subDir = $"FullSystemSharedRTC_{Devices.RTC.GetCurrentDate().ToString("yyyy-MM-dd-HH-mm-ss")}"; //should be used in final program
+            DirectoryInfo dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+            DirectoryInfo[] directories = dir.GetDirectories();
+            int latestIteration = 0;
+            foreach(var directory in directories)
+            {
+                string number = System.Text.RegularExpressions.Regex.Match(directory.Name, @"\d+").Value;
 
-            Directory.CreateDirectory(subDir);
+                Int32.TryParse(number, out int iteration);
+
+                if (iteration > latestIteration)
+                    latestIteration = iteration;
+            }
+            //use the latest found iteration and increment it as it will be the latest iteration
+            string subDir = $"FullSystemSharedRTC_{++latestIteration}"; //should be used in final program
+
+            dir.CreateSubdirectory(subDir);
             string accelFileName = Path.Combine(Directory.GetCurrentDirectory(), subDir, "Accelerometer.binary");
             string gyroFileName = Path.Combine(Directory.GetCurrentDirectory(), subDir, "Gyroscope.binary");
 

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 

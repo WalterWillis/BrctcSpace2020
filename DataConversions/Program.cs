@@ -7,6 +7,7 @@ namespace DataConversions
 {
     class Program
     {
+        static FileInfo LogFile = new FileInfo(Path.Combine("Converted", "Log.txt"));
         static void Main(string[] args)
         {
             ConvertAccelData();
@@ -15,10 +16,13 @@ namespace DataConversions
 
         public static void ConvertAccelData()
         {
-            string filename = "Accelerometer.binary";
-            string newFile = "Accelerometer";
+            string filename = Path.Combine("Data", "Accelerometer.binary");
+            string fileDir = Path.Combine("Converted", "Accelerometer");
+
+            Directory.CreateDirectory("Converted");
 
             DateTime initialTime = DateTime.Now;
+            DateTime currentTime = DateTime.Now;
             bool isInitialDateTime = true;
 
             int fileCounter = 0; //current files found and navigated
@@ -26,11 +30,12 @@ namespace DataConversions
 
             long index = 1;
             long fileLineIndex = 0; //tracks amount of lines in current file
+            long count = 0; //keep track of records
 
             const int fileLineSize = 1000000;
 
             string searchFile = $"{filename}{fileCounter++}";
-            string resultFile = $"{newFile}{newFileCounter++}.csv";
+            string resultFile = $"{fileDir}{newFileCounter++}.csv";
 
             StreamWriter sw = File.CreateText(resultFile);
 
@@ -58,7 +63,7 @@ namespace DataConversions
                         Span<byte> rtcSegment = data.Slice(accelBytes, rtcBytes);
                         Span<byte> cpuSegment = data.Slice(accelBytes + rtcBytes, cpuBytes);
 
-                        DateTime currentTime = new DateTime(BitConverter.ToInt64(rtcSegment));
+                        currentTime = new DateTime(BitConverter.ToInt64(rtcSegment));
 
                         if (isInitialDateTime)
                         {
@@ -85,7 +90,7 @@ namespace DataConversions
                         {
                             //generate new csv file
                             fileLineIndex = 0;
-                            resultFile = $"{newFile}{newFileCounter++}.csv";
+                            resultFile = $"{fileDir}{newFileCounter++}.csv";
 
                             sw.Flush();
                             sw.Close();
@@ -94,6 +99,7 @@ namespace DataConversions
                         }
 
                         sw.WriteLine(csvLine);
+                        count++;
                         fileLineIndex++;
 
                     }
@@ -103,70 +109,110 @@ namespace DataConversions
                 sw.Flush();
                 searchFile = $"{filename}{fileCounter++}";
             }
-            sw.Flush();
             sw.Dispose();
+
+            using (var writer = LogFile.AppendText())
+            {
+                writer.WriteLine("-------------------------------------------------------------------------------");
+                writer.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")} - Accelerometer Records converted: {count}");
+                writer.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")} - Accelerometer Files found: {fileCounter}");
+                writer.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")} - Accelerometer Converted Files created: {newFileCounter}");
+                writer.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")} - Accelerometer TotalSeconds: {(currentTime - initialTime).TotalSeconds.ToString("F3")}");
+                writer.WriteLine();
+            }
         }
 
         public static void ConvertGyroData()
         {
-            string filename = "Gyroscope.binary";
-            string newFile = "Gyroscope.csv";
+            string filename = Path.Combine("Data", "Gyroscope.binary");
+            string newFile = Path.Combine("Converted", "Gyroscope");
+
+            Directory.CreateDirectory("Converted");
 
             DateTime initialTime = DateTime.Now;
+            DateTime currentTime = DateTime.Now;
             bool isInitialDateTime = true;
+
+            int newFileCounter = 0; //current number of files converted based on fileLineSize
+
+            long index = 1;
+            long fileLineIndex = 0; //tracks amount of lines in current file
+            const int fileLineSize = 1000000;
+            long count = 0;
+
+            string resultFile = $"{newFile}{newFileCounter++}.csv";
+            StreamWriter sw = File.CreateText(resultFile);
 
             using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read))
             {
-                using (StreamWriter sw = File.CreateText(newFile))
+                const int gyroBytes = 20;
+                const int rtcBytes = 8;
+                const int cpuBytes = 8;
+
+                byte[] bytes = new byte[gyroBytes + rtcBytes + cpuBytes];
+
+                const string header = "ID,Second,DIAG_STAT_RAW,GYRO_X_Raw,GYRO_Y_RAW,GYRO_Z_RAW,ACCEL_X_RAW,ACCEL_Y_RAW,ACCEL_Z_RAW,TEMP_RAW,SPS_RAW,CHECKSUM_RAW," +
+             "DIAG_STAT,GYRO_X,GYRO_Y,GYRO_Z,ACCEL_X,ACCEL_Y,ACCEL_Z,TEMP,SPS,CHECKSUM," +
+             "TIMESTAMP,CPU_TEMP";
+
+                sw.WriteLine(header);
+
+                while (fs.Read(bytes) != 0)
                 {
-                    const int gyroBytes = 20;
-                    const int rtcBytes = 8;
-                    const int cpuBytes = 8;
+                    Span<byte> data = bytes;
+                    Span<byte> gyroSegment = data.Slice(0, gyroBytes);
+                    Span<byte> rtcSegment = data.Slice(gyroBytes, rtcBytes);
+                    Span<byte> cpuSegment = data.Slice(gyroBytes + rtcBytes, cpuBytes);
 
-                    byte[] bytes = new byte[gyroBytes + rtcBytes + cpuBytes];
+                    currentTime = new DateTime(BitConverter.ToInt64(rtcSegment));
 
-                    const string header = "ID,Second,DIAG_STAT_RAW,GYRO_X_Raw,GYRO_Y_RAW,GYRO_Z_RAW,ACCEL_X_RAW,ACCEL_Y_RAW,ACCEL_Z_RAW,TEMP_RAW,SPS_RAW,CHECKSUM_RAW," +
-                 "DIAG_STAT,GYRO_X,GYRO_Y,GYRO_Z,ACCEL_X,ACCEL_Y,ACCEL_Z,TEMP,SPS,CHECKSUM," +
-                 "TIMESTAMP,CPU_TEMP";
-
-                    sw.WriteLine(header);
-                    int index = 1;
-
-                    while (fs.Read(bytes) != 0)
+                    if (isInitialDateTime)
                     {
-                        Span<byte> data = bytes;
-                        Span<byte> gyroSegment = data.Slice(0, gyroBytes);
-                        Span<byte> rtcSegment = data.Slice(gyroBytes, rtcBytes);
-                        Span<byte> cpuSegment = data.Slice(gyroBytes + rtcBytes, cpuBytes);
-
-                        DateTime currentTime = new DateTime(BitConverter.ToInt64(rtcSegment));
-
-                        if (isInitialDateTime)
-                        {
-                            initialTime = currentTime;
-                            isInitialDateTime = false;
-                        }
-
-
-                        string csvLine = $"{index++},";
-
-                        csvLine += (currentTime - initialTime).TotalSeconds.ToString("F3") + ",";
-
-
-
-                        Span<short> burstData = GyroConversionHelper.CombineBytes(gyroSegment);
-                        csvLine += string.Join(',', burstData.ToArray()) + ",";
-
-                        Span<double> gyroData = GyroConversionHelper.GetGyroscopeDetails(burstData);
-
-                        csvLine += string.Join(',', gyroData.ToArray()) + ",";
-                        csvLine += currentTime.ToString("HH:mm:ss") + ",";
-                        csvLine += BitConverter.ToDouble(cpuSegment).ToString();
-
-                        sw.WriteLine(csvLine);
-
+                        initialTime = currentTime;
+                        isInitialDateTime = false;
                     }
+
+
+                    string csvLine = $"{index++},";
+
+                    csvLine += (currentTime - initialTime).TotalSeconds.ToString("F3") + ",";
+                    count++;
+
+
+                    Span<short> burstData = GyroConversionHelper.CombineBytes(gyroSegment);
+                    csvLine += string.Join(',', burstData.ToArray()) + ",";
+
+                    Span<double> gyroData = GyroConversionHelper.GetGyroscopeDetails(burstData);
+
+                    csvLine += string.Join(',', gyroData.ToArray()) + ",";
+                    csvLine += currentTime.ToString("HH:mm:ss") + ",";
+                    csvLine += BitConverter.ToDouble(cpuSegment).ToString();
+
+
+                    if (fileLineIndex >= fileLineSize)
+                    {
+                        //generate new csv file
+                        fileLineIndex = 0;
+                        resultFile = $"{newFile}{newFileCounter++}.csv";
+
+                        sw.Flush();
+                        sw.Close();
+                        sw.Dispose();
+                        sw = File.CreateText(resultFile);
+                    }
+
+                    sw.WriteLine(csvLine);
+
                 }
+
+            }
+
+            using (var writer = LogFile.AppendText())
+            {                
+                writer.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")} - Gyroscope Records converted: {count}");
+                writer.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")} - Gyroscope Converted Files created: {newFileCounter}");
+                writer.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")} - Gyroscope TotalSeconds: {(currentTime - initialTime).TotalSeconds.ToString("F3")}");
+                writer.WriteLine("-------------------------------------------------------------------------------");
             }
         }
     }
