@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,18 +23,7 @@ namespace Vibe2020DataAcquisition
         {
             //PerformanceTests();
             //TelemetryTest(args);
-
-
-            if (args[0].ToLowerInvariant() == "telemetry") 
-            {
-                ReceiveTelemetryEvents();
-            }
-            else
-            {
-                Int32.TryParse(args[0], out int timeLimit);
-
-                PerformFullSystemTest(timeLimit);
-            }
+            ReceiveTelemetryEvents();
         }
 
         #region Performance Tests
@@ -402,6 +392,8 @@ namespace Vibe2020DataAcquisition
             string subDir = Path.Combine(Directory.GetCurrentDirectory(),$"FullSystemSharedRTC_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}");
             Directory.CreateDirectory(subDir);
 
+            string port = SerialPort.GetPortNames().First();
+
             string fileName = Path.Combine(subDir, $"file{fileNum}.txt");
             
             bool isReading = true;
@@ -409,7 +401,7 @@ namespace Vibe2020DataAcquisition
             try
             {
 
-                using (UART telemetry = new UART("/dev/ttyAMA0", 57600))
+                using (UART telemetry = new UART(port))
                 {
                     //telemetry.Open();
                     //ReliableSerialPort.DataReceivedEventHandler handler = new ReliableSerialPort.DataReceivedEventHandler(Event);
@@ -418,8 +410,9 @@ namespace Vibe2020DataAcquisition
                     telemetry.Subscribe((s, e) =>
                     {
                         SerialPort port = (SerialPort)s;
-
+                       
                         string line = port.ReadLine();
+                        Console.WriteLine(line);
 
                         if (line == EOP)
                         {                            
@@ -429,10 +422,14 @@ namespace Vibe2020DataAcquisition
                             fileQueue.Enqueue(line);
                     });
 
-
+                    CancellationTokenSource source = new CancellationTokenSource();
+                    source.CancelAfter(1000 * 10 * 60); //run for 10 minutes
+                    Console.WriteLine("Starting to read from telemetry for 10 minutes");
+                    
 
                     int lineNumber = 1;
-                    while (isReading || fileQueue.Count < 0) 
+
+                    while (!source.IsCancellationRequested) 
                     {
                         if (!fileQueue.IsEmpty && fileQueue.TryDequeue(out string line))
                         {
@@ -451,13 +448,14 @@ namespace Vibe2020DataAcquisition
                                     }
                                 }
                             }
-                        }
 
-                        if (lineNumber >= 1000000)
-                        {
-                            Console.WriteLine($"Saved {fileNum++} files so far!");
-                            fileName = Path.Combine(subDir, $"file{fileNum}.txt");
-                            lineNumber = 1;
+
+                            if (lineNumber >= 1000000)
+                            {
+                                Console.WriteLine($"Saved {fileNum++} files so far!");
+                                fileName = Path.Combine(subDir, $"file{fileNum}.txt");
+                                lineNumber = 1;
+                            }
                         }
                     }
                     telemetry.Unsubscribe();

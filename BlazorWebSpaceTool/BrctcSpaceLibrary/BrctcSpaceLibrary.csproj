@@ -10,4 +10,8 @@
     <PackageReference Include="System.IO.Ports" Version="5.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\BrctcCalculations\BrctcCalculations.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -1,5 +1,6 @@
 ﻿using BrctcSpaceLibrary.DataModels;
 using BrctcSpaceLibrary.Device;
+using BrctcSpaceLibrary.Processes;
 using Iot.Device.CpuTemperature;
 using System;
 using System.Collections.Concurrent;
@@ -231,7 +232,12 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
             CancellationToken token = _source.Token;
             long indexTracker = 0; //tracks the current index of each line over multiple files
             int fileSent = 1;
+            long currentSecond = 1;
             UART telemetry = null;
+            TemperatureModel temperature = new TemperatureModel();
+            DateTime prevTime = new DateTime(0); //set invalid date to start so comparisons can begin
+            AccelerometerDataAnalysis processor = new AccelerometerDataAnalysis();
+
             while (!token.IsCancellationRequested)
             {              
                 try
@@ -243,10 +249,10 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
                         Console.WriteLine($"Sending file # {fileSent}");
                         fileQueue.TryDequeue(out string fileName);
                         //logic to handle failed dequeue needs to be here
-                        Vibe2020TelemetryModel model = new Vibe2020TelemetryModel(); // let's just reuse the same model for efficiency 
                         using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
                         {
                             byte[] bytes = new byte[AccelSegmentLength];
+                            
                             while (fs.Read(bytes) != 0) //while data is in the stream, continue 
                             {
                                 if (token.IsCancellationRequested)
@@ -259,21 +265,44 @@ namespace BrctcSpaceLibrary.Vibe2020Programs
                                 Span<byte> rtcSegment = data.Slice(_accelBytes, _rtcBytes);
                                 Span<byte> cpuSegment = data.Slice(_accelBytes + _rtcBytes, _cpuBytes);
 
-                                model.Index = indexTracker++;
-                                model.AccelData_Raw = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, int>(accelSegment).ToArray();
-                                model.TransactionTime = BitConverter.ToInt64(rtcSegment);
-                                model.CpuTemp = BitConverter.ToDouble(cpuSegment);
+                                DateTime currentTime  = new DateTime(BitConverter.ToInt64(rtcSegment));
+                                TimeSpan diff = currentTime - prevTime;
 
-                                try
+                                //as long as the seconds match, get the data
+                                if (diff.TotalSeconds == 0)
                                 {
-                                    telemetry.SerialSend(model.ToString());
+                                    //add data for each second
+                                    temperature.GetNextAverage(BitConverter.ToDouble(cpuSegment));
+                                    processor.ProcessData(accelSegment);                                   
                                 }
-                                catch
+                                else
                                 {
-                                    Console.WriteLine("Failed to send!");
-                                    telemetry.Dispose();
-                                    telemetry = new UART(); // let's refresh the interface
+                                    //perform analysis and send message on second change
+                                    processor.PerformFFTAnalysis();
+
+                                    //iterate second and append all data. Processor data should already have commas
+                                    string message = $"{currentSecond++},{temperature.AverageCPUTemp},{processor.X_Magnitudes}{processor.Y_Magnitudes}{processor.Z_Magnitudes}";
+
+                                    try
+                                    {
+                                        telemetry.SerialSend(message);
+                                        indexTracker++;
+                                    }
+                                    catch
+                                    {
+                                        Console.WriteLine("Failed to send!");
+                                        telemetry.Dispose();
+                                        telemetry = new UART(); // let's refresh the interface
+                                    }
+
+                                    //reset processor and temperature averge and begin new data set here
+                                    processor.Reset();
+                                    temperature.Reset();
+                                    temperature.GetNextAverage(BitConverter.ToDouble(cpuSegment));
+                                    processor.ProcessData(accelSegment);
                                 }
+
+                                prevTime = currentTime;                               
 
                                 data.Clear(); // since we are reusing this array, clear the values for integrity                                  
                                 }

@@ -1,0 +1,1 @@
+sudo rm /home/pi/BackgroundService/FullSys* -r

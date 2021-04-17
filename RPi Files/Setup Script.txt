@@ -1,0 +1,20 @@
+sudo apt-get update
+sudo apt-get upgrade -y
+
+sudo apt-get install libfftw3-3 -y
+sudo apt-get install libfftw3-dev -y
+
+sudo apt-get purge bluez -y
+sudo apt-get autoremove -y
+
+cd ~/Downloads
+
+curl -SL -o dotnet.tar.gz https://download.visualstudio.microsoft.com/download/pr/e8912d3b-483b-4d6f-bd3a-3066b3194313/20f2261fe4e16e55df4bbe03c65a7648/dotnet-sdk-5.0.100-linux-arm.tar.gz
+sudo mkdir -p /usr/share/dotnet
+sudo tar -zxf dotnet.tar.gz -C /usr/share/dotnet
+sudo ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
+
+
+export DOTNET_ROOT=/usr/share/dotnet
+export PATH=$PATH:/usr/share/dotnet
+

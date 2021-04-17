@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO.Ports;
+using System.Threading.Tasks;
 
 namespace BrctcSpaceLibrary.Device
 {
-    public class UART: IDisposable
+    public class UART : IDisposable, IUART
     {
         private bool _isdisposing = false;
         private SerialPort _serialDevice;
@@ -14,8 +15,8 @@ namespace BrctcSpaceLibrary.Device
         public UART()
         {
             _serialDevice = new SerialPort("/dev/ttyAMA0", 57600);
-            _serialDevice.WriteTimeout = 1000;
-            _serialDevice.ReadTimeout = 1000;
+            //_serialDevice.WriteTimeout = 1000;
+            //_serialDevice.ReadTimeout = 1000;
             _serialDevice.Handshake = Handshake.None;
             _serialDevice.Open();
         }
@@ -23,15 +24,15 @@ namespace BrctcSpaceLibrary.Device
         public UART(string port, int writeTimeout = 1000, int readTimeout = 1000)
         {
             _serialDevice = new SerialPort(port, 57600);
-            _serialDevice.WriteTimeout = writeTimeout;
-            _serialDevice.ReadTimeout = readTimeout;
+            //_serialDevice.WriteTimeout = writeTimeout;
+            //_serialDevice.ReadTimeout = readTimeout;
             _serialDevice.Handshake = Handshake.None;
             _serialDevice.Open();
         }
 
         public void SerialSend(string message)
         {
-            if(!_serialDevice.IsOpen)
+            if (!_serialDevice.IsOpen)
                 _serialDevice.Open();
 
             _serialDevice.WriteLine(message);
@@ -63,8 +64,11 @@ namespace BrctcSpaceLibrary.Device
         /// <param name="interruptToAttach"></param>
         public void Subscribe(SerialDataReceivedEventHandler interruptToAttach)
         {
-            _serialDevice.DataReceived += interruptToAttach;
-            _toUnsubscribe = interruptToAttach;
+            if (_toUnsubscribe == null) //if we already subscribed the event, ignore
+            {
+                _serialDevice.DataReceived += interruptToAttach;
+                _toUnsubscribe = interruptToAttach;
+            }
         }
 
         /// <summary>
@@ -89,13 +93,13 @@ namespace BrctcSpaceLibrary.Device
             for (int i = 0; i < iterations; i++)
             {
                 //wait until data is recieved
-                while(!testCanSend) { }
+                while (!testCanSend) { }
 
                 if (testCanSend)
                 {
                     testCanSend = false;
                     _serialDevice.WriteLine($"Test{i}!");
-                }                
+                }
             }
 
             _serialDevice.DataReceived -= Received;
@@ -120,7 +124,7 @@ namespace BrctcSpaceLibrary.Device
                 Dispose(true);
                 GC.SuppressFinalize(this);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine("Failed to Dispose UART!");
                 Console.WriteLine(ex.Message);
@@ -145,6 +149,20 @@ namespace BrctcSpaceLibrary.Device
             }
 
             _isdisposing = true;
+        }
+
+        /// <summary>
+        /// Used to recreate a UART device if an exception occurs during program run
+        /// </summary>
+        /// <returns></returns>
+        public IUART GetUART()
+        {
+            return new UART();
+        }
+
+        public Task SerialSendAsync(string message)
+        {
+            return Task.Run(() => { SerialSend(message); });
         }
     }
 }

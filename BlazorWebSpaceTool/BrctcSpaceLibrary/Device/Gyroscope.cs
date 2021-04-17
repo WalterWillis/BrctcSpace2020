@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace BrctcSpaceLibrary.Device
 {
-    public class Gyroscope : IDisposable
+    public class Gyroscope : IDisposable, IGyroscope
     {
         private SpiConnectionSettings _settings;
         private bool _isdisposing = false;
@@ -126,43 +126,43 @@ namespace BrctcSpaceLibrary.Device
         public void AcquireData(Span<byte> buffer)
         {
             Span<byte> deviceBuffer = FastBuffer.Span.Slice(2, 2);
-            
+
             FastRegisterRead(Register.DIAG_STAT, deviceBuffer);
             buffer[0] = deviceBuffer[0];
             buffer[1] = deviceBuffer[1];
-           
+
             FastRegisterRead(Register.X_GYRO_OUT, deviceBuffer);
             buffer[2] = deviceBuffer[0];
             buffer[3] = deviceBuffer[1];
-           
+
             FastRegisterRead(Register.Y_GYRO_OUT, deviceBuffer);
             buffer[4] = deviceBuffer[0];
             buffer[5] = deviceBuffer[1];
-           
+
             FastRegisterRead(Register.Z_GYRO_OUT, deviceBuffer);
             buffer[6] = deviceBuffer[0];
             buffer[7] = deviceBuffer[1];
-           
+
             FastRegisterRead(Register.X_ACCL_OUT, deviceBuffer);
             buffer[8] = deviceBuffer[0];
             buffer[9] = deviceBuffer[1];
-            
+
             FastRegisterRead(Register.Y_ACCL_OUT, deviceBuffer);
             buffer[10] = deviceBuffer[0];
             buffer[11] = deviceBuffer[1];
-           
+
             FastRegisterRead(Register.Z_ACCL_OUT, deviceBuffer);
             buffer[12] = deviceBuffer[0];
             buffer[13] = deviceBuffer[1];
-            
+
             FastRegisterRead(Register.TEMP_OUT, deviceBuffer);
             buffer[14] = deviceBuffer[0];
             buffer[15] = deviceBuffer[1];
-            
+
             FastRegisterRead(Register.SMPL_CNTR, deviceBuffer);
             buffer[16] = deviceBuffer[0];
             buffer[17] = deviceBuffer[1];
-            
+
             FastRegisterRead(Register.CAL_CRC, deviceBuffer);
             buffer[18] = deviceBuffer[0];
             buffer[19] = deviceBuffer[1];
@@ -193,7 +193,7 @@ namespace BrctcSpaceLibrary.Device
 
         public void FastRegisterRead(Register regAddr, Span<byte> replyBuffer)
         {
-            var span = FastBuffer.Span.Slice(0,2);
+            var span = FastBuffer.Span.Slice(0, 2);
             span[0] = (byte)regAddr;
             _gyro.TransferFullDuplex(span, replyBuffer);
             span.Fill(0);
@@ -216,11 +216,11 @@ namespace BrctcSpaceLibrary.Device
             Thread.SpinWait(40); // delay approximately 40 microseconds
             _gyro.Write(new byte[] { highBytehighWord, lowBytehighWord });
         }
-      
+
         public void Dispose()
         {
             Dispose(true);
-            GC.SuppressFinalize(this);    
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

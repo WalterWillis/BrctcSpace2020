@@ -1,0 +1,21 @@
+Install .service file to /etc/systemd/system/ directory
+Filename should be Vibe2021.service
+sudo systemctl start Vibe2021.service
+sudo systemctl stop Vibe2021.service
+sudo journalctl -u Vibe2021.service
+sudo systemctrl enable Vibe2012.service to enable auto startup
+
+[Unit]
+Description= BRCTC 2020-2021 Experiment for data harvesting, conversion and UART transmission
+
+[Service]
+WorkingDirectory=/home/pi/BackgroundService
+ExecStart=/usr/bin/dotnet /home/pi/BackgroundService/BrctcSpaceBackgroundService.dll
+SyslogIdentifier=BRCTCVibe
+StandardOutput=append:/home/pi/Logs/VibeService.log
+StandardError=append:/home/pi/Logs/VibeServiceErrors.log
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
