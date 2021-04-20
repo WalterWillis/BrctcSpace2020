@@ -1,0 +1,105 @@
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38
+Unhandled exception. System.PlatformNotSupportedException: This driver is generic so it can not perform conversions between pin numbering schemes.
+   at System.Device.Gpio.Drivers.SysFsDriver.ConvertPinNumberToLogicalNumberingScheme(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.GetLogicalPinNumber(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber)
+   at System.Device.Gpio.GpioController.OpenPin(Int32 pinNumber, PinMode mode)
+   at BrctcSpaceLibrary.Device.GPIO..ctor() in C:\Git\BrctcSpace2020\BlazorWebSpaceTool\BrctcSpaceLibrary\Device\GPIO.cs:line 17
+   at BrctcSpaceBackgroundService.Program.Main(String[] args) in C:\Git\BrctcSpace2020\BrctcSpaceBackgroundService\Program.cs:line 38

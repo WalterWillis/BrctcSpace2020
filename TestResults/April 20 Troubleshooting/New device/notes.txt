@@ -1,0 +1,1 @@
+Had to change GPIO's PinNumberingScheme.Board to PinNumberingScheme.Logical
