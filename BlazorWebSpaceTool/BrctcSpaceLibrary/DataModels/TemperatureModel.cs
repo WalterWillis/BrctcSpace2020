@@ -16,7 +16,7 @@ namespace BrctcSpaceLibrary.DataModels
             AverageCPUTemp = a * value + b * AverageCPUTemp;
         }
 
-        internal void Reset()
+        public void Reset()
         {
             N = 1;
             AverageCPUTemp = 1;

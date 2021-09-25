@@ -11,6 +11,8 @@ namespace BrctcSpaceLibrary.Processes
         private const int _magnitudeCount = 20;
         private const double resRatio = 5D / 4095;
 
+        public int MagnitudeCount { get => _magnitudeCount; }
+
         private List<double> X_Values { get; set; } = new List<double>();
         private List<double> Y_Values { get; set; } = new List<double>();
         private List<double> Z_Values { get; set; } = new List<double>();
@@ -69,7 +71,7 @@ namespace BrctcSpaceLibrary.Processes
             return header_X + header_Y + header_Z;
         }
 
-        internal void Reset()
+        public void Reset()
         {
             X_Values.Clear();
             Y_Values.Clear();
