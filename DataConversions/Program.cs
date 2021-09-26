@@ -2,8 +2,10 @@
 using BrctcSpaceLibrary.DataModels;
 using BrctcSpaceLibrary.Processes;
 using BrctcSpaceLibrary.Systems;
+using System.Collections.Generic;
 using System;
 using System.IO;
+using System.Numerics;
 
 namespace DataConversions
 {
@@ -205,18 +207,18 @@ namespace DataConversions
                     int cpuBytes = 8;
                     int accelSegmentLength = accelBytes + rtcBytes + cpuBytes;
 
-                    byte[] bytes = new byte[accelBytes + rtcBytes + cpuBytes];
-
-                    if (writeHeader)
-                    {
-                        string header = $"ID,Timestamp,Second,Temp (F),SPS,X_Frequency,X_Magnitude,Y_Frequency,Y_Magnitude,Z_Frequency,Z_Magnitude";
-
-                        sw.WriteLine(header);
-                        writeHeader = false;
-                    }
+                    byte[] bytes = new byte[accelBytes + rtcBytes + cpuBytes];                  
 
                     while (fs.Read(bytes) != 0)
                     {
+                        if (writeHeader)
+                        {
+                            string header = $"ID,Timestamp,Second,Temp (F),SPS,X_Frequency,X_Magnitude,Y_Frequency,Y_Magnitude,Z_Frequency,Z_Magnitude";
+
+                            sw.WriteLine(header);
+                            writeHeader = false;
+                        }
+
                         Span<byte> data = bytes;
                         Span<byte> accelSegment = data.Slice(0, accelBytes);
                         Span<byte> rtcSegment = data.Slice(accelBytes, rtcBytes);
@@ -240,34 +242,18 @@ namespace DataConversions
                         }
                         else
                         {
-                            //perform analysis and send message on second change
-                            processor.PerformFFTAnalysis();
-
                             //iterate second and append all data. Processor data should already have commas
-                            var xPairs = processor.X_Magnitudes.Split(',');
-                            var yPairs = processor.Y_Magnitudes.Split(',');
-                            var zPairs = processor.Z_Magnitudes.Split(',');
+                            Tuple<int, Complex>[] xPairs = processor.PerformFFTAnalysis_XOnly();
+                            Tuple<int, Complex>[] yPairs = processor.PerformFFTAnalysis_YOnly();
+                            Tuple<int, Complex>[] zPairs = processor.PerformFFTAnalysis_ZOnly();
+
                             try
                             {
-                                for (int i = 0; i < processor.MagnitudeCount * 2; i += 2) //magnitude count times two since the array will have each result's frequency and magnitude
+                                for (int i = 0; i < xPairs.Length; i++) //magnitude count times two since the array will have each result's frequency and magnitude
                                 {
-                                    if (string.IsNullOrEmpty(xPairs[i]))
-                                    {
-                                        xPairs[i] = "0";
-                                    }
-
-                                    if (string.IsNullOrEmpty(yPairs[i]))
-                                    {
-                                        yPairs[i] = "0";
-                                    }
-
-                                    if (string.IsNullOrEmpty(zPairs[i]))
-                                    {
-                                        zPairs[i] = "0";
-                                    }
 
                                     string csvLine = $"{indexTracker++},{currentTime.ToString("HH:mm:ss")},{(currentTime - initialTime).TotalSeconds.ToString("F3")}," +
-                                        $"{(int)temperature.AverageCPUTemp},{processor.SampleSize},{xPairs[i]},{xPairs[i + 1]},{yPairs[i]},{yPairs[i + 1]},{zPairs[i]},{zPairs[i + 1]}";
+                                        $"{(int)temperature.AverageCPUTemp},{processor.SampleSize},{xPairs[i].Item1},{xPairs[i].Item2.Magnitude},{yPairs[i].Item1},{yPairs[i].Item2.Magnitude},{zPairs[i].Item1},{zPairs[i].Item2.Magnitude}";
 
                                     sw.WriteLine(csvLine);
                                     count++;

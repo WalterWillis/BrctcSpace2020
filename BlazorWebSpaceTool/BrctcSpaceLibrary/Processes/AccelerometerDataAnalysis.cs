@@ -2,6 +2,7 @@
 using BrctcSpaceLibrary.DataModels;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace BrctcSpaceLibrary.Processes
@@ -49,6 +50,21 @@ namespace BrctcSpaceLibrary.Processes
             X_Magnitudes = FFTCalculations.GetMagnitudeString(X_Values.ToArray(), _magnitudeCount);
             Y_Magnitudes = FFTCalculations.GetMagnitudeString(Y_Values.ToArray(), _magnitudeCount);
             Z_Magnitudes = FFTCalculations.GetMagnitudeString(Z_Values.ToArray(), _magnitudeCount);
+        }
+
+        public Tuple<int, Complex>[] PerformFFTAnalysis_XOnly()
+        {
+            return FFTCalculations.CalculateSalientMagnitudesOfOneSecond(X_Values.ToArray());
+        }
+
+        public Tuple<int, Complex>[] PerformFFTAnalysis_YOnly()
+        {
+            return FFTCalculations.CalculateSalientMagnitudesOfOneSecond(Y_Values.ToArray());
+        }
+
+        public Tuple<int, Complex>[] PerformFFTAnalysis_ZOnly()
+        {
+            return FFTCalculations.CalculateSalientMagnitudesOfOneSecond(Z_Values.ToArray());
         }
 
         /// <summary>

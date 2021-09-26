@@ -80,6 +80,33 @@ namespace BrctcCalculations
         }
 
         /// <summary>
+        /// Performs FFT on a list of values returns a list of Frequencies associated with maximum magnitudes
+        /// </summary>
+        /// <param name="values">Values to perform FFT on</param>
+        /// <returns>Returns the entire list</returns>
+        public static Tuple<int, Complex>[] CalculateSalientMagnitudesOfOneSecond(double[] values)
+        {
+            Complex[] input = ConvertToComplex(values);
+            Complex[] output = new Complex[input.Length];
+
+            using (var pinIn = new PinnedArray<Complex>(input))
+            using (var pinOut = new PinnedArray<Complex>(output))
+            {
+                DFT.FFT(pinIn, pinOut); //leave extra threads out as we are already multithreading
+            }
+
+            //only half the data is within the frequency domain
+            //tuples appear to be faster than dictionaries for this particular use case (sorting, returning, etc.)
+            Tuple<int, Complex>[] results = new Tuple<int, Complex>[output.Length / 2];
+            for (int i = 0; i < output.Length / 2; i++)
+            {
+                results[i] = new Tuple<int, Complex>(i, output[i] / input[i]);
+            }
+
+            return results;
+        }
+
+        /// <summary>
         /// Performs an FFT on the passed values and creates a CSV-based string
         /// </summary>
         /// <param name="values">Values to perform FFT on</param>

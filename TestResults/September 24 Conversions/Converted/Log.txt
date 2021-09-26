@@ -1,0 +1,22 @@
+-------------------------------------------------------------------------------
+2021-09-25-23-07-46 - Accelerometer Frequency Analysis Records converted: 819
+2021-09-25-23-07-46 - Accelerometer Frequency Analysis Files found: 104
+2021-09-25-23-07-46 - Accelerometer Frequency Analysis Converted Files created: 1
+2021-09-25-23-07-46 - Accelerometer Frequency Analysis TotalSeconds: 1067.000
+
+-------------------------------------------------------------------------------
+2021-09-25-23-07-56 - Accelerometer Frequency Analysis Duplicate ID Records converted: 3263184
+2021-09-25-23-07-56 - Accelerometer Frequency Analysis Duplicate ID Files found: 104
+2021-09-25-23-07-56 - Accelerometer Frequency Analysis Duplicate ID Converted Files created: 4
+2021-09-25-23-07-56 - Accelerometer Frequency Analysis Duplicate ID TotalSeconds: 1067.000
+
+-------------------------------------------------------------------------------
+2021-09-25-23-08-13 - Accelerometer Records converted: 6527184
+2021-09-25-23-08-13 - Accelerometer Files found: 104
+2021-09-25-23-08-13 - Accelerometer Converted Files created: 7
+2021-09-25-23-08-13 - Accelerometer TotalSeconds: 1067.000
+
+2021-09-25-23-08-14 - Gyroscope Records converted: 292751
+2021-09-25-23-08-14 - Gyroscope Converted Files created: 1
+2021-09-25-23-08-14 - Gyroscope TotalSeconds: -59926608018.000
+-------------------------------------------------------------------------------
