@@ -350,7 +350,7 @@ namespace DataConversions
 
                     byte[] bytes = new byte[accelBytes + rtcBytes + cpuBytes];
 
-                    const string header = "ID,SECOND,X_RAW,Y_RAW,Z_RAW,X,Y,X,TIMESTAMP,CPU_TEMP";
+                    const string header = "ID,SECOND,X_RAW,Y_RAW,Z_RAW,X,Y,Z,TIMESTAMP,CPU_TEMP";
 
                     sw.WriteLine(header);
 
@@ -394,6 +394,7 @@ namespace DataConversions
                             sw.Close();
                             sw.Dispose();
                             sw = File.CreateText(resultFile);
+                            sw.WriteLine(header);
                         }
 
                         sw.WriteLine(csvLine);
