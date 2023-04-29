@@ -4,14 +4,19 @@ using System.Threading.Tasks;
 
 namespace BrctcSpaceLibrary.Device
 {
+    /// <summary>
+    /// The UART class is used for communication between the host device and other devices through a serial interface.
+    /// </summary>
     public class UART : IDisposable, IUART
     {
         private bool _isdisposing = false;
         private SerialPort _serialDevice;
-
         private bool testCanSend = true;
         private SerialDataReceivedEventHandler _toUnsubscribe; //used to automatically unsubscribe 
 
+        /// <summary>
+        /// Initializes a new UART object with default settings.
+        /// </summary>
         public UART()
         {
             _serialDevice = new SerialPort("/dev/ttyAMA0", 57600);
@@ -21,6 +26,9 @@ namespace BrctcSpaceLibrary.Device
             _serialDevice.Open();
         }
 
+        /// <summary>
+        /// Initializes a new UART object with custom settings.
+        /// </summary>
         public UART(string port, int writeTimeout = 1000, int readTimeout = 1000)
         {
             _serialDevice = new SerialPort(port, 57600);
@@ -30,6 +38,9 @@ namespace BrctcSpaceLibrary.Device
             _serialDevice.Open();
         }
 
+        /// <summary>
+        /// Sends a string message through the UART connection.
+        /// </summary>
         public void SerialSend(string message)
         {
             if (!_serialDevice.IsOpen)
@@ -38,6 +49,9 @@ namespace BrctcSpaceLibrary.Device
             _serialDevice.WriteLine(message);
         }
 
+        /// <summary>
+        /// Reads a string message from the UART connection.
+        /// </summary>
         public string SerialRead()
         {
             if (!_serialDevice.IsOpen)
@@ -48,6 +62,9 @@ namespace BrctcSpaceLibrary.Device
             return message;
         }
 
+        /// <summary>
+        /// Sends an array of bytes through the UART connection.
+        /// </summary>
         public void SendBytes(Span<byte> buffer)
         {
             if (!_serialDevice.IsOpen)
@@ -79,7 +96,6 @@ namespace BrctcSpaceLibrary.Device
             _serialDevice.DataReceived -= _toUnsubscribe;
         }
 
-
         /// <summary>
         /// This function will test the rx/tx pins of the current device if the rx and tx are shorted to each other.
         /// </summary>
@@ -87,21 +103,17 @@ namespace BrctcSpaceLibrary.Device
         {
             if (iterations < 1)
                 throw new ArgumentOutOfRangeException("SelfTest iterations must be a positive nonzero number");
-
             _serialDevice.DataReceived += Received;
-
             for (int i = 0; i < iterations; i++)
             {
                 //wait until data is recieved
                 while (!testCanSend) { }
-
                 if (testCanSend)
                 {
                     testCanSend = false;
                     _serialDevice.WriteLine($"Test{i}!");
                 }
             }
-
             _serialDevice.DataReceived -= Received;
         }
 
@@ -131,7 +143,6 @@ namespace BrctcSpaceLibrary.Device
                 Console.WriteLine(ex.StackTrace);
             }
         }
-
         /// <summary>
         /// Remove
         /// </summary>
@@ -140,14 +151,12 @@ namespace BrctcSpaceLibrary.Device
         {
             if (_isdisposing)
                 return;
-
             if (disposing)
             {
                 if (_serialDevice.IsOpen)
                     _serialDevice.Close();
                 _serialDevice.Dispose();
             }
-
             _isdisposing = true;
         }
 
@@ -160,9 +169,19 @@ namespace BrctcSpaceLibrary.Device
             return new UART();
         }
 
+        /// <summary>
+        /// Sends a string message through the UART connection asynchronously.
+        /// </summary>
         public Task SerialSendAsync(string message)
         {
             return Task.Run(() => { SerialSend(message); });
         }
     }
 }
+
+/*
+ * This UART class provides an interface for communicating with other devices through a serial connection. 
+ * It supports sending and receiving both string messages and byte arrays, 
+ * subscribing and unsubscribing to data received events, and disposing resources when no longer needed. 
+ * It also includes methods for self-testing and recreating a UART object if needed.
+*/ 

@@ -1,4 +1,5 @@
-﻿using BrctcSpaceLibrary.Device;
+﻿
+using BrctcSpaceLibrary.Device;
 using Iot.Device.CpuTemperature;
 using System;
 using System.Collections.Concurrent;
@@ -10,10 +11,12 @@ using static BrctcSpaceLibrary.Device.Accelerometer;
 
 namespace BrctcSpaceLibrary.Systems
 {
+    /// <summary>
+    /// The AccelerometerSystem class is responsible for handling accelerometer data collection, RTC, and CPU temperature.
+    /// </summary>
     public class AccelerometerSystem
     {
-        private readonly int _secondaryDataTrigger; //subtract one from expected/wanted samples per second since counter starts at 0
-
+        private readonly int _secondaryDataTrigger; // Subtract one from expected/wanted samples per second since counter starts at 0
         public int SPS { get => _secondaryDataTrigger; }
 
         private int _accelSegmentLength;
@@ -31,13 +34,17 @@ namespace BrctcSpaceLibrary.Systems
         public long AccelDatasetCounter { get; set; } = 0;
 
         /// <summary>
-        /// Multiplies the set amount against the chunk size of the data
+        /// Defines the maximum number of chunks per file, default is 25 for approximately 1,000,000 lines per file.
         /// </summary>
-        public int MaxChunksPerFile { get; set; } = 25; //25 by default for approximately 1,000,000 lines per file
+        public int MaxChunksPerFile { get; set; } = 25;
 
         private ConcurrentQueue<string> _fileQueue = new ConcurrentQueue<string>();
 
         public ConcurrentQueue<string> FileQueue { get => _fileQueue; }
+
+        /// <summary>
+        /// Initializes the AccelerometerSystem with a specified file name and expected samples per second (default: 7999).
+        /// </summary>
         public AccelerometerSystem(string fileName, int expectedSPS = 7999)
         {
             _accelFileName = fileName;
@@ -45,7 +52,10 @@ namespace BrctcSpaceLibrary.Systems
             _accelSegmentLength = _accelBytes + _rtcBytes + _cpuBytes;
         }
 
-        public  void RunAccelerometer(CancellationToken token)
+        /// <summary>
+        /// Collects and stores accelerometer, RTC, and CPU temperature data until the cancellation token is triggered.
+        /// </summary>
+        public void RunAccelerometer(CancellationToken token)
         {
             Span<byte> data = new Span<byte>(new byte[_accelSegmentLength]);
 
@@ -53,15 +63,14 @@ namespace BrctcSpaceLibrary.Systems
             Span<byte> rtcSegment = data.Slice(_accelBytes, _rtcBytes);
             Span<byte> cpuSegment = data.Slice(_accelBytes + _rtcBytes, _cpuBytes);
 
-            
             int secondaryDataCounter = 1;
 
             int fileCounter = 0;
 
-            //Initialize to approximately 256 KB (or as close it as possible given the segment size)
+            // Initialize to approximately 256 KB (or as close it as possible given the segment size)
             int chunkSize = _secondaryDataTrigger * 8; //(4096 / _accelSegmentLength) * 256;
 
-            int maxLines = chunkSize * MaxChunksPerFile; //arbitrary amount of iterations per buffer cycle
+            int maxLines = chunkSize * MaxChunksPerFile; // Arbitrary amount of iterations per buffer cycle
 
             int iterations = maxLines / chunkSize;
 
@@ -73,7 +82,7 @@ namespace BrctcSpaceLibrary.Systems
                 {
                     using (MemoryStream stream = new MemoryStream())
                     {
-                        //initialize
+                        // Initialize
                         GetRTCTime(rtcSegment);
                         GetCPUTemp(cpuSegment);
 
@@ -91,12 +100,11 @@ namespace BrctcSpaceLibrary.Systems
                                     GetCPUTemp(cpuSegment);
                                     secondaryDataCounter = 1;
                                 }
-
                                 stream.Write(data);
 
                                 AccelDatasetCounter++;
 
-                                accelSegment.Clear(); // only clear the accelerometer values as they must be ensured to be precise
+                                accelSegment.Clear(); // Only clear the accelerometer values as they must be ensured to be precise
                             }
 
                             stream.WriteTo(fs);
@@ -110,6 +118,9 @@ namespace BrctcSpaceLibrary.Systems
             }
         }
 
+        /// <summary>
+        /// Retrieves the current RTC time and stores it in the provided buffer.
+        /// </summary>
         private void GetRTCTime(Span<byte> buffer)
         {
             Monitor.Enter(Devices.RTC);
@@ -117,6 +128,9 @@ namespace BrctcSpaceLibrary.Systems
             Monitor.Exit(Devices.RTC);
         }
 
+        /// <summary>
+        /// Retrieves the current CPU temperature and stores it in the provided buffer.
+        /// </summary>
         private void GetCPUTemp(Span<byte> buffer)
         {
             Monitor.Enter(Devices.CPUTemp);
@@ -136,6 +150,9 @@ namespace BrctcSpaceLibrary.Systems
             Monitor.Exit(Devices.CPUTemp);
         }
 
+        /// <summary>
+        /// Returns a normal MCP class for the accelerometer.
+        /// </summary>
         public static IMcp3208 GetNormalMCPClass()
         {
             var settings = new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1900000 };
@@ -143,6 +160,9 @@ namespace BrctcSpaceLibrary.Systems
             return new Accelerometer(settings); ;
         }
 
+        /// <summary>
+        /// Returns a custom MCP class for the accelerometer.
+        /// </summary>
         public static IMcp3208 GetCustomMCPClass()
         {
             var settings = new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1900000 };
@@ -157,10 +177,33 @@ namespace BrctcSpaceLibrary.Systems
             return mcp;
         }
 
+        /// <summary>
+        /// Returns a mock MCP class for the accelerometer.
+        /// </summary>
         public static IMcp3208 GetMockMCPClass()
         {
             return new Device.Mocks.MockAccelerometer(); ;
         }
-
     }
 }
+
+/*
+In this AccelerometerSystem class, the primary purpose is to handle the collection and storage of accelerometer data, Real-Time Clock (RTC) data, and CPU temperature data.
+
+The class starts by defining necessary variables and properties, such as the number of bytes needed for accelerometer, RTC, and CPU data. It also initializes a ConcurrentQueue to store file names.
+
+The RunAccelerometer method is responsible for continuously collecting and storing the data until the CancellationToken is triggered. 
+Inside the method, it creates a file for each data set and writes the data to the file in chunks. It also updates the AccelDatasetCounter for each data point collected.
+
+The GetRTCTime and GetCPUTemp methods are used to retrieve the RTC time and CPU temperature, respectively, and store them in the provided buffers. 
+These methods are called within the `RunAccelerometer` method during data collection.
+
+Additionally, the class provides three static methods to create different types of MCP (Microchip Analog-to-Digital Converter) classes for the accelerometer:
+
+1. `GetNormalMCPClass` returns a normal MCP class for the accelerometer.
+2. `GetCustomMCPClass` returns a custom MCP class for the accelerometer.
+3. `GetMockMCPClass` returns a mock MCP class for the accelerometer, which can be useful for testing purposes.
+
+Overall, the AccelerometerSystem class is responsible for managing the data collection and storage process for the accelerometer, RTC, and CPU temperature data. 
+The class provides methods to initialize, run, and retrieve data from the system, making it a crucial component in the data acquisition process.
+*/

@@ -4,23 +4,25 @@ using System.Device.Spi;
 using BrctcSpaceLibrary.Helpers;
 using Iot.Device.Adc;
 
-//Methods for communicating with our accelerometers. Uses three accelerometers (ADXL-1002Z) through an MCP3208 ADC Pi hat.
+// This class provides methods for communicating with three accelerometers (ADXL-1002Z), originally through an MCP3208 ADC Pi hat.
+// We later acquired the ADC component by itself and removed the need for the hat.
+// After testing, we later switched to a custom SPI implementation for the ADC for performance reasons.
 namespace BrctcSpaceLibrary.Device
 {
     /// <summary>
-    ///  MCP3208 - 12-bit A/D Converter with SPI Serial Interface 
+    ///  Class to communicate with the MCP3208 - a 12-bit A/D Converter with SPI Serial Interface.
     /// </summary>
     public class Accelerometer : IMcp3208, IDisposable
     {
         private bool _isdisposing = false;
         private SpiConnectionSettings _settings;
-        private double _resRatio = 5 / 4095; // verified correct - Use: value * _resRatio
+        private double _resRatio = 5D / 4095; // Verified correct - Use: value * _resRatio
         private Mcp3208 _adc;
         private IntUnion _union = new IntUnion();
 
-       /// <summary>
-       ///  MCP3208 - 12-bit A/D Converter with SPI Serial Interface
-       /// </summary>
+        /// <summary>
+        ///  Initializes a new instance of the Accelerometer class with default SPI settings.
+        /// </summary>
         public Accelerometer()
         {
             _settings = new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1000000 };
@@ -32,11 +34,10 @@ namespace BrctcSpaceLibrary.Device
         }
 
         /// <summary>
-        /// MCP3208 - 12-bit A/D Converter with SPI Serial Interface
+        /// Initializes a new instance of the Accelerometer class with custom SPI settings and voltage reference.
         /// </summary>
         /// <param name="settings">Define customized settings or set null to allow default</param>
         /// <param name="voltRef">Defaults to 5 volts</param>
-
         public Accelerometer(SpiConnectionSettings settings, double voltRef = 5)
         {
             if (settings == null)
@@ -45,7 +46,6 @@ namespace BrctcSpaceLibrary.Device
             }
 
             _settings = settings;
-
             _resRatio = voltRef / 4095;
 
             using (SpiDevice spi = SpiDevice.Create(_settings))
@@ -55,19 +55,19 @@ namespace BrctcSpaceLibrary.Device
         }
 
         /// <summary>
-        /// Get the raw combined byte value from the specified channel
+        /// Get the raw combined byte value from the specified channel.
         /// </summary>
         /// <param name="channel">Channel to read from</param>
-        /// <returns></returns>
+        /// <returns>Raw combined byte value</returns>
         public int GetRaw(Channel channel)
         {
             return _adc.Read((int)channel);
         }
 
         /// <summary>
-        /// Gets all three raw axis data in the order of X, Y, Z
+        /// Gets raw axis data for all three axes in the order of X, Y, Z.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Array of raw axis data</returns>
         public int[] GetRaws()
         {
             return new int[] {
@@ -78,7 +78,7 @@ namespace BrctcSpaceLibrary.Device
         }
 
         /// <summary>
-        /// Fills a 12 bit buffer with 3 int values
+        /// Fills a 12-bit buffer with 3 int values.
         /// </summary>
         /// <param name="buffer">Span reference that gets filled with byte data</param>
         public void Read(Span<byte> buffer)
@@ -103,35 +103,32 @@ namespace BrctcSpaceLibrary.Device
         }
 
         /// <summary>
-        /// Get the voltage representation from the specified channel
+        /// Get the voltage representation from the specified channel.
         /// </summary>
         /// <param name="channel">Channel to read from</param>
-        /// <returns></returns>
+        /// <returns>Voltage representation of the channel</returns>
         public double GetScaledValue(Channel channel)
         {
             return _adc.Read((int)channel) / _resRatio;
         }
 
-
         /// <summary>
-        /// Gets voltage representation of all three axis data in the order of X, Y, Z
+        /// Gets voltage representation of all three axis data in the order of X, Y, Z.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Span containing voltage representation of all three axis</returns>
         public Span<double> GetScaledValues()
         {
-
             return new double[] {
-                _adc.Read((int)Channel.X) * _resRatio,
-                _adc.Read((int)Channel.Y) * _resRatio,
-                _adc.Read((int)Channel.Z) * _resRatio
-            };
-
+            _adc.Read((int)Channel.X) * _resRatio,
+            _adc.Read((int)Channel.Y) * _resRatio,
+            _adc.Read((int)Channel.Z) * _resRatio
+        };
         }
 
         /// <summary>
-        /// fills a 24 bit buffer with 3 double values
+        /// Fills a 24-bit buffer with 3 double values.
         /// </summary>
-        /// <param name="buffer"></param>
+        /// <param name="buffer">Span reference that gets filled with byte data</param>
         public void GetScaledValues(Span<byte> buffer)
         {
             byte[] bytes = BitConverter.GetBytes((double)(_adc.Read((int)Channel.X) * _resRatio));
@@ -165,9 +162,8 @@ namespace BrctcSpaceLibrary.Device
             buffer[23] = bytes[7];
         }
 
-        //We use pins 0, 2 and 4 as X, Y, and Z respectively
+        // Enum for specifying the accelerometer axes (X, Y, and Z) corresponding to pins 0, 2, and 4.
         public enum Channel : int { X = 0, Y = 1, Z = 2 }
-
 
         public void Dispose()
         {
@@ -176,9 +172,9 @@ namespace BrctcSpaceLibrary.Device
         }
 
         /// <summary>
-        /// Remove
+        /// Dispose method to clean up resources.
         /// </summary>
-        /// <param name="disposing"></param>
+        /// <param name="disposing">Indicates whether the method call comes from a Dispose method or a finalizer</param>
         protected virtual void Dispose(bool disposing)
         {
             if (_isdisposing)
@@ -193,3 +189,16 @@ namespace BrctcSpaceLibrary.Device
         }
     }
 }
+
+/*
+
+Explanation:
+
+This code defines a class called `Accelerometer` that communicates with three ADXL-1002Z accelerometers through an MCP3208 ADC. The MCP3208 is a 12-bit analog-to-digital converter with an SPI serial interface.
+
+The class has two constructors: one with default SPI settings and another with custom SPI settings and a voltage reference. It provides methods for getting raw data and scaled voltage values for individual axes (X, Y, and Z) or all three axes together.
+
+There are also methods for reading data and filling buffers with byte or double data representations. The `Channel` enum is used to specify the accelerometer axes (X, Y, and Z) corresponding to pins 0, 2, and 4.
+
+Finally, the class implements the `IDisposable` interface to properly dispose of resources when the object is no longer needed.
+*/

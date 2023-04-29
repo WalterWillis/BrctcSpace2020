@@ -10,9 +10,8 @@ namespace BrctcSpaceLibrary.Device
     {
         private SpiConnectionSettings _settings;
         private bool _isdisposing = false;
-
-        //Container used to quickly request data without further allocations being necessary
-        //0 and 1 are used for requests, 2 and 3 are used for replies
+        // Container used to quickly request data without further allocations being necessary
+        // 0 and 1 are used for requests, 2 and 3 are used for replies
         private Memory<byte> FastBuffer = new Memory<byte>(new byte[4]);
         private ReadOnlyMemory<byte> BurstReadRegisterBuffer = new ReadOnlyMemory<byte>(
             new byte[22] { 0x3E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
@@ -45,12 +44,11 @@ namespace BrctcSpaceLibrary.Device
         }
 
         /// <summary>
-        /// returns an array of burst data (Will be removed)
+        /// Returns an array of burst data (Will be removed)
         /// </summary>
         /// <returns></returns>
         public Span<int> BurstRead()
         {
-
             Span<byte> Diag = FastRegisterRead(Register.DIAG_STAT);
             Span<byte> GyroX = FastRegisterRead(Register.X_GYRO_OUT);
             Span<byte> GyroY = FastRegisterRead(Register.Y_GYRO_OUT);
@@ -74,22 +72,23 @@ namespace BrctcSpaceLibrary.Device
                 Temp[0], Temp[1],
                 Sample[0], Sample[1],
                 Checksum[0], Checksum[1],
-            };
+             };
 
-            //Only for quick data retrieval
-            //Convert the byte array to an int array -- Efficient, but will require using the exact opposite to retrieve correct values
-            //Example: Convert result such that newResult = MemoryMarshal.Cast<int,byte>(result)
-            //Note that the cast takes data type length into account. An int is 4 bytes.
-            //Note: 20 bytes = 5 int array. 22 bytes also = 5 int array. 20 is perfect for multiplicity
-            return MemoryMarshal.Cast<byte, int>(burstData); //remove the leading empty bytes
+            // Only for quick data retrieval
+            // Convert the byte array to an int array -- Efficient, but will require using the exact opposite to retrieve correct values
+            // Example: Convert result such that newResult = MemoryMarshal.Cast<int,byte>(result)
+            // Note that the cast takes data type length into account. An int is 4 bytes.
+            // Note: 20 bytes = 5 int array. 22 bytes also = 5 int array. 20 is perfect for multiplicity
+            return MemoryMarshal.Cast<byte, int>(burstData); // Remove the leading empty bytes
         }
 
+        // Reads burst data and stores it in the provided buffer
         public void BurstRead(Span<byte> buffer)
         {
             _gyro.TransferFullDuplex(BurstReadRegisterBuffer.Span, BurstReadDataBuffer.Span);
 
             var span = BurstReadDataBuffer.Span;
-            //endianness is inverted from the ADIS' expectation. This is taken care of via the GyroConversionHelper static class in the UI.
+            // Endianness is inverted from the ADIS' expectation. This is taken care of via the GyroConversionHelper static class in the UI.
             buffer[0] = span[2];
             buffer[1] = span[3];
 
@@ -171,11 +170,11 @@ namespace BrctcSpaceLibrary.Device
         public int RegisterRead(byte regAddr)
         {
             byte[] reply = new byte[2];
-            //ADIS is a 16 bit device. Append a 0 byte to the address
+            // ADIS is a 16-bit device. Append a 0 byte to the address
             _gyro.Write(new byte[] { regAddr, 0x00 });
-            Thread.SpinWait(40); // delay approximately 40 microseconds
+            Thread.SpinWait(40); // Delay approximately 40 microseconds
             _gyro.Read(reply);
-            Thread.SpinWait(40); // delay approximately 40 microseconds
+            Thread.SpinWait(40); // Delay approximately 40 microseconds
 
             int result = (reply[0] << 8) | (reply[1] & 0xFF);
 
@@ -213,7 +212,7 @@ namespace BrctcSpaceLibrary.Device
             byte lowBytelowWord = (byte)(lowWord & 0xFF);
 
             _gyro.Write(new byte[] { highBytelowWord, lowBytelowWord });
-            Thread.SpinWait(40); // delay approximately 40 microseconds
+            Thread.SpinWait(40); // Delay approximately 40 microseconds
             _gyro.Write(new byte[] { highBytehighWord, lowBytehighWord });
         }
 
@@ -241,3 +240,18 @@ namespace BrctcSpaceLibrary.Device
         }
     }
 }
+
+/*
+The Gyroscope class provides a high-level interface for interacting with the ADIS16460 gyroscope sensor.
+This class allows you to create a gyroscope object, customize the connection settings, read
+register values, and write data to registers. It also includes methods for acquiring burst data and disposing of the resources when they are no longer needed.
+
+Here's a quick explanation of the class's main features
+1. Constructors: The class provides two constructors, one with default connection settings and one that allows you to provide custom settings.
+2. BurstRead: This method reads burst data from the gyroscope, which includes diagnostic information, gyro and accelerometer data, temperature, sample counter, and checksum. It returns an array of integers.
+3. AcquireData: This method reads data from the gyroscope and stores it in the provided buffer. It retrieves the same data as BurstRead, but with a more efficient approach.
+4. RegisterRead and FastRegisterRead: These methods allow you to read data from a specific register. FastRegisterRead provides a more efficient approach.
+5. RegisterWrite: This method writes a short value to a specific register.
+6. Dispose: This method disposes of the resources used by the class, such as the SpiDevice object.
+
+*/
