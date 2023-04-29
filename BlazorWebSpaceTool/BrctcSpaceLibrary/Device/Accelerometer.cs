@@ -4,10 +4,11 @@ using System.Device.Spi;
 using BrctcSpaceLibrary.Helpers;
 using Iot.Device.Adc;
 
+//Methods for communicating with our accelerometers. Uses three accelerometers (ADXL-1002Z) through an MCP3208 ADC Pi hat.
 namespace BrctcSpaceLibrary.Device
 {
     /// <summary>
-    /// Methods for communicating with our accelerometers. Uses three accelerometers through an MCP3208 ADC Pi hat.
+    ///  MCP3208 - 12-bit A/D Converter with SPI Serial Interface 
     /// </summary>
     public class Accelerometer : IMcp3208, IDisposable
     {
@@ -17,9 +18,9 @@ namespace BrctcSpaceLibrary.Device
         private Mcp3208 _adc;
         private IntUnion _union = new IntUnion();
 
-        /// <summary>
-        /// Accelerometer values via SPI 
-        /// </summary>
+       /// <summary>
+       ///  MCP3208 - 12-bit A/D Converter with SPI Serial Interface
+       /// </summary>
         public Accelerometer()
         {
             _settings = new SpiConnectionSettings(1, 0) { Mode = SpiMode.Mode0, ClockFrequency = 1000000 };
@@ -31,13 +32,11 @@ namespace BrctcSpaceLibrary.Device
         }
 
         /// <summary>
-        /// Accelerometer values via SPI 
+        /// MCP3208 - 12-bit A/D Converter with SPI Serial Interface
         /// </summary>
         /// <param name="settings">Define customized settings or set null to allow default</param>
-        /// <param name="channel_x">Defaults to channel 0</param>
-        /// <param name="channel_y">Defaults to channel 1</param>
-        /// <param name="channel_z">Defaults to channel 2</param>
         /// <param name="voltRef">Defaults to 5 volts</param>
+
         public Accelerometer(SpiConnectionSettings settings, double voltRef = 5)
         {
             if (settings == null)
@@ -78,6 +77,10 @@ namespace BrctcSpaceLibrary.Device
             };
         }
 
+        /// <summary>
+        /// Fills a 12 bit buffer with 3 int values
+        /// </summary>
+        /// <param name="buffer">Span reference that gets filled with byte data</param>
         public void Read(Span<byte> buffer)
         {
             _union.integer = _adc.Read((int)Channel.X);

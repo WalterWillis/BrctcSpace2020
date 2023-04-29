@@ -11,6 +11,8 @@ namespace DataConversions
 {
     class Program
     {
+        private static int lineLimit = 7999 * 20; // 20 seconds of data
+
         static FileInfo LogFile = new FileInfo(Path.Combine("Converted", "Log.txt"));
         static void Main(string[] args)
         {
@@ -45,7 +47,7 @@ namespace DataConversions
             long indexTracker = 0; //tracks the current index of each line over multiple files
 
 
-            const int fileLineSize = 1000000;
+            int fileLineSize = lineLimit;
 
             string searchFile = $"{filename}{fileCounter++}";
             string resultFile = $"{fileDir}{newFileCounter++}.csv";
@@ -187,7 +189,7 @@ namespace DataConversions
             long indexTracker = 0; //tracks the current index of each line over multiple files
 
 
-            const int fileLineSize = 1000000;
+            int fileLineSize = lineLimit;
 
             string searchFile = $"{filename}{fileCounter++}";
             string resultFile = $"{fileDir}{newFileCounter++}.csv";
@@ -330,7 +332,7 @@ namespace DataConversions
             long fileLineIndex = 0; //tracks amount of lines in current file
             long count = 0; //keep track of records
 
-            const int fileLineSize = 1000000;
+            int fileLineSize = lineLimit;
 
             string searchFile = $"{filename}{fileCounter++}";
             string resultFile = $"{fileDir}{newFileCounter++}.csv";
@@ -436,7 +438,7 @@ namespace DataConversions
 
             long index = 1;
             long fileLineIndex = 0; //tracks amount of lines in current file
-            const int fileLineSize = 1000000;
+            int fileLineSize = 200000; //currently arbitrary
             long count = 0;
 
             string resultFile = $"{newFile}{newFileCounter++}.csv";
