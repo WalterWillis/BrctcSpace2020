@@ -99,3 +99,27 @@ namespace BrctcSpaceLibrary.Processes
         }
     }
 }
+
+/*
+ The `AccelerometerDataAnalysis` class is responsible for analyzing accelerometer data. 
+This class processes the input data, performs Fast Fourier Transform (FFT) analysis on it, and returns the results in different formats. 
+
+The main components of this class are:
+
+1. Private properties for storing X, Y, and Z axis data (`X_Values`, `Y_Values`, `Z_Values`).
+2. Public properties to access the magnitude count, sample size, and magnitudes for each axis (`MagnitudeCount`, `SampleSize`, `X_Magnitudes`, `Y_Magnitudes`, `Z_Magnitudes`).
+
+The key methods of this class are:
+
+1. `ProcessData()`: This method takes a `Span<byte>` of accelerometer data, converts it into an array of integers, scales the values using a predefined ratio, and adds the resulting data to the X, Y, and Z value lists.
+
+2. `PerformFFTAnalysis()`: This method performs FFT analysis on the X, Y, and Z value lists, and stores the magnitudes as strings in the `X_Magnitudes`, `Y_Magnitudes`, and `Z_Magnitudes` properties.
+
+3. `PerformFFTAnalysis_XOnly()`, `PerformFFTAnalysis_YOnly()`, `PerformFFTAnalysis_ZOnly()`: These methods perform FFT analysis on individual axes (X, Y, or Z) and return an array of Tuples containing frequency and complex values.
+
+4. `GenerateCsvHeaders()`: This method generates a CSV header string for each axis with frequency and peak headers.
+
+5. `Reset()`: This method resets the internal state of the object, clearing all the values and magnitudes for each axis.
+
+Overall, this class is used for processing and analyzing accelerometer data, making it easier to perform frequency analysis and generate useful outputs for further analysis or visualization.
+*/

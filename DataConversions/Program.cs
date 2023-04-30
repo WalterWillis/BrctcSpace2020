@@ -22,6 +22,9 @@ namespace DataConversions
             ConvertGyroData();
         }
 
+        /// <summary>
+        /// Reads raw accelerometer data from binary files, processes the data, performs a Fast Fourier Transform (FFT) analysis, and saves the analyzed data in CSV files.
+        /// </summary>
         public static void ConvertAccelData()
         {
             string filename = Path.Combine("Data", "Accelerometer.binary");
@@ -164,6 +167,12 @@ namespace DataConversions
             }
         }
 
+        /// <summary>
+        /// This function processes binary accelerometer data files one by one and converts them into separate CSV files.
+        /// Each CSV file contains the frequency analysis of the accelerometer data for X, Y, and Z axes, with separate rows for each axis and duplicate IDs.
+        /// An imposed limit on the number of lines per file is maintained. If the number of lines in a CSV file exceeds the limit, a new CSV file is created, and the process continues.
+        /// The function also calculates the average CPU temperature for each second of data.
+        /// </summary>
         public static void ConvertAccelDataSeperateRowsDuplicateIDs()
         {
             string filename = Path.Combine("Data", "Accelerometer.binary");
@@ -314,6 +323,12 @@ namespace DataConversions
             }
         }
 
+        /// <summary>
+        /// This function processes binary accelerometer data files one by one and converts them into separate CSV files.
+        /// Each CSV file contains raw and processed accelerometer data for X, Y, and Z axes along with the timestamp and CPU temperature for each record.
+        /// An imposed limit on the number of lines per file is maintained. If the number of lines in a CSV file exceeds the limit, a new CSV file is created, and the process continues.
+        /// The function does not perform any frequency analysis on the accelerometer data.
+        /// </summary>
         public static void ConvertAccelDataNoAnalysis()
         {
             string filename = Path.Combine("Data", "Accelerometer.binary");
@@ -423,6 +438,9 @@ namespace DataConversions
             }
         }
 
+        /// <summary>
+        /// Reads raw gyroscope data from binary files, processes the data, and saves the data in CSV files.
+        /// </summary>
         public static void ConvertGyroData()
         {
             string filename = Path.Combine("Data", "Gyroscope.binary");
